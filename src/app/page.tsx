@@ -1,65 +1,131 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Header from "@/components/Header";
+import SearchBar from "@/components/SearchBar";
+import GenreTag from "@/components/GenreTag";
+import { getTopGenres, getGenreArtists, getArtistPreviewData, type GenreInfo } from "@/lib/api";
+import { useAudio } from "@/contexts/AudioContext";
+import Footer from "@/components/Footer";
 
 export default function Home() {
+  const router = useRouter();
+  const [trendingGenres, setTrendingGenres] = useState<GenreInfo[]>([]);
+  const { playTrack, currentTrack, isPlaying } = useAudio();
+
+  useEffect(() => {
+    getTopGenres(30).then(setTrendingGenres);
+  }, []);
+
+  const handlePlayGenre = async (genreName: string) => {
+    // Determine if this genre is already playing
+    const isThisGenrePlaying = currentTrack?.id === genreName;
+    if (isThisGenrePlaying) {
+      // Defer to the Context toggle logic
+      playTrack(currentTrack);
+      return;
+    }
+
+    try {
+      const artists = await getGenreArtists(genreName, 5);
+      if (!artists || artists.length === 0) return;
+
+      const randomArtist = artists[Math.floor(Math.random() * artists.length)];
+      const previewData = await getArtistPreviewData(randomArtist.name);
+      const trackWithPreview = previewData.tracks.find(t => t.preview);
+
+      if (!trackWithPreview) return;
+
+      playTrack({
+        id: genreName,
+        url: trackWithPreview.preview,
+        title: trackWithPreview.title,
+        artist: randomArtist.name,
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSelect = (artistName: string) => {
+    router.push(`/artist/${encodeURIComponent(artistName)}`);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-white">
+      <Header />
+      <div
+        className="flex flex-col items-center justify-center px-5 pt-20 pb-16 sm:px-10 sm:pt-[120px] sm:pb-20"
+        style={{ animation: "fadeIn 0.5s ease" }}
+      >
+        <h1
+          className="text-3xl sm:text-5xl font-light text-[#1D1D1F] mb-3 text-center"
+          style={{ letterSpacing: "-0.04em" }}
+        >
+          Discover similar artists
+        </h1>
+        <p
+          className="text-sm sm:text-base text-[#9CA3AF] mb-8 sm:mb-12 font-normal text-center"
+          style={{ letterSpacing: "-0.01em" }}
+        >
+          Search an artist. Explore the constellation.
+        </p>
+        <div className="w-full max-w-[480px]">
+          <SearchBar
+            onSelectArtist={handleSelect}
+            onSelectGenre={(name) => router.push(`/genre/${encodeURIComponent(name)}`)}
+          />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+
+        {/* Surprise Me Feature */}
+        <button
+          onClick={() => {
+            if (trendingGenres.length > 0) {
+              const random = trendingGenres[Math.floor(Math.random() * trendingGenres.length)];
+              router.push(`/genre/${encodeURIComponent(random.name)}`);
+            }
+          }}
+          className="mt-6 flex items-center gap-2 px-6 py-2.5 bg-[#FAFAFA] border border-[#E5E5E5] hover:border-[#1D1D1F] hover:bg-[#1D1D1F] hover:text-white transition-all duration-300 rounded-full text-sm font-semibold text-[#1D1D1F] cursor-pointer"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" />
+          </svg>
+          Surprise Me
+        </button>
+
+        {/* Trending Genres */}
+        {trendingGenres.length > 0 && (
+          <div className="mt-12 sm:mt-16 w-full max-w-[600px]">
+            <div className="flex items-center justify-between mb-4">
+              <div
+                className="text-[11px] font-semibold text-[#9CA3AF] uppercase"
+                style={{ letterSpacing: "0.08em" }}
+              >
+                Trending Genres
+              </div>
+              <Link
+                href="/genres"
+                className="text-[11px] font-semibold text-[#9CA3AF] hover:text-[#1D1D1F] transition-colors no-underline"
+              >
+                Browse all genres →
+              </Link>
+            </div>
+            <div className="flex flex-wrap justify-center">
+              {trendingGenres.map((g) => (
+                <GenreTag
+                  key={g.name}
+                  genre={g.name}
+                  onPlayClick={handlePlayGenre}
+                  isPlaying={isPlaying && currentTrack?.id === g.name}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      <Footer />
     </div>
   );
 }
