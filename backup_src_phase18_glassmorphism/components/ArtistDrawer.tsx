@@ -29,7 +29,7 @@ import StreamingLinks from "@/components/StreamingLinks";
 
 function ArtistAvatar({ name, image, size = 44 }: { name: string; image?: string | null; size?: number }) {
     if (image) {
-        return <Image src={image} alt={name} width={size} height={size} className="object-cover shrink-0 border border-black grayscale-[100%]" style={{ width: size, height: size, imageRendering: "pixelated" }} unoptimized />;
+        return <Image src={image} alt={name} width={size} height={size} className="object-cover shrink-0" style={{ width: size, height: size }} unoptimized />;
     }
     return <ArtistInitials name={name} size={size} />;
 }
@@ -171,7 +171,7 @@ function SimilarCard({
 
     return (
         <div style={{ animation: `fadeIn 0.3s ease ${index * 0.04}s both` }}>
-            <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-3.5 border-b border-dashed border-black cursor-default p-4 hover:bg-[#F8F8FA] transition-colors">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-3.5 border-b border-[#F0F0F0/50] cursor-default p-4 hover:bg-[#F8F8FA] transition-colors">
                 <div className="flex items-center gap-3 sm:gap-3.5 flex-1 min-w-0">
                     <ArtistAvatar name={artist.name} image={artist.image} size={44} />
                     <div className="flex-1 min-w-0">
@@ -191,21 +191,21 @@ function SimilarCard({
                 </div>
                 <div className="flex gap-1.5 items-center sm:items-start shrink-0">
                     {previewUrl && (
-                        <button onClick={() => isPlaying ? onStop() : onPlay(previewUrl, "Preview", artist.name, artist.image)} className={`flex items-center justify-center border cursor-pointer transition-all duration-150 shrink-0 ${isPlaying ? "border-black bg-black text-white" : "border-black bg-white text-black hover:bg-black hover:text-white"}`} style={{ width: 28, height: 28 }} title={isPlaying ? "Stop" : "Play"}>
+                        <button onClick={() => isPlaying ? onStop() : onPlay(previewUrl, "Preview", artist.name, artist.image)} className={`flex items-center justify-center border cursor-pointer transition-all duration-150 shrink-0 ${isPlaying ? "border-[#1D1D1F] bg-[#1D1D1F] text-white" : "border-[#E5E5E5] bg-[#FAFAFA] text-[#1D1D1F] hover:bg-[#1D1D1F] hover:text-white"}`} style={{ width: 28, height: 28 }} title={isPlaying ? "Stop" : "Play"}>
                             {isPlaying ? <svg width={10} height={10} viewBox="0 0 12 12" fill="currentColor"><rect x="1" y="1" width="4" height="10" /><rect x="7" y="1" width="4" height="10" /></svg> : <svg width={10} height={10} viewBox="0 0 12 12" fill="currentColor"><polygon points="2,0 12,6 2,12" /></svg>}
                         </button>
                     )}
-                    <button onClick={() => onToggleBookmark(cardId, artist.name, artist.image, artist.genres)} disabled={isBookmarking} className={`flex items-center justify-center border transition-all duration-150 cursor-pointer ${isBookmarked ? "border-[#ff4500] bg-[#fff0f0] text-[#ff4500]" : "border-black bg-white text-black hover:text-[#ff4500]"}`} style={{ width: 28, height: 28 }}>
+                    <button onClick={() => onToggleBookmark(cardId, artist.name, artist.image, artist.genres)} disabled={isBookmarking} className={`flex items-center justify-center border transition-all duration-150 rounded-sm cursor-pointer ${isBookmarked ? "border-[#FF4B4B] bg-[#FFF0F0] text-[#FF4B4B]" : "border-[#E5E5E5] bg-[#FAFAFA] text-[#9CA3AF] hover:text-[#1D1D1F]"}`} style={{ width: 28, height: 28 }}>
                         <Heart size={14} className={isBookmarked ? "fill-current" : ""} strokeWidth={isBookmarked ? 2.5 : 2} />
                     </button>
-                    <button onClick={() => onToggleDiscography(artist.name)} className={`text-[10px] font-bold border cursor-pointer whitespace-nowrap transition-all duration-150 ${discographyOpen ? "border-black bg-black text-white" : "border-black bg-white text-black hover:bg-black hover:text-white"}`} style={{ padding: "0 8px", height: 28 }}>
-                        {discographyOpen ? "CLOSE" : "EXPLORE"}
+                    <button onClick={() => onToggleDiscography(artist.name)} className={`text-[10px] font-semibold border cursor-pointer whitespace-nowrap transition-all duration-150 ${discographyOpen ? "border-[#1D1D1F] bg-[#1D1D1F] text-white" : "border-[#E5E5E5] bg-[#FAFAFA] text-[#1D1D1F] hover:bg-[#1D1D1F] hover:text-white"}`} style={{ padding: "0 8px", height: 28 }}>
+                        {discographyOpen ? "Close" : "Explore"}
                     </button>
                 </div>
             </div>
             <div className="transition-all duration-300 ease-in-out" style={{ display: "grid", gridTemplateRows: discographyOpen ? "1fr" : "0fr", opacity: discographyOpen ? 1 : 0 }}>
                 <div className="overflow-hidden">
-                    <div className="p-4 bg-[rgba(250,250,250,0.5)] border-b border-solid border-black">
+                    <div className="p-4 bg-[rgba(250,250,250,0.5)] border-b border-[#F0F0F0]">
                         {discography ? <DiscographyPanel albums={discography.albums} topTracks={discography.topTracks} playingUrl={playingUrl} onPlay={onPlay} onStop={onStop} albumTracksCache={albumTracksCache} onAlbumClick={onAlbumClick} expandedAlbum={expandedAlbum} bio={bio} /> : <div className="text-xs text-[#9CA3AF] py-2">Loading...</div>}
                     </div>
                 </div>
@@ -373,11 +373,11 @@ export default function ArtistDrawer({
     const primaryPreview = primaryDisco?.topTracks?.[0]?.preview || null;
 
     return (
-        <div className={className || "absolute top-0 right-0 bottom-0 w-full md:w-[480px] bg-[#e6e6e6] border-l border-solid border-black shadow-[inset_1px_0_0_0_black] z-50 flex flex-col transform transition-transform duration-300 ease-out"} style={className ? {} : { animation: "slideInRight 0.3s ease-out" }}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-dashed border-black">
+        <div className={className || "absolute top-0 right-0 bottom-0 w-full md:w-[480px] bg-white/95 backdrop-blur-xl border-l border-[#F0F0F0] shadow-[-20px_0_40px_rgba(0,0,0,0.06)] z-50 flex flex-col transform transition-transform duration-300 ease-out"} style={className ? {} : { animation: "slideInRight 0.3s ease-out" }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#F0F0F0/60]">
                 <div className="flex items-center gap-3">
                     {showCloseAsBack && (
-                        <button onClick={onClose} className="text-black hover:text-[#ff4500] transition-colors p-1 -ml-1">
+                        <button onClick={onClose} className="text-[#9CA3AF] hover:text-[#1D1D1F] transition-colors p-1 -ml-1">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
                     )}
@@ -402,7 +402,7 @@ export default function ArtistDrawer({
                     </div>
                 ) : (
                     <>
-                        <div className="px-6 py-6 border-b border-dashed border-black">
+                        <div className="px-6 py-6 border-b border-[#F0F0F0/60]">
                             <div className="flex items-start gap-4 mb-4">
                                 <ArtistAvatar name={artistName} image={artistInfo?.image} size={64} />
                                 <div className="flex-1 min-w-0">
@@ -428,7 +428,7 @@ export default function ArtistDrawer({
                                     </button>
                                 )}
                                 {artistInfo && (
-                                    <button onClick={() => handleToggleBookmark(artistInfo.deezerId?.toString() || artistName, artistName, artistInfo.image, artistInfo.genres)} disabled={bookmarkingIds.has(artistInfo.deezerId?.toString() || "primary")} className={`flex items-center justify-center border transition-all duration-150 rounded-sm cursor-pointer ${bookmarkedArtists.has(artistName) ? "border-[#FF4B4B] bg-[#FFF0F0] text-[#FF4B4B]" : "border-[#E5E5E5] bg-[#FAFAFA] text-black hover:text-[#ff4500]"}`} style={{ width: 42, height: 42 }}>
+                                    <button onClick={() => handleToggleBookmark(artistInfo.deezerId?.toString() || artistName, artistName, artistInfo.image, artistInfo.genres)} disabled={bookmarkingIds.has(artistInfo.deezerId?.toString() || "primary")} className={`flex items-center justify-center border transition-all duration-150 rounded-sm cursor-pointer ${bookmarkedArtists.has(artistName) ? "border-[#FF4B4B] bg-[#FFF0F0] text-[#FF4B4B]" : "border-[#E5E5E5] bg-[#FAFAFA] text-[#9CA3AF] hover:text-[#1D1D1F]"}`} style={{ width: 42, height: 42 }}>
                                         <Heart size={18} className={bookmarkedArtists.has(artistName) ? "fill-current" : ""} strokeWidth={bookmarkedArtists.has(artistName) ? 2.5 : 2} />
                                     </button>
                                 )}
@@ -438,7 +438,7 @@ export default function ArtistDrawer({
                         </div>
 
                         {primaryDisco?.albums && primaryDisco.albums.length > 0 && (
-                            <div className="border-b border-dashed border-black">
+                            <div className="border-b border-[#F0F0F0/60]">
                                 <button onClick={() => setPrimaryDiscoOpen(!primaryDiscoOpen)} className="w-full flex items-center justify-between px-6 py-4 text-xs font-semibold text-[#1D1D1F] hover:bg-[#F8F8FA] transition-colors">
                                     <span className="uppercase tracking-widest text-[#9CA3AF]">Discography & Top Tracks</span>
                                     <span>{primaryDiscoOpen ? "−" : "+"}</span>
@@ -451,7 +451,7 @@ export default function ArtistDrawer({
                             </div>
                         )}
 
-                        <div className="px-6 py-4 border-b border-dashed border-black">
+                        <div className="px-6 py-4 border-b border-[#F0F0F0/60]">
                             <h3 className="font-semibold text-xs tracking-widest uppercase text-[#9CA3AF]">Similar Artists</h3>
                         </div>
                         <div className="pb-8">

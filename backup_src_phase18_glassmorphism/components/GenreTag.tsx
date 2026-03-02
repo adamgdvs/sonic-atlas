@@ -18,18 +18,18 @@ export default function GenreTag({
   onPlayClick?: (genre: string) => void;
   isPlaying?: boolean;
 }) {
+  const color = getGenreColor(genre);
+
   const resolvedHref = href || `/genre/${encodeURIComponent(genre)}`;
 
   const style = {
-    padding: "2px 8px",
-    color: active || isPlaying ? "#FFF" : "black",
-    border: "1px solid black",
-    backgroundColor: active || isPlaying ? "#ff4500" : "white",
-    boxShadow: (active || isPlaying) ? "1px 1px 0 0 black" : "2px 2px 0 0 black",
+    padding: "4px 10px",
+    color: active || isPlaying ? "#FFF" : color,
+    border: `1px solid ${active || isPlaying ? color : `${color}33`}`,
+    backgroundColor: active || isPlaying ? color : `${color}0A`,
   };
 
-  const wrapperClass = `group inline-flex items-center text-xs font-mono mr-2 mb-2 transition-all duration-75 ${onClick || onPlayClick ? "hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_black]" : ""} ${active || isPlaying ? "translate-x-[1px] translate-y-[1px] shadow-[1px_1px_0_0_black]" : ""}`;
-
+  const wrapperClass = `group inline-flex items-center text-[11px] font-medium tracking-wide mr-2 mb-2 transition-all duration-150 rounded-full ${onClick || onPlayClick ? "hover:opacity-80" : ""}`;
 
   // If we have an onPlayClick handler, we split the button into a "play" text region and a "navigate" icon
   if (onPlayClick) {
@@ -47,7 +47,7 @@ export default function GenreTag({
         {resolvedHref && (
           <Link
             href={resolvedHref}
-            className="w-5 opacity-100 ml-1 pl-1 border-l border-current cursor-pointer no-underline flex items-center justify-center whitespace-nowrap hover:text-[#ff4500] transition-colors"
+            className="w-0 opacity-0 overflow-hidden transition-all duration-200 group-hover:w-5 group-hover:opacity-70 hover:!opacity-100 group-hover:ml-1 group-hover:pl-1 group-hover:border-l border-current cursor-pointer no-underline flex items-center justify-center whitespace-nowrap"
             title="Explore Genre"
           >
             →

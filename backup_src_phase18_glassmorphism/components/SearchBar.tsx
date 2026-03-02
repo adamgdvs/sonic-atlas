@@ -67,42 +67,40 @@ export default function SearchBar({
         }}
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 200)}
-        placeholder={compact ? "SEARCH ANOTHER ARTIST..." : "ARTIST NAME..."}
-        className="w-full outline-none text-black font-mono transition-none placeholder:text-gray-500 uppercase"
+        placeholder={compact ? "Search another artist..." : "Artist name..."}
+        className="w-full outline-none text-[#1D1D1F] font-[family-name:var(--font-dm-sans)] transition-[border-color] duration-150"
         style={{
           padding: compact ? "10px 16px" : "14px 20px",
           fontSize: compact ? "14px" : "16px",
-          fontWeight: 600,
-          border: "1px solid black",
-          backgroundColor: focused ? "white" : (compact ? "#e6e6e6" : "white"),
-          boxShadow: focused ? "2px 2px 0 0 black" : "inset 1px 1px 0 0 black",
+          fontWeight: 400,
+          border: focused ? "1px solid #1D1D1F" : "1px solid #E5E5E5",
+          backgroundColor: compact ? "#FAFAFA" : "#FFF",
+          letterSpacing: "-0.01em",
         }}
       />
       {focused && (results.length > 0 || loading) && (
-        <div className="absolute top-full left-0 right-0 bg-white border border-black border-t-0 z-10 shadow-[2px_2px_0_0_black]">
+        <div className="absolute top-full left-0 right-0 bg-white border border-[#E5E5E5] border-t-0 z-10">
           {loading && results.length === 0 && (
-            <div className="px-4 py-3 text-xs text-black font-mono">
-              SEARCHING...
+            <div className="px-4 py-3 text-xs text-[#9CA3AF]">
+              Searching...
             </div>
           )}
           {results.map((r, i) => (
             <div
               key={`${r.type}-${r.name}-${i}`}
               onClick={() => handleSelect(r)}
-              className="flex items-center gap-2.5 cursor-pointer hover:bg-black hover:text-white group border-b border-dashed border-black last:border-b-0"
+              className="flex items-center gap-2.5 cursor-pointer hover:bg-[#FAFAFA]"
               style={{ padding: "10px 16px", fontSize: "14px" }}
             >
               {r.type === "artist" ? (
-                <div className="border border-black bg-white shrink-0 group-hover:border-white">
-                  <ArtistInitials name={r.name} size={compact ? 24 : 28} />
-                </div>
+                <ArtistInitials name={r.name} size={compact ? 24 : 28} />
               ) : (
                 <div
-                  className="flex items-center justify-center border border-black shrink-0 group-hover:border-white"
+                  className="flex items-center justify-center rounded-full shrink-0"
                   style={{
                     width: compact ? 24 : 28,
                     height: compact ? 24 : 28,
-                    backgroundColor: "black",
+                    backgroundColor: "#1D1D1F",
                     color: "white"
                   }}
                 >
@@ -113,11 +111,11 @@ export default function SearchBar({
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <div className="font-bold text-black group-hover:text-[#ff4500] truncate uppercase font-mono tracking-tighter">
+                <div className="font-medium text-[#1D1D1F] truncate capitalize">
                   {r.name}
                 </div>
                 {!compact && (
-                  <div className="text-[11px] text-gray-500 group-hover:text-gray-300 truncate uppercase font-mono">
+                  <div className="text-[11px] text-[#9CA3AF] truncate capitalize">
                     {r.type}
                   </div>
                 )}

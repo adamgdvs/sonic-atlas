@@ -8,22 +8,21 @@ export default function Header() {
   const { data: session } = useSession();
 
   return (
-    <header className="border-b border-[#F0F0F0] h-14 flex items-center justify-between px-4 sm:px-10">
-      <Link href="/" className="flex items-center gap-2 no-underline">
-        <div className="w-2 h-2 bg-[#1D1D1F] rounded-full" />
+    <header className="border-b border-dashed border-black bg-[#e6e6e6] h-14 flex items-center justify-between px-4 sm:px-10 z-50 relative">
+      <Link href="/" className="flex items-center gap-2 no-underline group">
+        <div className="w-3 h-3 bg-[#ff4500] border border-black group-hover:bg-black transition-colors" />
         <span
-          className="text-[15px] font-bold text-[#1D1D1F]"
-          style={{ letterSpacing: "-0.03em" }}
+          className="text-[15px] font-bold text-black font-mono uppercase tracking-tighter"
         >
           sonic atlas
         </span>
       </Link>
-      <div className="flex items-center gap-4 sm:gap-6 text-[13px] text-[#9CA3AF]">
+      <div className="flex items-center gap-4 sm:gap-6 text-xs text-black font-mono uppercase font-bold">
         {session ? (
           <>
             <Link
               href="/my-atlas"
-              className="cursor-pointer font-medium text-[#1D1D1F] transition-colors no-underline"
+              className="cursor-pointer text-black hover:text-white hover:bg-black px-2 py-1 transition-colors no-underline"
             >
               My Atlas
             </Link>
@@ -31,28 +30,28 @@ export default function Header() {
         ) : (
           <Link
             href="/genres"
-            className="cursor-pointer hover:text-[#1D1D1F] transition-colors no-underline text-[#9CA3AF]"
+            className="cursor-pointer text-black hover:text-white hover:bg-black px-2 py-1 transition-colors no-underline"
           >
             Genres
           </Link>
         )}
 
-        <span className="cursor-pointer hover:text-[#1D1D1F] transition-colors hidden sm:inline">
+        <span className="cursor-pointer hover:text-white hover:bg-black px-2 py-1 transition-colors hidden sm:inline">
           About
         </span>
 
         {session ? (
-          <div className="flex items-center gap-3 border-l border-[#F0F0F0] pl-4 sm:pl-6">
-            <div className="w-6 h-6 rounded-full bg-[#E5E7EB] overflow-hidden">
+          <div className="flex items-center gap-3 border-l border-dashed border-black pl-4 sm:pl-6">
+            <div className="w-6 h-6 bg-white border border-black overflow-hidden relative">
               {session.user?.image ? (
-                <Image src={session.user.image} alt="User" width={24} height={24} />
+                <Image src={session.user.image} alt="User" fill className="object-cover grayscale-[100%]" style={{ imageRendering: "pixelated" }} />
               ) : (
-                <div className="w-full h-full bg-[#1D1D1F]" />
+                <div className="w-full h-full bg-black" />
               )}
             </div>
             <button
               onClick={() => signOut()}
-              className="hover:text-[#1D1D1F] transition-colors"
+              className="hover:text-[#ff4500] transition-colors"
             >
               Sign out
             </button>
@@ -60,7 +59,7 @@ export default function Header() {
         ) : (
           <button
             onClick={() => signIn()}
-            className="text-[#1D1D1F] font-bold hover:opacity-70 transition-opacity"
+            className="text-white bg-black px-3 py-1 hover:bg-[#ff4500] hover:text-white transition-colors border border-black"
           >
             Sign in
           </button>

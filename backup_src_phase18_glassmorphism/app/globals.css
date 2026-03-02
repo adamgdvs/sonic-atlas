@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #ffffff;
+  --color-foreground: #1D1D1F;
+  --color-muted: #9CA3AF;
+  --color-border: #E5E5E5;
+  --color-border-light: #F0F0F0;
+  --color-surface: #FAFAFA;
+  --font-sans: var(--font-dm-sans);
+  --font-mono: var(--font-dm-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), 'Helvetica Neue', sans-serif;
+}
+
+::selection {
+  background: #1D1D1F;
+  color: #FFF;
+}
+
+input::placeholder {
+  color: #C4C4C4;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

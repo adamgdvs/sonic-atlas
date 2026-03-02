@@ -1,33 +1,56 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #ffffff;
-  --color-foreground: #1D1D1F;
-  --color-muted: #9CA3AF;
-  --color-border: #E5E5E5;
-  --color-border-light: #F0F0F0;
-  --color-surface: #FAFAFA;
-  --font-sans: var(--font-dm-sans);
-  --font-mono: var(--font-dm-mono);
+  --color-retro-gray: #e6e6e6;
+  --color-retro-orange: #ff4500;
+  --color-retro-black: #000000;
+  --color-base-bg: #1e1e1e;
+  
+  --color-background: var(--color-retro-gray);
+  --color-foreground: #000000;
+  --font-sans: var(--font-roboto-mono);
+  --font-mono: var(--font-roboto-mono);
+  --font-retro: var(--font-vt323);
+  
+  --spacing-18: 4.5rem;
 }
 
 * {
   box-sizing: border-box;
+  border-radius: 0 !important;
 }
 
 body {
-  background: var(--color-background);
+  background-color: var(--color-background);
   color: var(--color-foreground);
-  font-family: var(--font-sans), 'Helvetica Neue', sans-serif;
+  font-family: var(--font-sans), 'Courier New', Courier, monospace;
+  -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: #1D1D1F;
+  background: var(--color-retro-orange);
   color: #FFF;
 }
 
 input::placeholder {
-  color: #C4C4C4;
+  color: #666;
+}
+
+/* Custom retro scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-retro-gray);
+  border-left: 1px solid black;
+}
+::-webkit-scrollbar-thumb {
+  background: black;
+  border: 2px solid var(--color-retro-gray);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-retro-orange);
 }
 
 @keyframes fadeSlideIn {

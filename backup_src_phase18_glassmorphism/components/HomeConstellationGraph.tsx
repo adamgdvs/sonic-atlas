@@ -165,9 +165,9 @@ export default function HomeConstellationGraph({
                     cx={node.x}
                     cy={node.y}
                     r={r}
-                    fill={isHl ? "#ff4500" : "white"}
-                    stroke="black"
-                    strokeWidth={isHl ? 2 * scale : 1 * scale}
+                    fill={isHl ? color : `${color}18`}
+                    stroke={color}
+                    strokeWidth={isHl ? 1.5 : 0.75}
                     style={{ transition: "all 0.2s ease" }}
                 />
                 <text
@@ -176,10 +176,9 @@ export default function HomeConstellationGraph({
                     textAnchor="middle"
                     dominantBaseline="central"
                     fontSize={6 * scale}
-                    fontFamily="var(--font-roboto-mono)"
                     fontWeight="600"
                     letterSpacing="0.02em"
-                    fill={isHl ? "white" : "black"}
+                    fill={isHl ? "#FFF" : color}
                     style={{ transition: "fill 0.2s ease", pointerEvents: "none" }}
                 >
                     {getInitials(node.name)}
@@ -191,9 +190,8 @@ export default function HomeConstellationGraph({
                             y={node.y + r + 10 * scale}
                             textAnchor="middle"
                             fontSize={7 * scale}
-                            fontFamily="var(--font-roboto-mono)"
                             fontWeight="600"
-                            fill="black"
+                            fill="#1D1D1F"
                             style={{ pointerEvents: "none" }}
                         >
                             {node.name}
@@ -204,9 +202,8 @@ export default function HomeConstellationGraph({
                                 y={node.y + r + 20 * scale}
                                 textAnchor="middle"
                                 fontSize={5 * scale}
-                                fontFamily="var(--font-roboto-mono)"
                                 fontWeight="400"
-                                fill="black"
+                                fill={color}
                                 style={{ pointerEvents: "none" }}
                             >
                                 {node.genres[0]}
@@ -229,7 +226,7 @@ export default function HomeConstellationGraph({
 
     return (
         <div
-            className="relative w-full h-full bg-[#e6e6e6] overflow-hidden"
+            className="relative w-full h-full bg-[#FAFAFA] overflow-hidden"
             onWheel={handleWheel}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -238,7 +235,7 @@ export default function HomeConstellationGraph({
             style={{
                 cursor: isPanning ? "grabbing" : "grab",
                 touchAction: "none",
-                border: "1px solid black"
+                border: "1px solid #F0F0F0"
             }}
         >
             <svg width="100%" height="100%" viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}>
@@ -263,9 +260,9 @@ export default function HomeConstellationGraph({
                                 y1={link.source.y}
                                 x2={link.target.x}
                                 y2={link.target.y}
-                                stroke="black"
+                                stroke="#E5E5E5"
                                 strokeWidth={Math.min(3, 1 + link.value * 0.5) * scale}
-                                strokeOpacity={hoveredId ? (link.source.id === hoveredId || link.target.id === hoveredId ? 1 : 0.05) : opacity}
+                                strokeOpacity={hoveredId ? (link.source.id === hoveredId || link.target.id === hoveredId ? 0.6 : 0.05) : opacity}
                                 style={{ transition: "stroke-opacity 0.2s ease" }}
                             />
                         );
@@ -285,7 +282,7 @@ export default function HomeConstellationGraph({
                         e.stopPropagation();
                         setZoom((z) => Math.max(0.4, z - 0.2));
                     }}
-                    className="w-8 h-8 bg-white border border-black flex items-center justify-center text-black shadow-[2px_2px_0_0_black] hover:bg-black hover:text-white transition-all cursor-pointer"
+                    className="w-8 h-8 rounded-full bg-white border border-[#E5E5E5] flex items-center justify-center text-[#6B7280] shadow-sm hover:text-[#1D1D1F] hover:border-[#1D1D1F] transition-all cursor-pointer"
                 >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
@@ -294,16 +291,16 @@ export default function HomeConstellationGraph({
                         e.stopPropagation();
                         handleReset();
                     }}
-                    className="px-3 h-8 bg-white border border-black flex items-center justify-center text-black font-mono shadow-[2px_2px_0_0_black] hover:bg-black hover:text-white transition-all cursor-pointer"
+                    className="px-3 h-8 rounded-full bg-white border border-[#E5E5E5] flex items-center justify-center text-[#6B7280] text-xs font-semibold shadow-sm hover:text-[#1D1D1F] hover:border-[#1D1D1F] transition-all cursor-pointer"
                 >
-                    RESET
+                    Reset
                 </button>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         setZoom((z) => Math.min(4, z + 0.2));
                     }}
-                    className="w-8 h-8 bg-white border border-black flex items-center justify-center text-black shadow-[2px_2px_0_0_black] hover:bg-black hover:text-white transition-all cursor-pointer"
+                    className="w-8 h-8 rounded-full bg-white border border-[#E5E5E5] flex items-center justify-center text-[#6B7280] shadow-sm hover:text-[#1D1D1F] hover:border-[#1D1D1F] transition-all cursor-pointer"
                 >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>

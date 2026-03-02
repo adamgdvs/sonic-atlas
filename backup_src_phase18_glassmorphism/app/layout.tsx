@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
-import { Roboto_Mono, VT323 } from "next/font/google";
+import { DM_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { GlobalProviders } from "@/providers/GlobalProviders";
 
-const robotoMono = Roboto_Mono({
-  variable: "--font-roboto-mono",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
-const vt323 = VT323({
-  variable: "--font-vt323",
+const dmMono = DM_Mono({
+  variable: "--font-dm-mono",
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${robotoMono.variable} ${vt323.variable} antialiased`}>
+      <body className={`${dmSans.variable} ${dmMono.variable} antialiased`}>
         <GlobalProviders>
           {children}
         </GlobalProviders>

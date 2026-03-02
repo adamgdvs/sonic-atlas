@@ -1,0 +1,141 @@
+"use client";
+
+import { useMemo } from "react";
+import { getGenreColor } from "@/lib/utils";
+import type { ConstellationNode } from "@/components/ConstellationGraph";
+
+interface WordCloudProps {
+  center: string;
+  centerGenres?: string[];
+  similar: ConstellationNode[];
+  highlightedId: string | null;
+  onHover: (id: string | null) => void;
+  onExplore: (name: string) => void;
+  size?: number;
+}
+
+interface PlacedWord {
+  id: string;
+  name: string;
+  genres: string[];
+  similarity: number;
+  x: number;
+  y: number;
+  fontSize: number;
+  rotate: number;
+}
+
+export default function WordCloud({ similar, highlightedId, onHover, onExplore, size = 320 }: WordCloudProps) {
+  const placed = useMemo(() => {
+    if (similar.length === 0) return [];
+
+    const sorted = [...similar].sort((a, b) => b.similarity - a.similarity);
+    const minFont = Math.max(8, size * 0.025);
+    const maxFont = size * 0.065;
+    const cx = size / 2;
+    const cy = size / 2;
+
+    const results: PlacedWord[] = [];
+    // Simple bounding-box collision detection
+    const boxes: { x: number; y: number; w: number; h: number }[] = [];
+
+    for (const node of sorted) {
+      const fontSize = minFont + (maxFont - minFont) * node.similarity;
+      const rotate = Math.random() < 0.15 ? (Math.random() - 0.5) * 20 : 0;
+      // Estimate text dimensions
+      const charWidth = fontSize * 0.6;
+      const wordW = node.name.length * charWidth;
+      const wordH = fontSize * 1.2;
+
+      let placed = false;
+      // Spiral placement
+      for (let step = 0; step < 300; step++) {
+        const angle = step * 0.5;
+        const radius = step * (size * 0.004);
+        const x = cx + Math.cos(angle) * radius;
+        const y = cy + Math.sin(angle) * radius;
+
+        // Check bounds
+        if (x - wordW / 2 < 0 || x + wordW / 2 > size || y - wordH / 2 < 0 || y + wordH / 2 > size) {
+          continue;
+        }
+
+        // Check collision with existing boxes
+        const box = { x: x - wordW / 2, y: y - wordH / 2, w: wordW, h: wordH };
+        let collision = false;
+        for (const b of boxes) {
+          if (
+            box.x < b.x + b.w &&
+            box.x + box.w > b.x &&
+            box.y < b.y + b.h &&
+            box.y + box.h > b.y
+          ) {
+            collision = true;
+            break;
+          }
+        }
+
+        if (!collision) {
+          results.push({ id: node.id, name: node.name, genres: node.genres, similarity: node.similarity, x, y, fontSize, rotate });
+          boxes.push(box);
+          placed = true;
+          break;
+        }
+      }
+
+      // If we couldn't place it, skip
+      if (!placed) continue;
+    }
+
+    return results;
+  }, [similar, size]);
+
+  return (
+    <div className="relative">
+      <svg width={size} height={size} className="block">
+        {placed.map((word) => {
+          const color = word.genres.length > 0 ? getGenreColor(word.genres[0]) : "#6B7280";
+          const isHl = highlightedId === word.id;
+
+          return (
+            <g
+              key={word.id}
+              onMouseEnter={() => onHover(word.id)}
+              onMouseLeave={() => onHover(null)}
+              onClick={(e) => { e.stopPropagation(); onExplore(word.name); }}
+              style={{ cursor: "pointer" }}
+            >
+              <text
+                x={word.x}
+                y={word.y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={word.fontSize}
+                fontWeight={isHl ? "700" : "600"}
+                fill={isHl ? "#1D1D1F" : color}
+                opacity={isHl ? 1 : 0.75}
+                transform={word.rotate !== 0 ? `rotate(${word.rotate}, ${word.x}, ${word.y})` : undefined}
+                style={{ transition: "all 0.15s ease" }}
+              >
+                {word.name}
+              </text>
+              {isHl && (
+                <text
+                  x={word.x}
+                  y={word.y + word.fontSize * 0.8}
+                  textAnchor="middle"
+                  fontSize={Math.max(8, word.fontSize * 0.5)}
+                  fill="#9CA3AF"
+                  style={{ pointerEvents: "none" }}
+                  fontFamily="var(--font-dm-mono), monospace"
+                >
+                  {Math.round(word.similarity * 100)}% match
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
