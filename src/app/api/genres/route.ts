@@ -5,10 +5,20 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "2000");
+    const total = genresData.genres.length;
+
+    // Evenly distribute the selection across the entire A-Z array
+    let selectedGenres = genresData.genres;
+    if (limit < total) {
+      const step = total / limit;
+      selectedGenres = [];
+      for (let i = 0; i < limit; i++) {
+        selectedGenres.push(genresData.genres[Math.floor(i * step)]);
+      }
+    }
 
     // Map to { name, count } format, generating a pseudo-random count for font sizing
-    const mappedGenres = genresData.genres
-      .slice(0, limit)
+    const mappedGenres = selectedGenres
       .map((name) => {
         // Simple hash to guarantee consistent sizes for the same genre
         let hash = 0;
