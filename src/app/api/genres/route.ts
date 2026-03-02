@@ -6,14 +6,15 @@ const LASTFM_API_KEY = process.env.LASTFM_API_KEY;
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "2000");
+    const limit = parseInt(searchParams.get("limit") || "1000");
+    const safeLimit = Math.min(limit, 1000); // Last.fm strict API max
 
     if (!LASTFM_API_KEY) {
       throw new Error("LASTFM_API_KEY is not configured");
     }
 
     const res = await fetch(
-      `http://ws.audioscrobbler.com/2.0/?method=chart.gettoptags&api_key=${LASTFM_API_KEY}&limit=${limit}&format=json`
+      `http://ws.audioscrobbler.com/2.0/?method=chart.gettoptags&api_key=${LASTFM_API_KEY}&limit=${safeLimit}&format=json`
     );
 
     if (!res.ok) {
