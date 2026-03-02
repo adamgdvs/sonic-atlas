@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import genresData from "@/data/genres.json";
 
 const LASTFM_API_KEY = process.env.LASTFM_API_KEY;
 const LASTFM_BASE_URL = 'https://ws.audioscrobbler.com/2.0/';
@@ -38,9 +39,15 @@ export async function GET(request: Request) {
         }
 
         // 2. Genre matches
-        // Allow users to force-search any string as a genre
-        const genreResults: { type: 'genre'; name: string }[] = [
-            { type: 'genre', name: q.toLowerCase() }
+        const qLower = q.toLowerCase();
+        const matchingGenres = genresData.genres
+            .filter(g => g.includes(qLower))
+            .map(g => ({ type: 'genre' as const, name: g }))
+            .slice(0, 3);
+
+        // Allow users to force-search any string as a genre if no matches found
+        const genreResults = matchingGenres.length > 0 ? matchingGenres : [
+            { type: 'genre', name: qLower }
         ];
 
         // Combine and limit
