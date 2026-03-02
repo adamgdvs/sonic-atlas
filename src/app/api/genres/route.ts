@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     }
 
     const res = await fetch(
-      `http://ws.audioscrobbler.com/2.0/?method=chart.gettoptags&api_key=${LASTFM_API_KEY}&format=json`
+      `http://ws.audioscrobbler.com/2.0/?method=chart.gettoptags&api_key=${LASTFM_API_KEY}&limit=${limit}&format=json`
     );
 
     if (!res.ok) {
