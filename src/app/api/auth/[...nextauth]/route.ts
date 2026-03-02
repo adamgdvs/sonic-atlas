@@ -67,7 +67,9 @@ export const authOptions: AuthOptions = {
             return session;
         },
     },
-    // Ensure NextAuth uses its built-in generic login page which is perfectly fine for now!
+    pages: {
+        signIn: "/login",
+    },
 };
 
 const handler = NextAuth(authOptions as any);
