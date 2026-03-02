@@ -15,6 +15,7 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [mode, setMode] = useState<"signin" | "signup">("signin");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -63,38 +64,45 @@ export default function LoginPage() {
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#1D1D1F] text-white mb-6 shadow-xl">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
                     </div>
-                    <h1 className="text-3xl font-bold text-[#1D1D1F] tracking-tight mb-2" style={{ letterSpacing: "-0.03em" }}>Sign in to Sonic Atlas</h1>
-                    <p className="text-[#6B7280] text-sm">Create an account instantly or log back in to access your personal exploration map.</p>
+                    <h1 className="text-3xl font-bold text-[#1D1D1F] tracking-tight mb-2" style={{ letterSpacing: "-0.03em" }}>
+                        {mode === "signin" ? "Sign in to Sonic Atlas" : "Create your Atlas"}
+                    </h1>
+                    <p className="text-[#6B7280] text-sm">
+                        {mode === "signin"
+                            ? "Log back in to access your personal exploration map."
+                            : "Create an account instantly to start your journey."}
+                    </p>
                 </div>
 
                 <div className="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#F0F0F0]">
                     <form onSubmit={handleSubmit} className="space-y-4 text-left">
                         <div>
-                            <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-2">Email</label>
+                            <label className="block text-[11px] font-bold text-[#86868B] uppercase tracking-widest mb-2 ml-1">Email</label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="explorer@sonicatlas.com"
                                 required
-                                className="w-full h-12 px-4 rounded-xl bg-[#FAFAFA] border border-[#E5E5E5] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full h-14 px-5 rounded-2xl bg-[#F5F5F7] border border-transparent text-[15px] font-medium text-[#1D1D1F] placeholder:text-[#A1A1A6] focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/30 transition-all shadow-[inset_0_1px_2px_rgb(0,0,0,0.02)]"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-2">Password</label>
+                            <label className="block text-[11px] font-bold text-[#86868B] uppercase tracking-widest mb-2 ml-1">Password</label>
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
                                 required
-                                className="w-full h-12 px-4 rounded-xl bg-[#FAFAFA] border border-[#E5E5E5] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="w-full h-14 px-5 rounded-2xl bg-[#F5F5F7] border border-transparent text-[15px] font-medium text-[#1D1D1F] placeholder:text-[#A1A1A6] focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/30 transition-all shadow-[inset_0_1px_2px_rgb(0,0,0,0.02)]"
                             />
                         </div>
 
                         {error && (
-                            <div className="p-3 rounded-lg bg-red-50 text-red-600 border border-red-100 text-xs font-medium">
+                            <div className="p-4 rounded-xl bg-red-50 text-red-600 border border-red-100 text-sm font-semibold flex items-center gap-2">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                                 {error}
                             </div>
                         )}
@@ -102,18 +110,36 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full h-12 mt-2 rounded-xl bg-[#1D1D1F] text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-black transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full h-14 mt-6 rounded-2xl bg-[#1D1D1F] text-white font-semibold text-[15px] flex items-center justify-center gap-2 hover:bg-black hover:shadow-[0_8px_20px_rgb(0,0,0,0.12)] transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:shadow-none shadow-[0_4px_14px_0_rgb(0,0,0,0.08)]"
                         >
                             {isLoading ? (
                                 <>
-                                    <Loader2 size={16} className="animate-spin" />
-                                    Authenticating...
+                                    <Loader2 size={18} className="animate-spin" />
+                                    {mode === "signin" ? "Authenticating..." : "Creating Account..."}
                                 </>
                             ) : (
-                                "Continue"
+                                mode === "signin" ? "Sign In" : "Create Account"
                             )}
                         </button>
                     </form>
+
+                    <div className="mt-8 text-center text-[13px] text-[#86868B] font-medium">
+                        {mode === "signin" ? (
+                            <>
+                                Don't have an account?{' '}
+                                <button type="button" onClick={() => { setMode("signup"); setError(""); }} className="text-[#1D1D1F] font-bold hover:underline">
+                                    Sign up now
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                Already have an account?{' '}
+                                <button type="button" onClick={() => { setMode("signin"); setError(""); }} className="text-[#1D1D1F] font-bold hover:underline">
+                                    Sign in instead
+                                </button>
+                            </>
+                        )}
+                    </div>
 
                 </div>
             </div>
