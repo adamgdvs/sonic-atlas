@@ -9,6 +9,7 @@ const allGenres = data.genres;
 const activeGenres = [];
 let errorCount = 0;
 let processed = 0;
+let removedCount = 0;
 
 // To avoid banning, 5 requests at a time, wait 100ms
 const BATCH_SIZE = 5;
@@ -31,10 +32,10 @@ function checkGenre(genre, retries = 3) {
                         } else {
                             resolve({ genre, active: false, error: true, msg: json.message });
                         }
-                    } else if (json.topartists && json.topartists.artist && json.topartists.artist.length > 0) {
+                    } else if (json.topartists && json.topartists['@attr'] && parseInt(json.topartists['@attr'].total, 10) >= 60) {
                         resolve({ genre, active: true });
                     } else {
-                        resolve({ genre, active: false });
+                        resolve({ genre, active: false, removed: true });
                     }
                 } catch (e) {
                     if (retries > 0) {
@@ -66,18 +67,21 @@ async function run() {
                 activeGenres.push(res.genre);
             } else if (res.error) {
                 errorCount++;
+            } else if (res.removed) {
+                removedCount++;
             }
         }
 
         processed += batch.length;
-        process.stdout.write(`\rProgress: ${processed} / ${allGenres.length} | Active: ${activeGenres.length} | Errors: ${errorCount}`);
+        process.stdout.write(`\rProgress: ${processed} / ${allGenres.length} | Active: ${activeGenres.length} | Removed (<60): ${removedCount} | Errors: ${errorCount}`);
 
         // throttle heavily to 50 requests per second max
         await new Promise(r => setTimeout(r, 100)); // 100ms per 5 reqs = 50 req/sec
     }
 
     console.log(`\n\nValidation complete.`);
-    console.log(`Valid Last.fm mapped genres: ${activeGenres.length}`);
+    console.log(`Valid Last.fm mapped genres (>60 artists): ${activeGenres.length}`);
+    console.log(`Removed (<60): ${removedCount}`);
     console.log(`API Dropouts/Errors: ${errorCount}`);
 
     if (activeGenres.length > 0) {
