@@ -107,10 +107,12 @@ function ArtistAvatar({
   name,
   image,
   size = 44,
+  className = "",
 }: {
   name: string;
   image?: string | null;
   size?: number;
+  className?: string;
 }) {
   if (image) {
     return (
@@ -119,13 +121,13 @@ function ArtistAvatar({
         alt={name}
         width={size}
         height={size}
-        className="object-cover shrink-0"
-        style={{ width: size, height: size }}
+        className={`object-cover shrink-0 ${className}`}
+        style={className ? {} : { width: size, height: size }}
         unoptimized
       />
     );
   }
-  return <ArtistInitials name={name} size={size} />;
+  return <div className={className}><ArtistInitials name={name} size={size} /></div>;
 }
 
 function GenreMap({
@@ -894,18 +896,18 @@ export default function ArtistPage({
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#888_1px,transparent_1px),linear-gradient(to_bottom,#888_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
-      <main className="relative z-10 p-5 md:p-10 max-w-[1400px] mx-auto">
+      <main className="relative z-10 p-4 sm:p-5 md:p-10 max-w-[1400px] mx-auto">
         {/* Hero Header section with high-contrast Shift5 Orange */}
-        <div className="mb-12 border border-white/10 bg-shift5-orange text-shift5-dark p-8 md:p-12 relative overflow-hidden group">
+        <div className="mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-5 py-10 md:p-12 relative overflow-hidden group">
           {/* Decorative Background Text (Shift5 vibe) */}
-          <div className="absolute top-0 right-0 text-[120px] font-bold text-shift5-dark/5 select-none leading-none pointer-events-none uppercase mr-[-20px] mt-[-20px]">
+          <div className="absolute top-0 right-0 text-[80px] sm:text-[120px] font-bold text-shift5-dark/5 select-none leading-none pointer-events-none uppercase mr-[-10px] sm:mr-[-20px] mt-[-10px] sm:mt-[-20px]">
             {artistName.slice(0, 3)}
           </div>
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-8">
-            <div className="flex items-start gap-8">
-              <div className="relative overflow-hidden border-2 border-shift5-dark p-1 bg-shift5-dark/10 backdrop-blur-sm -mt-6">
-                <ArtistAvatar name={artistName} image={artistInfo?.image} size={150} />
+            <div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-8">
+              <div className="relative overflow-hidden border-2 border-shift5-dark p-1 bg-shift5-dark/10 backdrop-blur-sm mt-0 md:-mt-6 shrink-0 w-[100px] h-[100px] md:w-[150px] md:h-[150px]">
+                <ArtistAvatar name={artistName} image={artistInfo?.image} size={150} className="w-full h-full" />
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
 
@@ -914,7 +916,7 @@ export default function ArtistPage({
                   <span className="text-[10px] font-mono text-shift5-dark uppercase tracking-[0.3em] font-bold bg-white/20 px-2 py-0.5">Active_Node // {artistInfo?.deezerId || 'IDENT_PENDING'}</span>
                   <StreamingLinks artistName={artistName} size={20} />
                 </div>
-                <h1 className="text-5xl md:text-7xl font-bold uppercase tracking-tighter leading-none mb-4 selection:bg-shift5-dark selection:text-white">
+                <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold uppercase tracking-tighter leading-none mb-4 selection:bg-shift5-dark selection:text-white break-words">
                   {artistName}
                 </h1>
                 <div className="flex flex-wrap gap-2 mt-4">
@@ -923,7 +925,7 @@ export default function ArtistPage({
                   ))}
                 </div>
 
-                <div className="mt-8 space-y-4 max-w-2xl border-l-2 border-shift5-dark/10 pl-6">
+                <div className="mt-8 space-y-4 max-w-2xl border-l-2 border-shift5-dark/10 pl-4 sm:pl-6">
                   <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold">Operational_Bio</div>
                   <p className="text-[12px] font-mono text-shift5-dark/80 leading-relaxed uppercase tracking-tight font-medium">
                     {truncateBio(artistInfo?.bio || "")}
@@ -1032,7 +1034,7 @@ export default function ArtistPage({
               </div>
             </div>
 
-            <div className="flex flex-col items-end gap-6 h-full justify-between pb-4">
+            <div className="flex flex-row md:flex-col items-center md:items-end gap-3 sm:gap-6 h-full justify-between pb-4 w-full md:w-auto">
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => {
@@ -1041,7 +1043,7 @@ export default function ArtistPage({
                       playingUrl === top.preview ? handleStop() : handlePlay(top.preview, top.title);
                     }
                   }}
-                  className={`flex items-center gap-3 px-8 py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'bg-white/10 border-shift5-dark/40 hover:border-shift5-dark hover:bg-white/20 text-shift5-dark'}`}
+                  className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'bg-white/10 border-shift5-dark/40 hover:border-shift5-dark hover:bg-white/20 text-shift5-dark'}`}
                 >
                   {playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? (
                     <>
@@ -1058,14 +1060,14 @@ export default function ArtistPage({
 
                 <button
                   onClick={() => handleToggleBookmark(artistInfo?.deezerId?.toString() || artistName, artistName, artistInfo?.image, artistInfo?.genres)}
-                  className={`flex items-center gap-3 px-8 py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${bookmarkedArtists.has(artistName) ? 'bg-shift5-dark border-shift5-dark text-white' : 'border-shift5-dark/30 hover:border-shift5-dark text-shift5-dark/70 hover:text-shift5-dark'}`}
+                  className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${bookmarkedArtists.has(artistName) ? 'bg-shift5-dark border-shift5-dark text-white' : 'border-shift5-dark/30 hover:border-shift5-dark text-shift5-dark/70 hover:text-shift5-dark'}`}
                 >
                   <Heart size={16} className={bookmarkedArtists.has(artistName) ? 'fill-current' : ''} />
                   {bookmarkedArtists.has(artistName) ? 'SAVED_NODE' : 'SAVE_NODE'}
                 </button>
               </div>
 
-              <div className="flex flex-col items-end gap-1 opacity-60">
+              <div className="hidden sm:flex flex-col items-end gap-1 opacity-60">
                 <span className="text-[9px] font-mono text-shift5-dark uppercase tracking-widest font-bold">Sys_Confidence</span>
                 <span className="text-[12px] font-mono text-shift5-dark uppercase tracking-widest flex items-center gap-2 font-bold">
                   <span className="w-2 h-2 rounded-full bg-shift5-dark animate-pulse" />
