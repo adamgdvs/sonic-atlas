@@ -36,6 +36,7 @@ import { Heart } from "lucide-react";
 import StreamingLinks from "@/components/StreamingLinks";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { useJourney } from "@/contexts/JourneyContext";
+import CollapsibleBio from "@/components/CollapsibleBio";
 
 // ─── Sub-components ──────────────────────────────────────────────
 
@@ -196,9 +197,9 @@ function DiscographyPanel({
     <div>
       {/* Bio snippet */}
       {bio && (
-        <p className="text-[11px] font-mono text-white/40 leading-relaxed mb-8 uppercase tracking-tight border-l border-shift5-orange/20 pl-4">
-          {truncateBio(bio)}
-        </p>
+        <div className="mb-8 border-l border-shift5-orange/20 pl-4">
+          <CollapsibleBio bio={bio} maxLen={200} theme="dark" />
+        </div>
       )}
 
       {/* Top tracks - Hidden in focused mode */}
@@ -927,9 +928,11 @@ export default function ArtistPage({
 
                 <div className="mt-8 space-y-4 max-w-2xl border-l-2 border-shift5-dark/10 pl-4 sm:pl-6">
                   <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold">Operational_Bio</div>
-                  <p className="text-[12px] font-mono text-shift5-dark/80 leading-relaxed uppercase tracking-tight font-medium">
-                    {truncateBio(artistInfo?.bio || "")}
-                  </p>
+                  <CollapsibleBio
+                    bio={artistInfo?.bio || ""}
+                    maxLen={260}
+                    theme="hero"
+                  />
 
                   <div className="pt-6">
                     <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold mb-4">Signal_Discography // Select_To_Expand</div>

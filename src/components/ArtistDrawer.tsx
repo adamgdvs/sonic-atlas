@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/Skeleton";
 import { useSession, signIn } from "next-auth/react";
 import { Heart, X } from "lucide-react";
 import StreamingLinks from "@/components/StreamingLinks";
+import CollapsibleBio from "@/components/CollapsibleBio";
 
 // ─── Shared Sub-components (Copied from ArtistPage for isolation) ───
 
@@ -66,7 +67,9 @@ function DiscographyPanel({
             {bio && (
                 <div className="mb-6">
                     <div className="text-[9px] font-mono text-white/20 uppercase mb-2">Operational_Bio</div>
-                    <p className="text-[11px] font-mono text-white/40 leading-relaxed uppercase tracking-tight border-l border-shift5-orange/20 pl-4">{truncateBio(bio)}</p>
+                    <div className="border-l border-shift5-orange/20 pl-4">
+                        <CollapsibleBio bio={bio} maxLen={200} theme="dark" />
+                    </div>
                 </div>
             )}
             {topTracks.length > 0 && !isFocused && (
@@ -475,7 +478,7 @@ export default function ArtistDrawer({
                             {artistInfo?.bio && (
                                 <div className="mt-8">
                                     <div className="text-[9px] font-mono text-white/20 uppercase mb-2">Subject_Context</div>
-                                    <p className="text-[11px] font-mono text-white/40 leading-relaxed uppercase tracking-tight">{truncateBio(artistInfo.bio, 260)}</p>
+                                    <CollapsibleBio bio={artistInfo.bio} maxLen={240} theme="dark" />
                                 </div>
                             )}
                         </div>
