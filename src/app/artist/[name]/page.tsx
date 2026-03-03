@@ -176,18 +176,20 @@ function DiscographyPanel({
   onAlbumClick,
   expandedAlbum,
   bio,
+  genres = [],
   isFocused = false,
   onResetFocus,
 }: {
   albums: Album[];
   topTracks: PreviewTrack[];
   playingUrl: string | null;
-  onPlay: (url: string, title?: string) => void;
+  onPlay: (url: string, title?: string, artist?: string, coverUrl?: string | null, genres?: string[]) => void;
   onStop: () => void;
   albumTracksCache: Record<number, AlbumTrack[]>;
   onAlbumClick: (albumId: number) => void;
   expandedAlbum: number | null;
   bio?: string;
+  genres?: string[];
   isFocused?: boolean;
   onResetFocus?: () => void;
 }) {
@@ -220,7 +222,7 @@ function DiscographyPanel({
                   key={t.id}
                   className="flex items-center gap-4 py-3 px-3 hover:bg-white/5 transition-colors cursor-pointer group"
                   onClick={() =>
-                    isPlaying ? onStop() : onPlay(t.preview, t.title)
+                    isPlaying ? onStop() : onPlay(t.preview, t.title, undefined, undefined, genres)
                   }
                 >
                   <span
@@ -340,7 +342,7 @@ function DiscographyPanel({
                                 className="flex items-center gap-4 py-2 hover:bg-white/5 transition-colors cursor-pointer group/track"
                                 onClick={() => {
                                   if (t.preview) {
-                                    isPlaying ? onStop() : onPlay(t.preview, t.title);
+                                    isPlaying ? onStop() : onPlay(t.preview, t.title, undefined, undefined, genres);
                                   }
                                 }}
                               >
@@ -394,7 +396,7 @@ function SimilarCard({
   discographyOpen,
   onToggleDiscography,
   playingUrl,
-  bio,
+  info,
   albumTracksCache,
   onAlbumClick,
   expandedAlbum,
@@ -409,14 +411,14 @@ function SimilarCard({
   onHover: (id: string | null) => void;
   previewUrl?: string;
   isPlaying: boolean;
-  onPlay: (url: string, title?: string, artist?: string, image?: string | null) => void;
+  onPlay: (url: string, title?: string, artist?: string, image?: string | null, genres?: string[]) => void;
   onStop: () => void;
   onGenreClick: (genre: string) => void;
   discography: Discography | null;
   discographyOpen: boolean;
   onToggleDiscography: (name: string) => void;
   playingUrl: string | null;
-  bio?: string;
+  info?: ArtistInfo | null;
   albumTracksCache: Record<number, AlbumTrack[]>;
   onAlbumClick: (albumId: number) => void;
   expandedAlbum: number | null;
@@ -475,6 +477,7 @@ function SimilarCard({
               <div className="flex items-center gap-3">
                 <span className="text-[9px] font-mono text-white/30 uppercase tracking-[0.2em] hidden sm:inline font-bold">Confidence_Level:</span>
                 <SimilarityBar value={artist.match} />
+                <span className="text-[9px] font-mono text-shift5-orange font-bold">{(artist.match * 100).toFixed(0)}%</span>
               </div>
             </div>
             {artist.genres.length > 0 && (
@@ -489,7 +492,7 @@ function SimilarCard({
         <div className="flex gap-2 items-center sm:items-start sm:pt-1 ml-[68px] sm:ml-0">
           {previewUrl && (
             <button
-              onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, "Preview", artist.name, artist.image))}
+              onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, "Preview", artist.name, artist.image, info?.genres))}
               className={`flex items-center justify-center border cursor-pointer transition-all duration-300 shrink-0 ${isPlaying
                 ? "border-shift5-orange bg-shift5-orange text-white"
                 : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white hover:border-white/30"
@@ -559,25 +562,43 @@ function SimilarCard({
         }}
       >
         <div className="overflow-hidden">
-          <div className="px-5 py-8 bg-white/[0.01] border-b border-white/5">
-            {discography ? (
-              <DiscographyPanel
-                albums={discography.albums}
-                topTracks={discography.topTracks}
-                playingUrl={playingUrl}
-                onPlay={onPlay}
-                onStop={onStop}
-                albumTracksCache={albumTracksCache}
-                onAlbumClick={onAlbumClick}
-                expandedAlbum={expandedAlbum}
-                bio={bio}
-              />
-            ) : (
-              <div className="text-[10px] font-mono text-shift5-orange/40 py-8 text-center animate-pulse uppercase">
-                Synchronizing_Discography_Data...
+          {info && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 p-4 bg-white/[0.03] border border-white/5 font-mono text-[10px] uppercase tracking-widest">
+              <div className="space-y-1">
+                <div className="text-white/20">Signal_Origin</div>
+                <div className="text-white truncate">{info.location || "NULL_SECTOR"}</div>
               </div>
-            )}
-          </div>
+              <div className="space-y-1 border-l border-white/5 pl-4">
+                <div className="text-white/20">Established</div>
+                <div className="text-white">{info.yearStarted || "NULL_TIME"}</div>
+              </div>
+              <div className="space-y-1 sm:border-l border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0 pl-0 sm:pl-4">
+                <div className="text-white/20">Artifact_Count</div>
+                <div className="text-white">{info.nbAlbums || 0} Records</div>
+              </div>
+              <div className="space-y-1 border-l border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0 pl-4">
+                <div className="text-white/20">Match_Confidence</div>
+                <div className="text-shift5-orange">{(artist.match * 100).toFixed(0)}% (MATCH)</div>
+              </div>
+            </div>
+          )}
+          {discography ? (
+            <DiscographyPanel
+              albums={discography.albums}
+              topTracks={discography.topTracks}
+              playingUrl={playingUrl}
+              onPlay={onPlay}
+              onStop={onStop}
+              albumTracksCache={albumTracksCache}
+              onAlbumClick={onAlbumClick}
+              expandedAlbum={expandedAlbum}
+              bio={info?.bio}
+            />
+          ) : (
+            <div className="text-[10px] font-mono text-shift5-orange/40 py-8 text-center animate-pulse uppercase">
+              Synchronizing_Discography_Data...
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -820,16 +841,18 @@ export default function ArtistPage({
     }
   };
 
-  const handlePlay = (url: string, title?: string, artist?: string, coverUrl?: string | null) => {
+  const handlePlay = (url: string, title?: string, artist?: string, coverUrl?: string | null, genres?: string[]) => {
     if (currentTrack?.url === url) {
       togglePlayPause();
       return;
     }
+    const targetArtist = artist || artistName;
     playTrack({
       url,
       title: title || "Top Track",
-      artist: artist || artistName,
-      coverUrl: coverUrl || artistInfo?.image || null
+      artist: targetArtist,
+      coverUrl: coverUrl || artistInfo?.image || null,
+      genres: genres && genres.length > 0 ? genres : (targetArtist === artistName ? artistInfo?.genres : [])
     });
   };
 
@@ -920,10 +943,30 @@ export default function ArtistPage({
                 <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold uppercase tracking-tighter leading-none mb-4 selection:bg-shift5-dark selection:text-white break-words">
                   {artistName}
                 </h1>
-                <div className="flex flex-wrap gap-2 mt-4">
+                <div className="flex flex-wrap gap-2 mt-4 mb-8">
                   {artistInfo?.genres.map(g => (
                     <GenreTag key={g} genre={g} onClick={handleGenreClick} active={genreFilter === g} />
                   ))}
+                </div>
+
+                {/* Metadata Scans Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 p-4 bg-shift5-dark/5 border border-shift5-dark/10 font-mono text-[10px] uppercase tracking-widest text-shift5-dark w-fit">
+                  <div className="space-y-1">
+                    <div className="text-shift5-dark/40">Signal_Origin</div>
+                    <div className="font-bold truncate max-w-[120px]">{artistInfo?.location || "NULL_SECTOR"}</div>
+                  </div>
+                  <div className="space-y-1 border-l border-shift5-dark/10 pl-4">
+                    <div className="text-shift5-dark/40">Established</div>
+                    <div className="font-bold">{artistInfo?.yearStarted || "NULL_TIME"}</div>
+                  </div>
+                  <div className="space-y-1 sm:border-l border-t sm:border-t-0 border-shift5-dark/10 pt-3 sm:pt-0 pl-0 sm:pl-4">
+                    <div className="text-shift5-dark/40">Artifact_Count</div>
+                    <div className="font-bold">{artistInfo?.nbAlbums || 0} Records</div>
+                  </div>
+                  <div className="space-y-1 border-l border-t sm:border-t-0 border-shift5-dark/10 pt-3 sm:pt-0 pl-4">
+                    <div className="text-shift5-dark/40">Match_Confidence</div>
+                    <div className="font-bold">100% (PRIMARY)</div>
+                  </div>
                 </div>
 
                 <div className="mt-8 space-y-4 max-w-2xl border-l-2 border-shift5-dark/10 pl-4 sm:pl-6">
@@ -1022,8 +1065,14 @@ export default function ArtistPage({
                                 albumTracksCache={albumTracksCache}
                                 onAlbumClick={handleAlbumClickPrimary}
                                 expandedAlbum={expandedAlbumPrimary}
+                                bio={artistInfo?.bio}
+                                genres={artistInfo?.genres}
                                 isFocused={isDiscoFocused}
-                                onResetFocus={() => setIsDiscoFocused(false)}
+                                onResetFocus={() => {
+                                  setIsDiscoFocused(false);
+                                  setExpandedAlbumPrimary(null);
+                                  setPrimaryDiscoOpen(false);
+                                }}
                               />
                             </div>
                           ) : (
@@ -1124,7 +1173,7 @@ export default function ArtistPage({
                     discographyOpen={openDisco === a.name}
                     onToggleDiscography={handleToggleDisco}
                     playingUrl={playingUrl}
-                    bio={infoCache[a.name]?.bio}
+                    info={infoCache[a.name]}
                     albumTracksCache={albumTracksCache}
                     onAlbumClick={handleAlbumClick}
                     expandedAlbum={expandedAlbum}

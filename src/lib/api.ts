@@ -34,6 +34,8 @@ export interface ArtistInfo {
   deezerId: number | null;
   nbAlbums: number;
   nbFans: number;
+  location?: string | null;
+  yearStarted?: string | null;
 }
 
 export interface Album {

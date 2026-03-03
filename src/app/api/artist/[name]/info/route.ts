@@ -32,16 +32,30 @@ export async function GET(
     // --- Phase 9: Genre Classification Engine ---
     const genres = parseGenres(tags, 1);
 
+    // --- Extract Metadata Scans ---
+    const bioText = lastfm?.bio || "";
+    const yearMatch = bioText.match(/\b(19|20)\d{2}\b/);
+    const yearStarted = yearMatch ? yearMatch[0] : null;
+
+    // Simple location extraction (very rough, usually follows "from " or "formed in ")
+    let location = null;
+    const fromMatch = bioText.match(/from ([\w\s,]+)\./);
+    const formedMatch = bioText.match(/formed in ([\w\s,]+)\./i);
+    if (fromMatch) location = fromMatch[1].trim();
+    else if (formedMatch) location = formedMatch[1].trim();
+
     return NextResponse.json({
       name: lastfm?.name || artistName,
       image: deezer?.picture_big || deezer?.picture_medium || lastfm?.image || null,
       listeners: lastfm?.listeners || 0,
       playcount: lastfm?.playcount || 0,
-      bio: lastfm?.bio || "",
+      bio: bioText,
       genres,
       deezerId: deezer?.id || null,
       nbAlbums: deezer?.nb_album || 0,
       nbFans: deezer?.nb_fan || 0,
+      location,
+      yearStarted,
     });
   } catch (error) {
     console.error("Artist info error:", error);

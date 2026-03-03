@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useAudio } from "@/contexts/AudioContext";
 import { getSimilarArtists, getArtistPreviewData } from "@/lib/api";
-import { Play, Pause, X, Radio } from "lucide-react";
-import { motion } from "framer-motion";
+import { Play, Pause, X, Radio, Zap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { getGenreArtists } from "@/lib/api";
 
 export default function GlobalPlayer() {
     const {
@@ -21,7 +22,52 @@ export default function GlobalPlayer() {
     } = useAudio();
 
     const [loadingNext, setLoadingNext] = useState(false);
+    const [isSurging, setIsSurging] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const handleSurge = async () => {
+        if (!currentTrack?.genres || currentTrack.genres.length === 0) {
+            setError("NO_SECTOR_DATA_AVAILABLE");
+            return;
+        }
+
+        setIsSurging(true);
+        setError(null);
+
+        try {
+            // Pick a random genre from current track
+            const randomGenre = currentTrack.genres[Math.floor(Math.random() * currentTrack.genres.length)];
+            const artists = await getGenreArtists(randomGenre, 20);
+
+            if (artists.length === 0) {
+                setError("SECTOR_EMPTY");
+                return;
+            }
+
+            // Pick a random artist from that genre
+            const randomArtist = artists[Math.floor(Math.random() * artists.length)];
+            const previewData = await getArtistPreviewData(randomArtist.name);
+            const trackWithPreview = previewData.tracks.find(t => t.preview);
+
+            if (trackWithPreview) {
+                playTrack({
+                    id: randomGenre,
+                    url: trackWithPreview.preview,
+                    title: trackWithPreview.title,
+                    artist: randomArtist.name,
+                    coverUrl: previewData.image || undefined,
+                    genres: [randomGenre] // Pass the genre for the next surge
+                });
+            } else {
+                setError("SIGNAL_LOST");
+            }
+        } catch (e) {
+            console.error(e);
+            setError("SURGE_FAILURE");
+        } finally {
+            setIsSurging(false);
+        }
+    };
 
     // Radio Mode Engine
     useEffect(() => {
@@ -159,7 +205,16 @@ export default function GlobalPlayer() {
                 </div>
 
                 {/* Controls */}
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                    <button
+                        onClick={handleSurge}
+                        disabled={isSurging}
+                        className={`p-1.5 rounded-full transition-all duration-300 ${isSurging ? 'bg-shift5-orange text-white animate-pulse' : 'text-[#C4C4C4] hover:text-shift5-orange hover:bg-shift5-orange/10'}`}
+                        title="Surge Relay (New artist in same genre)"
+                    >
+                        <Zap size={16} fill={isSurging ? "currentColor" : "none"} className={isSurging ? "animate-bounce" : ""} />
+                    </button>
+
                     <button
                         onClick={() => setRadioMode(!radioMode)}
                         className={`p-1.5 rounded-full transition-colors ${radioMode ? 'bg-[#1D1D1F] text-white' : 'text-[#C4C4C4] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]'}`}

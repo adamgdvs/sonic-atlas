@@ -210,6 +210,7 @@ function SimilarCard({
                             <span onClick={() => onExplore(artist.name)} className="text-[13px] font-bold text-white uppercase tracking-tight cursor-pointer hover:text-shift5-orange transition-colors truncate">{artist.name}</span>
                             <StreamingLinks artistName={artist.name} size={16} />
                             <SimilarityBar value={artist.match} />
+                            <span className="text-[9px] font-mono text-shift5-orange font-bold">{(artist.match * 100).toFixed(0)}%</span>
                         </div>
                         {artist.genres.length > 0 && (
                             <div className="flex flex-wrap gap-1">
@@ -379,7 +380,13 @@ export default function ArtistDrawer({
 
     const handlePlay = (url: string, title?: string, artist?: string, coverUrl?: string | null) => {
         if (currentTrack?.url === url) { togglePlayPause(); return; }
-        playTrack({ url, title: title || "Top Track", artist: artist || artistName, coverUrl: coverUrl || artistInfo?.image || null });
+        playTrack({
+            url,
+            title: title || "Top Track",
+            artist: artist || artistName,
+            coverUrl: coverUrl || artistInfo?.image || null,
+            genres: artistInfo?.genres || []
+        });
     };
 
     const handleToggleDisco = async (name: string) => {
@@ -458,6 +465,26 @@ export default function ArtistDrawer({
                                     <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest">
                                         {artistInfo?.listeners ? `Artifact_Density // ${(artistInfo.listeners / 1000).toFixed(0)}K` : "SCANNING_DENSITY..."}
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Metadata Scans Grid */}
+                            <div className="grid grid-cols-2 gap-4 mb-8 p-4 bg-white/[0.02] border border-white/5 font-mono text-[10px] uppercase tracking-widest">
+                                <div className="space-y-1">
+                                    <div className="text-white/20">Signal_Origin</div>
+                                    <div className="text-white truncate">{artistInfo?.location || "NULL_SECTOR"}</div>
+                                </div>
+                                <div className="space-y-1 border-l border-white/5 pl-4">
+                                    <div className="text-white/20">Established</div>
+                                    <div className="text-white">{artistInfo?.yearStarted || "NULL_TIME"}</div>
+                                </div>
+                                <div className="space-y-1 border-t border-white/5 pt-3">
+                                    <div className="text-white/20">Artifact_Count</div>
+                                    <div className="text-white">{artistInfo?.nbAlbums || 0} Records</div>
+                                </div>
+                                <div className="space-y-1 border-t border-l border-white/5 pt-3 pl-4">
+                                    <div className="text-white/20">Match_Confidence</div>
+                                    <div className="text-shift5-orange">100% (PRIMARY)</div>
                                 </div>
                             </div>
 

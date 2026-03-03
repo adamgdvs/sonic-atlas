@@ -7,6 +7,7 @@ export interface TrackParams {
     title: string;
     artist: string;
     coverUrl?: string | null;
+    genres?: string[];
     id?: string;
 }
 

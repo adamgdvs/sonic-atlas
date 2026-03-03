@@ -48,6 +48,7 @@ export default function Home() {
         title: trackWithPreview.title,
         artist: randomArtist.name,
         coverUrl: previewData.image || undefined,
+        genres: [genreName],
       });
     } catch (e) {
       console.error(e);
