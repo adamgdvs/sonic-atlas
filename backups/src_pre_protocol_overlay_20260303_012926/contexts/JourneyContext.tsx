@@ -11,25 +11,21 @@ export interface JourneyNode {
 
 interface JourneyContextType {
     path: JourneyNode[];
-    history: JourneyNode[];
     pushNode: (node: JourneyNode) => void;
     clearJourney: () => void;
 }
 
 const JourneyContext = createContext<JourneyContextType>({
     path: [],
-    history: [],
     pushNode: () => { },
     clearJourney: () => { },
 });
 
 export function JourneyProvider({ children }: { children: React.ReactNode }) {
     const [path, setPath] = useState<JourneyNode[]>([]);
-    const [history, setHistory] = useState<JourneyNode[]>([]);
     const pathname = usePathname();
 
-    // Reset journey path when explicitly returning to home or My Atlas
-    // But keep history for the session "Path Log"
+    // Reset journey when explicitly returning to home or My Atlas
     useEffect(() => {
         if (pathname === "/" || pathname === "/my-atlas") {
             setPath([]);
@@ -37,30 +33,25 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
     }, [pathname]);
 
     const pushNode = (node: JourneyNode) => {
-        // Update breadcrumb path (with truncation logic)
         setPath((prev) => {
+            // If we are pushing the same node we are already on, do nothing
             if (prev.length > 0 && prev[prev.length - 1].url === node.url) return prev;
+
+            // If we are navigating *back* to a node already in the path, truncate the path to that node
             const existingIndex = prev.findIndex((n) => n.url === node.url);
             if (existingIndex !== -1) {
                 return prev.slice(0, existingIndex + 1);
             }
-            return [...prev, node].slice(-8);
-        });
 
-        // Update full session history (Path Log)
-        setHistory((prev) => {
-            if (prev.length > 0 && prev[prev.length - 1].url === node.url) return prev;
-            return [...prev, node].slice(-50); // Keep last 50 for the log
+            // Otherwise append up to a limit
+            return [...prev, node].slice(-8); // Keep max 8 to prevent infinite wrapping
         });
     };
 
-    const clearJourney = () => {
-        setPath([]);
-        setHistory([]);
-    };
+    const clearJourney = () => setPath([]);
 
     return (
-        <JourneyContext.Provider value={{ path, history, pushNode, clearJourney }}>
+        <JourneyContext.Provider value={{ path, pushNode, clearJourney }}>
             {children}
         </JourneyContext.Provider>
     );

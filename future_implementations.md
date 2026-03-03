@@ -23,4 +23,28 @@ Right now, the Global Audio Player plays a 30-second snippet and stops.
 
 ## 5. Temporal Filtering (The "Time Machine")
 Right now we filter by Sound, Genre, and Audience.
-* **Decade/Era Pills:** Add filters for "1980s", "1990s", "2010s", etc. You could search for a modern Synth-Pop artist, hit the "1980s" filter, and the graph immediately re-orients to show only their legacy influences from that era.
+## 6. Global Intelligence & Live Feeds
+To make the platform feel like a living, breathing ecosystem:
+*   **The Global Frequency Hub:** A dedicated page showing a real-time "Signal Ticker" of what the global community is currently discovering (e.g., `SIGNAL_DETECTED: [USER] scanned [ARTIST]`).
+*   **Acoustic Intelligence (Mood Filtering):** Implement advanced metadata filtering for "Energy," "Danceability," and "Valence" (happiness/sadness) to scan only for "High-Energy" or "Ambient/Focus" neighbors.
+
+## 7. Advanced Discovery Pages
+Expanding the surface area of the platform:
+*   **"Deep Scan" Search Explorer:** A specialized explorer for complex queries, using technical data tables to allow for multi-variable filtering (e.g., "90s Grunge with High BPM").
+*   **Album Intel (Deep Dive):** Dedicated album nodes and pages featuring instrumentation data, production credits, and granular "Similar Album" constellations.
+*   **Operational Methodology (Labs):** A transparent "About" page that visualizes the "Hidden Layers" of our similarity engine and recommendation algorithm.
+
+## 8. Professional Utility Features
+Features designed for the "Power Listener":
+*   **Keyboard Operation (Command Palette):** A `Cmd+K` palette for technical users to run commands like `/search [artist]`, `/play`, or `/bookmark` without leaving the keyboard.
+*   **Data Export (Crate Digging):** Allow users to export their "My Atlas" manifests or specific constellations as technical JSON/CSV files or direct integration with **Discogs**.
+*   **Concert Tour Signal:** Integrate live data (Songkick/Bandsintown) to pulse an artist's node on the graph if a "Live Signal" (Tour) is currently active.
+*   **Constellation Pulse:** Add dynamic background grid lines that warp or blip based on the density of the graph or the BPM of the active audio frequency.
+
+## 9. The "Protocol Overlay" (Modular Command Center)
+Replacing standard navigation with a high-contrast, technical menu inspired by `shift5.io`. This single overlay acts as the **Operator's Command Center**, integrating four distinct modules:
+
+*   **Vibe Controller (Discovery Settings):** Real-time sliders for "Discovery Depth" (Stable vs. Chaotic) and "Filter Persistence."
+*   **The Path Log (Session History):** A technical, scrollsable manifest of every artist/node scanned in the current session (e.g., `SCAN_01 -> SCAN_02`).
+*   **System Diagnostics (Account & Sync):** Live status indicators for Spotify/Apple Music encryption and session data integrity.
+*   **Experimental Labs:** Toggles for tactical high-contrast themes (Neon Cyan / Toxic Green) and reactive background visualizers.

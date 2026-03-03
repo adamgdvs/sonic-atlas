@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-shift5-gray: #1a1a1a;
+  --color-shift5-orange: #ff5841;
+  --color-shift5-accent: #444444;
+  --color-shift5-dark: #0d0d0d;
+  --color-shift5-light: #dcdcdc;
+  /* For the 'light' sections seen on shift5.io */
+
+  --color-background: var(--color-shift5-dark);
+  --color-foreground: #ffffff;
+  --font-sans: var(--font-roboto-mono);
+  /* Primarily mono for technical feel */
+  --font-mono: var(--font-roboto-mono);
+  --font-retro: var(--font-vt323);
+
+  --spacing-18: 4.5rem;
+}
+
+* {
+  box-sizing: border-box;
+  border-radius: 0 !important;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), 'Roboto Mono', monospace;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-shift5-orange);
+  color: #FFF;
+}
+
+input::placeholder {
+  color: #666;
+}
+
+/* Technical operational scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-shift5-dark);
+  border-left: 1px solid var(--color-shift5-accent);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-shift5-accent);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-shift5-orange);
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
