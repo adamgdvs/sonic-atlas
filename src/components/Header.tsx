@@ -77,6 +77,10 @@ export default function Header() {
             ABOUT
           </Link>
 
+          <Link href="/help" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 hidden sm:inline text-nowrap">
+            HELP
+          </Link>
+
           {session ? (
             <div className="flex items-center gap-4 border-l-2 border-shift5-accent pl-6">
               <div className="w-8 h-8 border-2 border-white/20 overflow-hidden relative group/avatar">
