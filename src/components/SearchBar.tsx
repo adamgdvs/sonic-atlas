@@ -74,7 +74,7 @@ export default function SearchBar({
         }}
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 200)}
-        placeholder={headerMode ? "SCAN_ID..." : (compact ? "NEXT_RECON..." : "SIG_IDENT_INPUT...")}
+        placeholder={headerMode ? "SEARCH" : (compact ? "SEARCH" : "SEARCH_NEXUS...")}
         className={`w-full outline-none text-white font-mono transition-all duration-300 placeholder:text-white/20 uppercase tracking-wider ${headerMode ? 'border-b border-white/10 focus:border-shift5-orange' : 'border'}`}
         style={{
           padding: headerMode ? "8px 12px" : (compact ? "12px 16px" : "16px 20px"),
