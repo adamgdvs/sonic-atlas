@@ -153,7 +153,7 @@ export default function GenreDrawer({
     };
 
     return (
-        <div className={className || "absolute top-0 right-0 bottom-0 w-full md:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col transform transition-transform duration-300 ease-out"} style={className ? {} : { animation: "slideInRight 0.3s ease-out" }}>
+        <div className={className || "fixed inset-y-0 right-0 w-full sm:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col transform transition-transform duration-300 ease-out"} style={className ? {} : { animation: "slideInRight 0.3s ease-out" }}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-shift5-dark/95 backdrop-blur-md z-10">
                 <div className="flex items-center gap-3">
                     {showCloseAsBack && (
@@ -166,11 +166,11 @@ export default function GenreDrawer({
             </div>
 
             <div className="flex-1 overflow-y-auto">
-                <div className="px-6 py-8 border-b border-white/5 bg-white/[0.01]">
+                <div className="px-4 sm:px-6 py-6 sm:py-8 border-b border-white/5 bg-white/[0.01]">
                     <div className="flex items-center gap-3 mb-4">
                         <span className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em] bg-shift5-orange/10 px-2 py-0.5 border border-shift5-orange/20">Category_Filter</span>
                     </div>
-                    <h2 className="text-3xl font-bold text-white mb-2 leading-none tracking-tighter uppercase truncate">{genreName}</h2>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 leading-none tracking-tighter uppercase truncate">{genreName}</h2>
                     <p className="text-[10px] font-mono text-white/20 uppercase tracking-widest leading-loose">
                         Intercepting artifacts associated with this sonic signature category.
                     </p>

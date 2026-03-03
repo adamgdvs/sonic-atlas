@@ -12,7 +12,7 @@ export default function Header() {
       <Link href="/" className="flex items-center gap-3 no-underline group">
         <div className="w-4 h-4 bg-shift5-orange border-2 border-white/20 group-hover:scale-125 transition-all duration-300 shadow-[0_0_10px_rgba(255,88,65,0.4)]" />
         <span
-          className="text-[16px] font-black text-white font-mono uppercase tracking-[0.2em] group-hover:text-shift5-orange transition-colors"
+          className="text-[14px] sm:text-[16px] font-black text-white font-mono uppercase tracking-[0.2em] group-hover:text-shift5-orange transition-colors truncate"
         >
           sonic_//_atlas
         </span>

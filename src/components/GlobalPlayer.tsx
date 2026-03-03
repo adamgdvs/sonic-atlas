@@ -93,10 +93,10 @@ export default function GlobalPlayer() {
 
     return (
         <div
-            className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300 pointer-events-auto"
+            className="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 lg:bottom-10 lg:right-10 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300 pointer-events-auto"
             style={{ animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" }}
         >
-            <div className="bg-white/90 backdrop-blur-xl border border-[#F0F0F0] shadow-[0_12px_48px_rgba(0,0,0,0.12)] rounded-3xl p-3 flex items-center gap-4 w-[340px] relative overflow-hidden group">
+            <div className="bg-white/90 backdrop-blur-xl border border-[#F0F0F0] shadow-[0_12px_48px_rgba(0,0,0,0.12)] rounded-3xl p-3 flex items-center gap-3 sm:gap-4 w-full sm:w-[340px] relative overflow-hidden group">
 
                 {/* Progress Bar Background */}
                 <div className="absolute top-0 left-0 w-full h-[3px] bg-[#F8F8FA]">

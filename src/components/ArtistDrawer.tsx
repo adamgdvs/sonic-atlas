@@ -407,7 +407,7 @@ export default function ArtistDrawer({
     const primaryPreview = primaryDisco?.topTracks?.[0]?.preview || null;
 
     return (
-        <div className={className || "absolute top-0 right-0 bottom-0 w-full md:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col transform transition-transform duration-300 ease-out"} style={className ? {} : { animation: "slideInRight 0.3s ease-out" }}>
+        <div className={className || "fixed inset-y-0 right-0 w-full sm:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col transform transition-transform duration-300 ease-out"} style={className ? {} : { animation: "slideInRight 0.3s ease-out" }}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-shift5-dark/95 backdrop-blur-md z-10">
                 <div className="flex items-center gap-3">
                     {showCloseAsBack && (
@@ -439,13 +439,13 @@ export default function ArtistDrawer({
                     </div>
                 ) : (
                     <>
-                        <div className="px-6 py-8 border-b border-white/5 bg-white/[0.01]">
-                            <div className="flex items-start gap-5 mb-6">
+                        <div className="px-4 sm:px-6 py-6 sm:py-8 border-b border-white/5 bg-white/[0.01]">
+                            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5 mb-6">
                                 <ArtistAvatar name={artistName} image={artistInfo?.image} size={64} />
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <h2 className="text-2xl font-bold text-white leading-none tracking-tighter uppercase truncate">{artistName}</h2>
-                                        <StreamingLinks artistName={artistName} size={20} className="mt-0.5" />
+                                        <h2 className="text-xl sm:text-2xl font-bold text-white leading-none tracking-tighter uppercase truncate">{artistName}</h2>
+                                        <StreamingLinks artistName={artistName} size={18} className="mt-0.5" />
                                     </div>
                                     {artistInfo && (
                                         <div className="mb-3 flex flex-wrap gap-1">
@@ -482,7 +482,7 @@ export default function ArtistDrawer({
 
                         {primaryDisco?.albums && primaryDisco.albums.length > 0 && (
                             <div className="border-b border-white/5 pt-8">
-                                <div className="px-6 mb-4">
+                                <div className="px-4 sm:px-6 mb-4">
                                     <div className="text-[9px] font-mono text-white/20 tracking-[0.2em] uppercase mb-4">Core_Artifacts // Metadata</div>
 
                                     {/* Horizontal Scroll Discography */}
