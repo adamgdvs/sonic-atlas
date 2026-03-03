@@ -18,8 +18,30 @@ export default function ProtocolOverlay({ isOpen, onClose }: ProtocolOverlayProp
 
     // Mock settings for now
     const [chaos, setChaos] = useState(40);
+    const [searchVector, setSearchVector] = useState<"NORMAL" | "DEEP">("NORMAL");
     const [persistence, setPersistence] = useState(true);
     const [highContrast, setHighContrast] = useState(false);
+
+    const handleExport = () => {
+        const manifest = {
+            timestamp: new Date().toISOString(),
+            session_id: Math.random().toString(36).substring(7).toUpperCase(),
+            nodes_logged: history.length,
+            path: history.map((h, i) => ({
+                step: i + 1,
+                name: h.name,
+                type: h.type,
+                resource_url: h.url
+            }))
+        };
+        const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `SONIC_MANIFEST_${new Date().getTime()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
 
     // Close on Escape
     useEffect(() => {
@@ -91,7 +113,7 @@ export default function ProtocolOverlay({ isOpen, onClose }: ProtocolOverlayProp
                         </div>
 
                         {/* Bottom Content / Details */}
-                        <div className="px-8 py-6 border-t border-black/5 bg-black/[0.03] min-h-[100px] flex flex-col justify-center">
+                        <div className="px-8 py-6 border-t border-black/5 bg-black/[0.03] min-h-[140px] flex flex-col justify-center">
                             <AnimatePresence mode="wait">
                                 {activeTab === "VIBE" && (
                                     <motion.div
@@ -99,20 +121,31 @@ export default function ProtocolOverlay({ isOpen, onClose }: ProtocolOverlayProp
                                         initial={{ opacity: 0, x: 5 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -5 }}
-                                        className="space-y-3"
+                                        className="space-y-4"
                                     >
-                                        <div className="flex justify-between items-end">
-                                            <span className="text-[9px] font-mono font-bold text-shift5-dark/40 uppercase tracking-widest">Signal_Chaos</span>
-                                            <span className="text-lg font-black text-shift5-dark">{chaos}%</span>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-[9px] font-mono font-bold text-shift5-dark/40 uppercase tracking-widest">Signal_Chaos</span>
+                                                <span className="text-lg font-black text-shift5-dark">{chaos}%</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="100"
+                                                value={chaos}
+                                                onChange={(e) => setChaos(parseInt(e.target.value))}
+                                                className="w-full accent-shift5-orange bg-black/10 h-1 appearance-none cursor-pointer"
+                                            />
                                         </div>
-                                        <input
-                                            type="range"
-                                            min="0"
-                                            max="100"
-                                            value={chaos}
-                                            onChange={(e) => setChaos(parseInt(e.target.value))}
-                                            className="w-full accent-shift5-orange bg-black/10 h-1 appearance-none cursor-pointer"
-                                        />
+                                        <div className="flex items-center justify-between pt-1">
+                                            <span className="text-[9px] font-mono font-bold text-shift5-dark/40 uppercase tracking-widest">Search_Vector</span>
+                                            <button
+                                                onClick={() => setSearchVector(v => v === "NORMAL" ? "DEEP" : "NORMAL")}
+                                                className="text-[9px] font-mono font-bold uppercase tracking-widest px-2.5 py-1 border-2 border-shift5-dark/10 text-shift5-dark hover:border-shift5-orange transition-colors"
+                                            >
+                                                {searchVector}
+                                            </button>
+                                        </div>
                                     </motion.div>
                                 )}
 
@@ -122,17 +155,26 @@ export default function ProtocolOverlay({ isOpen, onClose }: ProtocolOverlayProp
                                         initial={{ opacity: 0, x: 5 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -5 }}
-                                        className="space-y-3"
+                                        className="space-y-4"
                                     >
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-[9px] font-mono font-bold text-shift5-dark/40 uppercase tracking-widest">Active_Nodes</span>
-                                            <span className="text-lg font-black text-shift5-dark">{history.length}</span>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[9px] font-mono font-bold text-shift5-dark/40 uppercase tracking-widest">Active_Nodes</span>
+                                                <span className="text-lg font-black text-shift5-dark">{history.length}</span>
+                                            </div>
+                                            <div className="flex gap-1 h-1 bg-black/5 rounded-full overflow-hidden">
+                                                {Array.from({ length: Math.min(history.length, 20) }).map((_, i) => (
+                                                    <div key={i} className="flex-1 bg-shift5-orange/40 shadow-[0_0_8px_rgba(255,88,65,0.2)]" />
+                                                ))}
+                                            </div>
                                         </div>
-                                        <div className="flex gap-1 h-1 bg-black/5 rounded-full overflow-hidden">
-                                            {Array.from({ length: Math.min(history.length, 20) }).map((_, i) => (
-                                                <div key={i} className="flex-1 bg-shift5-orange/40 shadow-[0_0_8px_rgba(255,88,65,0.2)]" />
-                                            ))}
-                                        </div>
+                                        <button
+                                            onClick={handleExport}
+                                            className="w-full py-2 bg-shift5-dark text-white text-[9px] font-mono font-bold uppercase tracking-widest hover:bg-shift5-orange transition-colors flex items-center justify-center gap-2 group"
+                                        >
+                                            <Zap size={10} className="group-hover:animate-pulse" />
+                                            DEPLOY_MANIFEST
+                                        </button>
                                     </motion.div>
                                 )}
 
