@@ -15,6 +15,8 @@ import GenreTag from "@/components/GenreTag";
 import ArtistInitials from "@/components/ArtistInitials";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { useJourney } from "@/contexts/JourneyContext";
+import { useAudio } from "@/contexts/AudioContext";
+import Footer from "@/components/Footer";
 
 export default function GenreDetailPage({
   params,
@@ -39,266 +41,238 @@ export default function GenreDetailPage({
   const [loading, setLoading] = useState(true);
 
   // Audio state
-  const [playingUrl, setPlayingUrl] = useState<string | null>(null);
-  const [previewMap, setPreviewMap] = useState<Record<string, string>>({});
+  const { playTrack, currentTrack, isPlaying } = useAudio();
   const [imageMap, setImageMap] = useState<Record<string, string>>({});
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    setArtists([]);
-    setSimilarGenres([]);
-    setPreviewMap({});
-    setImageMap({});
-    handleStop();
-
-    Promise.all([
-      getGenreArtists(genreName),
-      getSimilarGenres(genreName),
-    ])
-      .then(([artistsData, similarData]) => {
-        setArtists(artistsData);
-        setSimilarGenres(similarData);
-      })
-      .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [genreName]);
-
-  // Fetch preview URLs in batches once artists load
   useEffect(() => {
     if (artists.length === 0) return;
-
     let cancelled = false;
 
-    async function fetchPreviews() {
-      // Fetch in batches of 3 with delay to respect Deezer rate limits
-      // Each preview call triggers 2 Deezer requests (search + top tracks)
-      for (let i = 0; i < artists.length; i += 3) {
+    async function fetchMissingImages() {
+      // Find artists with no images (now that Last.fm placeholders are null)
+      const missing = artists.filter(a => !a.image && !imageMap[a.name]);
+      if (missing.length === 0) return;
+
+      // Process in small batches to respect rate limits
+      for (let i = 0; i < missing.length; i += 3) {
         if (cancelled) return;
-        if (i > 0) await new Promise((r) => setTimeout(r, 800));
+        const batch = missing.slice(i, i + 3);
+
+        if (i > 0) await new Promise(r => setTimeout(r, 1000));
         if (cancelled) return;
-        const batch = artists.slice(i, i + 3);
+
         const results = await Promise.allSettled(
           batch.map(async (a) => {
             const data = await getArtistPreviewData(a.name);
-            return { name: a.name, url: data.tracks[0]?.preview || null, image: data.image };
+            return { name: a.name, image: data.image };
           })
         );
         if (cancelled) return;
 
-        const newPreviews: Record<string, string> = {};
-        const newImages: Record<string, string> = {};
-        let hasUpdates = false;
-
+        const updates: Record<string, string> = {};
+        let count = 0;
         for (const r of results) {
-          if (r.status === "fulfilled") {
-            if (r.value.url) newPreviews[r.value.name] = r.value.url;
-            if (r.value.image) newImages[r.value.name] = r.value.image;
-            hasUpdates = true;
+          if (r.status === "fulfilled" && r.value.image) {
+            updates[r.value.name] = r.value.image;
+            count++;
           }
         }
-
-        if (hasUpdates) {
-          setPreviewMap((prev) => ({ ...prev, ...newPreviews }));
-          setImageMap((prev) => ({ ...prev, ...newImages }));
+        if (count > 0) {
+          setImageMap(prev => ({ ...prev, ...updates }));
         }
       }
     }
 
-    fetchPreviews();
+    fetchMissingImages();
     return () => { cancelled = true; };
-  }, [artists]);
+  }, [artists]); // Run whenever artists list changes
 
-  // Cleanup audio on unmount / genre change
   useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [artistsData, similarData] = await Promise.all([
+          getGenreArtists(genreName),
+          getSimilarGenres(genreName)
+        ]);
+        setArtists(artistsData);
+        setSimilarGenres(similarData.slice(0, 10));
+      } catch (err) {
+        console.error("Error fetching genre data:", err);
+      } finally {
+        setLoading(false);
       }
     };
+    fetchData();
   }, [genreName]);
 
   const handleExplore = (name: string) => {
     router.push(`/artist/${encodeURIComponent(name)}`);
   };
 
-  const handlePlay = (url: string) => {
-    if (playingUrl === url) {
-      handleStop();
+  const handlePlayArtist = async (name: string, previewUrl?: string, artistImage?: string | null) => {
+    if (isPlaying && currentTrack?.artist === name) {
+      playTrack(currentTrack);
       return;
     }
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    const audio = new Audio(url);
-    audio.onended = () => setPlayingUrl(null);
-    audio.onerror = () => setPlayingUrl(null);
-    audio.play();
-    audioRef.current = audio;
-    setPlayingUrl(url);
-  };
 
-  const handleStop = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
+    if (previewUrl) {
+      playTrack({
+        id: name,
+        url: previewUrl,
+        title: "Track Preview",
+        artist: name,
+        coverUrl: artistImage || undefined
+      });
+    } else {
+      const data = await getArtistPreviewData(name);
+      const track = data.tracks[0];
+      if (track) {
+        playTrack({
+          id: name,
+          url: track.preview,
+          title: track.title,
+          artist: name,
+          coverUrl: data.image || undefined
+        });
+      }
     }
-    setPlayingUrl(null);
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-shift5-dark text-white selection:bg-shift5-orange/30">
       <Header />
       <Breadcrumbs />
 
-      {/* Search bar */}
-      <div className="flex items-center gap-3 border-b border-[#F0F0F0] px-4 sm:px-10 py-4">
-        <button
-          onClick={() => router.push("/genres")}
-          className="border-none bg-none cursor-pointer text-lg text-[#9CA3AF] p-1 hover:text-[#1D1D1F] transition-colors"
-        >
-          ←
-        </button>
-        <div className="flex-1 max-w-[360px]">
-          <SearchBar
-            onSelectArtist={handleExplore}
-            onSelectGenre={(name) => router.push(`/genre/${encodeURIComponent(name)}`)}
-            compact
-          />
-        </div>
+      {/* Background Decorative Grid */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.02] overflow-hidden z-0">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#888_1px,transparent_1px),linear-gradient(to_bottom,#888_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
-      <div
-        className="max-w-[1600px] mx-auto px-4 sm:px-10 py-6 sm:py-8"
-        style={{ animation: "fadeIn 0.3s ease" }}
-      >
-        {/* Header */}
-        <div className="mb-6">
-          <h1
-            className="text-2xl sm:text-3xl font-semibold text-[#1D1D1F] mb-1"
-            style={{ letterSpacing: "-0.03em" }}
-          >
-            {genreName}
-          </h1>
-          {!loading && (
-            <p className="text-sm text-[#9CA3AF]">
-              {artists.length} top artists
-            </p>
-          )}
+      <main className="relative z-10 p-5 md:p-10 max-w-[1400px] mx-auto">
+        <div className="mb-12 border-b border-white/5 pb-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mt-6">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em] bg-shift5-orange/10 px-2 py-0.5 border border-shift5-orange/20">Genre_Signal</span>
+                <span className="text-[10px] font-mono text-white/20 uppercase tracking-widest whitespace-nowrap">Status: ACTIVATED</span>
+              </div>
+              <h1 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter leading-none">{genreName}</h1>
+              {!loading && (
+                <div className="text-[10px] font-mono text-white/40 uppercase tracking-[0.1em] mt-4 flex items-center gap-4">
+                  <span>Total_Artifacts // {artists.length.toString().padStart(2, '0')}</span>
+                  <span className="text-white/10">|</span>
+                  <span>Signal_Confidence // 98%</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 max-w-[360px] w-full">
+              <SearchBar
+                onSelectArtist={handleExplore}
+                onSelectGenre={(name) => router.push(`/genre/${encodeURIComponent(name)}`)}
+                compact
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Related genres */}
-        {similarGenres.length > 0 && (
-          <div className="mb-8">
-            <div
-              className="text-[11px] font-semibold text-[#9CA3AF] uppercase mb-3"
-              style={{ letterSpacing: "0.08em" }}
-            >
-              Related Genres
-            </div>
-            <div className="flex flex-wrap gap-0.5 overflow-x-auto">
-              {similarGenres.map((g) => (
-                <GenreTag
-                  key={g.name}
-                  genre={g.name}
-                  href={`/genre/${encodeURIComponent(g.name)}`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* Main Content Column */}
+          <div className="lg:col-span-9">
+            {loading ? (
+              <div className="py-20 text-center">
+                <div className="inline-block w-8 h-8 border-2 border-shift5-orange/20 border-t-shift5-orange rounded-full animate-spin mb-4" />
+                <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest">Recon_In_Progress...</div>
+              </div>
+            ) : artists.length === 0 ? (
+              <div className="py-20 text-center border border-dashed border-white/10">
+                <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest">Zero_Matches_Found</div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                {artists.map((a, i) => {
+                  const isCurrentPlaying = isPlaying && currentTrack?.artist === a.name;
+                  return (
+                    <div
+                      key={a.name}
+                      className="group relative border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] transition-all duration-300 overflow-hidden"
+                      style={{ animation: `fadeIn 0.5s ease ${i * 0.05}s both` }}
+                      onClick={() => handleExplore(a.name)}
+                    >
+                      <div className="relative aspect-square overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700">
+                        {(imageMap[a.name] || a.image) ? (
+                          <Image
+                            src={imageMap[a.name] || a.image || ""}
+                            alt={a.name}
+                            width={300}
+                            height={300}
+                            className="object-cover w-full h-full scale-105 group-hover:scale-100 transition-transform duration-700"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-white/[0.02]">
+                            <ArtistInitials name={a.name} size={64} />
+                          </div>
+                        )}
 
-        {/* Artists grid */}
-        {loading ? (
-          <div className="text-sm text-[#9CA3AF] py-12 text-center">
-            Loading artists...
-          </div>
-        ) : artists.length === 0 ? (
-          <div className="text-sm text-[#9CA3AF] py-12 text-center">
-            No artists found for this genre
-          </div>
-        ) : (
-          <div>
-            <div
-              className="text-[11px] font-semibold text-[#9CA3AF] uppercase mb-4"
-              style={{ letterSpacing: "0.08em" }}
-            >
-              Top Artists
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-              {artists.map((a, i) => {
-                const preview = previewMap[a.name];
-                const isPlaying = !!preview && playingUrl === preview;
+                        <div className="absolute inset-0 bg-shift5-dark/20 group-hover:bg-transparent transition-colors" />
 
-                return (
-                  <div
-                    key={a.name}
-                    className="border border-[#F0F0F0] bg-white hover:border-[#E5E5E5] transition-all duration-150 p-3 sm:p-4 cursor-pointer group"
-                    style={{
-                      animation: `fadeSlideIn 0.3s ease ${i * 0.02}s both`,
-                    }}
-                    onClick={() => handleExplore(a.name)}
-                  >
-                    <div className="relative w-full aspect-square bg-[#F0F0F0] mb-3 overflow-hidden">
-                      {imageMap[a.name] || a.image ? (
-                        <Image
-                          src={imageMap[a.name] || a.image || ""}
-                          alt={a.name}
-                          width={200}
-                          height={200}
-                          className="object-cover w-full h-full"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ArtistInitials name={a.name} size={64} />
-                        </div>
-                      )}
-                      {/* Play button overlay */}
-                      {preview && (
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            isPlaying ? handleStop() : handlePlay(preview);
-                          }}
-                          className={`absolute bottom-2 right-2 flex items-center justify-center border cursor-pointer transition-all duration-150 ${isPlaying
-                            ? "border-white bg-[#1D1D1F] text-white opacity-100"
-                            : "border-white/60 bg-[#1D1D1F]/70 text-white opacity-0 group-hover:opacity-100"
-                            }`}
-                          style={{ width: 32, height: 32, backdropFilter: "blur(4px)" }}
-                          title={isPlaying ? "Stop" : "Play preview"}
+                          onClick={(e) => { e.stopPropagation(); handlePlayArtist(a.name, undefined, a.image); }}
+                          className={`absolute bottom-3 right-3 w-10 h-10 flex items-center justify-center border transition-all duration-300 backdrop-blur-md ${isCurrentPlaying ? 'bg-shift5-orange border-shift5-orange text-white' : 'bg-shift5-dark/80 border-white/10 text-white opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:bg-shift5-orange hover:border-shift5-orange'}`}
                         >
-                          {isPlaying ? (
-                            <svg width={10} height={10} viewBox="0 0 12 12" fill="currentColor">
+                          {isCurrentPlaying ? (
+                            <svg width={14} height={14} viewBox="0 0 12 12" fill="currentColor">
                               <rect x="1" y="1" width="4" height="10" />
                               <rect x="7" y="1" width="4" height="10" />
                             </svg>
                           ) : (
-                            <svg width={10} height={10} viewBox="0 0 12 12" fill="currentColor">
+                            <svg width={14} height={14} viewBox="0 0 12 12" fill="currentColor">
                               <polygon points="2,0 12,6 2,12" />
                             </svg>
                           )}
                         </button>
-                      )}
+                      </div>
+
+                      <div className="p-4 border-t border-white/5">
+                        <div className="text-[9px] font-mono text-white/20 uppercase tracking-widest mb-1">Identified_Node</div>
+                        <h3 className="text-sm font-bold uppercase tracking-tight truncate group-hover:text-shift5-orange transition-colors">{a.name}</h3>
+                      </div>
                     </div>
-                    <p
-                      className="text-sm font-semibold text-[#1D1D1F] truncate group-hover:underline"
-                      title={a.name}
-                    >
-                      {a.name}
-                    </p>
-                    <p className="text-[11px] text-[#9CA3AF] mt-0.5">
-                      Explore →
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+
+          {/* Sidebar Column */}
+          <aside className="lg:col-span-3 space-y-10">
+            {similarGenres.length > 0 && (
+              <section className="border border-white/5 p-6 bg-white/[0.01]">
+                <div className="text-[10px] font-mono text-white/30 uppercase mb-6 tracking-[0.2em] border-b border-white/5 pb-2">Proximal_Signals</div>
+                <div className="space-y-2">
+                  {similarGenres.map((g) => (
+                    <div key={g.name} className="group flex items-center justify-between p-2 border border-white/5 hover:border-white/20 transition-all cursor-pointer" onClick={() => router.push(`/genre/${encodeURIComponent(g.name)}`)}>
+                      <span className="text-[11px] font-mono text-white/50 uppercase group-hover:text-white transition-colors">{g.name}</span>
+                      <span className="text-[10px] text-white/10 group-hover:text-shift5-orange">→</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <div className="border border-dashed border-white/5 p-6 animate-pulse hover:animate-none group">
+              <div className="text-[9px] font-mono text-shift5-orange/40 uppercase mb-2">Sector_Analysis</div>
+              <div className="text-[10px] font-mono text-white/10 group-hover:text-white/30 transition-colors uppercase leading-tight">
+                Displaying primary cluster nodes for {genreName}. Spatial distribution reflects frequency within sonic metadata headers.
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      <Footer />
     </div>
   );
 }

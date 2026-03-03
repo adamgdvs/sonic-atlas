@@ -35,7 +35,7 @@ import StreamingLinks from "@/components/StreamingLinks";
 // --- Internal Reused Components ---
 function ArtistAvatar({ name, image, size = 44 }: { name: string; image?: string | null; size?: number }) {
     if (image) {
-        return <Image src={image} alt={name} width={size} height={size} className="object-cover shrink-0 border border-black grayscale-[100%]" style={{ width: size, height: size, imageRendering: "pixelated" }} unoptimized />;
+        return <Image src={image} alt={name} width={size} height={size} className="object-cover shrink-0 border border-white/10 grayscale group-hover:grayscale-0 transition-all duration-500" style={{ width: size, height: size }} unoptimized />;
     }
     return <ArtistInitials name={name} size={size} />;
 }
@@ -47,12 +47,14 @@ export default function GenreDrawer({
     onClose,
     showCloseAsBack = false,
     onSelectArtist,
+    onBookmarksChange,
     className
 }: {
     genreName: string;
     onClose: () => void;
     showCloseAsBack?: boolean;
     onSelectArtist: (name: string) => void;
+    onBookmarksChange?: () => void;
     className?: string;
 }) {
     const { data: session } = useSession();
@@ -119,7 +121,7 @@ export default function GenreDrawer({
     }, [artists]);
 
     const handleToggleBookmark = async (id: string, name: string, img?: string | null, genres?: string[]) => {
-        if (!session?.user) { signIn(); return; }
+        if (!session?.user) { signIn(undefined, { callbackUrl: "/my-atlas" }); return; }
         setBookmarkingIds((prev) => new Set(prev).add(id));
         const isCurrentlyBookmarked = bookmarkedArtists.has(name);
         try {
@@ -134,6 +136,7 @@ export default function GenreDrawer({
                     isCurrentlyBookmarked ? next.delete(name) : next.add(name);
                     return next;
                 });
+                if (onBookmarksChange) onBookmarksChange();
             }
         } finally {
             setBookmarkingIds((prev) => {
@@ -150,35 +153,37 @@ export default function GenreDrawer({
     };
 
     return (
-        <div className={className || "absolute top-0 right-0 bottom-0 w-full md:w-[480px] bg-[#e6e6e6] border-l border-solid border-black shadow-[inset_1px_0_0_0_black] z-50 flex flex-col transform transition-transform duration-300 ease-out"} style={className ? {} : { animation: "slideInRight 0.3s ease-out" }}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-dashed border-black">
+        <div className={className || "absolute top-0 right-0 bottom-0 w-full md:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col transform transition-transform duration-300 ease-out"} style={className ? {} : { animation: "slideInRight 0.3s ease-out" }}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-shift5-dark/95 backdrop-blur-md z-10">
                 <div className="flex items-center gap-3">
                     {showCloseAsBack && (
-                        <button onClick={onClose} className="text-black hover:text-[#ff4500] transition-colors p-1 -ml-1">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        <button onClick={onClose} className="text-white/40 hover:text-shift5-orange transition-colors p-1 -ml-1">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
                     )}
-                    <h3 className="font-semibold text-black text-sm uppercase tracking-widest">Genre Profile</h3>
+                    <h3 className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">Genre_Profile // Recon</h3>
                 </div>
             </div>
 
             <div className="flex-1 overflow-y-auto">
-                <div className="px-6 py-6 border-b border-dashed border-black bg-transparent">
-                    <h2 className="text-3xl font-bold text-black mb-1.5 leading-none tracking-tight capitalize">{genreName}</h2>
-                    <p className="text-xs text-gray-600">
-                        Explore the deepest cuts associated with this category.
+                <div className="px-6 py-8 border-b border-white/5 bg-white/[0.01]">
+                    <div className="flex items-center gap-3 mb-4">
+                        <span className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em] bg-shift5-orange/10 px-2 py-0.5 border border-shift5-orange/20">Category_Filter</span>
+                    </div>
+                    <h2 className="text-3xl font-bold text-white mb-2 leading-none tracking-tighter uppercase truncate">{genreName}</h2>
+                    <p className="text-[10px] font-mono text-white/20 uppercase tracking-widest leading-loose">
+                        Intercepting artifacts associated with this sonic signature category.
                     </p>
                 </div>
 
                 {loading ? (
-                    <div className="p-6 animate-pulse space-y-4">
-                        <Skeleton className="w-full h-[60px]" />
-                        <Skeleton className="w-full h-[60px]" />
-                        <Skeleton className="w-full h-[60px]" />
-                        <Skeleton className="w-full h-[60px]" />
+                    <div className="p-10 space-y-4 animate-pulse">
+                        <Skeleton className="w-full h-[80px] bg-white/5" />
+                        <Skeleton className="w-full h-[80px] bg-white/5" />
+                        <Skeleton className="w-full h-[80px] bg-white/5" />
                     </div>
                 ) : (
-                    <div className="pb-8">
+                    <div className="pb-12">
                         {artists.map((artist, index) => {
                             const cardId = artist.mbid || artist.name;
                             const isBookmarked = bookmarkedArtists.has(artist.name);
@@ -188,30 +193,30 @@ export default function GenreDrawer({
 
                             return (
                                 <div key={cardId} style={{ animation: `fadeIn 0.3s ease ${index * 0.04}s both` }}>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3.5 border-b border-dashed border-black cursor-default p-4 hover:bg-[rgba(255,255,255,0.4)] transition-colors">
-                                        <div className="flex items-center gap-3 sm:gap-3.5 flex-1 min-w-0">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 border-b border-white/5 cursor-default p-5 bg-white/[0.01] hover:bg-white/[0.02] transition-colors group">
+                                        <div className="flex items-center gap-4 flex-1 min-w-0">
                                             <ArtistAvatar name={artist.name} image={artist.image} size={48} />
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2.5 mb-0.5 flex-wrap">
-                                                    <span onClick={() => onSelectArtist(artist.name)} className="text-[15px] font-semibold text-black cursor-pointer hover:underline hover:text-[#ff4500] transition-colors truncate" style={{ letterSpacing: "-0.01em" }}>{artist.name}</span>
-                                                    <StreamingLinks artistName={artist.name} size={18} />
+                                                <div className="flex items-center gap-3 mb-1 flex-wrap">
+                                                    <span onClick={() => onSelectArtist(artist.name)} className="text-[13px] font-bold text-white uppercase tracking-tight cursor-pointer hover:text-shift5-orange transition-colors truncate">{artist.name}</span>
+                                                    <StreamingLinks artistName={artist.name} size={16} />
                                                 </div>
-                                                <div className="text-[11px] text-gray-600 capitalize tracking-wide hidden sm:block">
-                                                    {genreName} Artist
+                                                <div className="text-[9px] font-mono text-white/20 uppercase tracking-[0.2em]">
+                                                    Node_Signature // {genreName}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex gap-1.5 items-center shrink-0">
+                                        <div className="flex gap-2 items-center shrink-0">
                                             {previewUrl && (
-                                                <button onClick={() => isPlayingHere ? togglePlayPause() : handlePlay(previewUrl, "Preview", artist.name, artist.image)} className={`flex items-center justify-center border cursor-pointer transition-all duration-150 shrink-0 ${isPlayingHere ? "border-black bg-black text-white" : "border-black bg-white text-black hover:bg-black hover:text-white"}`} style={{ width: 34, height: 34 }} title={isPlayingHere ? "Stop" : "Play"}>
+                                                <button onClick={() => isPlayingHere ? togglePlayPause() : handlePlay(previewUrl, "Preview", artist.name, artist.image)} className={`flex items-center justify-center border transition-all duration-300 shrink-0 ${isPlayingHere ? "bg-shift5-orange border-shift5-orange text-white" : "bg-white/[0.05] border-white/10 text-white hover:bg-white/10 hover:border-white/30"}`} style={{ width: 34, height: 34 }} title={isPlayingHere ? "Stop" : "Play"}>
                                                     {isPlayingHere ? <svg width={12} height={12} viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="2" width="3" height="8" /><rect x="7" y="2" width="3" height="8" /></svg> : <svg width={12} height={12} viewBox="0 0 12 12" fill="currentColor"><polygon points="3,1 11,6 3,11" /></svg>}
                                                 </button>
                                             )}
-                                            <button onClick={() => handleToggleBookmark(cardId, artist.name, artist.image, [genreName])} disabled={isBookmarking} className={`flex items-center justify-center border transition-all duration-150 cursor-pointer ${isBookmarked ? "border-[#ff4500] bg-[#fff0f0] text-[#ff4500]" : "border-black bg-white text-black hover:text-[#ff4500]"}`} style={{ width: 34, height: 34 }}>
-                                                <Heart size={16} className={isBookmarked ? "fill-current mt-[1px]" : "mt-[1px]"} strokeWidth={isBookmarked ? 2.5 : 2} />
+                                            <button onClick={() => handleToggleBookmark(cardId, artist.name, artist.image, [genreName])} disabled={isBookmarking} className={`flex items-center justify-center border transition-all duration-300 cursor-pointer ${isBookmarked ? "border-shift5-orange bg-shift5-orange/10 text-shift5-orange" : "bg-white/[0.05] border-white/10 text-white/50 hover:text-white hover:border-white/30"}`} style={{ width: 34, height: 34 }}>
+                                                <Heart size={15} className={isBookmarked ? "fill-current" : ""} strokeWidth={isBookmarked ? 2.5 : 2} />
                                             </button>
-                                            <button onClick={() => onSelectArtist(artist.name)} className="text-[11px] font-semibold border cursor-pointer whitespace-nowrap transition-all duration-150 border-black bg-white text-black hover:bg-black hover:text-white" style={{ padding: "0 12px", height: 34 }}>
-                                                Explore
+                                            <button onClick={() => onSelectArtist(artist.name)} className={`text-[9px] font-bold font-mono border uppercase cursor-pointer whitespace-nowrap transition-all duration-300 bg-white/[0.05] border-white/10 text-white/50 hover:text-white hover:border-white/30`} style={{ padding: "0 10px", height: 34, letterSpacing: '0.1em' }}>
+                                                EXPLORE
                                             </button>
                                         </div>
                                     </div>

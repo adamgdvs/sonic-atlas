@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useJourney } from "@/contexts/JourneyContext";
+import { useJourney, type JourneyNode } from "@/contexts/JourneyContext";
 
-export default function Breadcrumbs() {
+interface BreadcrumbsProps {
+    onNodeClick?: (node: JourneyNode, index: number) => void;
+}
+
+export default function Breadcrumbs({ onNodeClick }: BreadcrumbsProps) {
     const { path } = useJourney();
 
     if (path.length === 0) return null;
 
     return (
-        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap px-4 sm:px-10 py-3 bg-[#FCFCFC] border-b border-[#F0F0F0] text-xs hide-scrollbar w-full">
+        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap px-4 sm:px-10 py-4 bg-shift5-dark/50 border-b border-white/5 text-[10px] uppercase font-mono tracking-widest hide-scrollbar w-full z-30 relative">
             {path.map((node, i) => {
                 const isLast = i === path.length - 1;
 
@@ -17,17 +21,25 @@ export default function Breadcrumbs() {
                     <div key={`${node.url}-${i}`} className="flex items-center gap-2">
                         <Link
                             href={node.url}
-                            className={`transition-colors duration-150 ${isLast
-                                    ? "text-[#1D1D1F] font-semibold cursor-default"
-                                    : "text-[#9CA3AF] hover:text-[#1D1D1F]"
+                            className={`transition-colors duration-300 ${isLast
+                                ? "text-shift5-orange cursor-default"
+                                : "text-white/30 hover:text-white"
                                 }`}
                             onClick={(e) => {
-                                if (isLast) e.preventDefault();
+                                if (isLast) {
+                                    e.preventDefault();
+                                    return;
+                                }
+
+                                if (onNodeClick) {
+                                    e.preventDefault();
+                                    onNodeClick(node, i);
+                                }
                             }}
                         >
                             {node.name}
                         </Link>
-                        {!isLast && <span className="text-[#E5E5E5]">/</span>}
+                        {!isLast && <span className="text-white/10">/</span>}
                     </div>
                 );
             })}

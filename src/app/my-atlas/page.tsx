@@ -20,7 +20,7 @@ export default async function MyAtlasPage() {
 
 
     return (
-        <div className="min-h-screen bg-[#FAFAFA] flex flex-col">
+        <div className="min-h-screen bg-shift5-dark text-white flex flex-col">
             <Header />
             <MyAtlasClient bookmarks={bookmarks} />
         </div>

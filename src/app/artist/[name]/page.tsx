@@ -18,6 +18,7 @@ import {
 } from "@/lib/api";
 import { getGenreColor, truncateBio } from "@/lib/utils";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import SearchBar from "@/components/SearchBar";
 import ArtistInitials from "@/components/ArtistInitials";
 import GenreTag from "@/components/GenreTag";
@@ -64,31 +65,33 @@ function GraphModeDropdown({
     <div ref={ref} className="relative inline-block">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="text-[11px] font-semibold text-[#9CA3AF] uppercase flex items-center gap-1.5 cursor-pointer hover:text-[#1D1D1F] transition-colors"
-        style={{ letterSpacing: "0.08em", background: "none", border: "none", padding: 0 }}
+        className="text-[10px] font-mono text-white/40 uppercase flex items-center gap-2 cursor-pointer hover:text-shift5-orange transition-colors tracking-widest"
+        style={{ background: "none", border: "none", padding: 0 }}
       >
+        <span className="text-white/20 select-none">[ MODE:</span>
         {current.label}
-        <svg width={8} height={8} viewBox="0 0 8 8" fill="currentColor" style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }}>
+        <span className="text-white/20 select-none">]</span>
+        <svg width={8} height={8} viewBox="0 0 8 8" fill="currentColor" className="transition-transform duration-300" style={{ transform: open ? "rotate(180deg)" : "none" }}>
           <polygon points="0,2 4,6 8,2" />
         </svg>
       </button>
       {open && (
         <div
-          className="absolute top-full left-0 mt-1.5 bg-white border border-[#E5E5E5] shadow-sm z-50 min-w-[180px]"
-          style={{ animation: "fadeIn 0.1s ease" }}
+          className="absolute top-full left-0 mt-2 bg-shift5-gray border border-shift5-accent z-50 min-w-[200px] shadow-2xl backdrop-blur-md"
+          style={{ animation: "fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)" }}
         >
           {GRAPH_MODES.map((m) => (
             <button
               key={m.key}
               onClick={() => { onChange(m.key); setOpen(false); }}
-              className={`w-full text-left px-3 py-2 cursor-pointer transition-colors border-none ${m.key === value ? "bg-[#F8F8FA]" : "bg-white hover:bg-[#FAFAFA]"
+              className={`w-full text-left px-4 py-3 cursor-pointer transition-colors border-none group ${m.key === value ? "bg-shift5-orange/10" : "bg-transparent hover:bg-white/5"
                 }`}
               style={{ display: "block" }}
             >
-              <span className={`text-xs font-semibold block ${m.key === value ? "text-[#1D1D1F]" : "text-[#6B7280]"}`}>
+              <span className={`text-[11px] font-mono uppercase tracking-wider block mb-1 transition-colors ${m.key === value ? "text-shift5-orange" : "text-white/70 group-hover:text-white"}`}>
                 {m.label}
               </span>
-              <span className="text-[10px] text-[#9CA3AF] block">
+              <span className="text-[9px] font-mono text-white/30 block uppercase tracking-tight">
                 {m.description}
               </span>
             </button>
@@ -135,26 +138,27 @@ function GenreMap({
   return (
     <div>
       <div
-        className="text-[11px] font-semibold text-[#9CA3AF] uppercase mb-3"
-        style={{ letterSpacing: "0.08em" }}
+        className="text-[10px] font-mono text-shift5-dark/40 uppercase mb-4 tracking-[0.15em] border-b border-shift5-dark/10 pb-1 font-bold"
       >
-        Genre Map
+        Genre_Profile
       </div>
-      {genreList.map((genre) => {
-        const count = similar.filter((a) => a.genres.includes(genre)).length;
-        return (
-          <div key={genre} className="flex items-center gap-2 mb-1.5">
-            <div
-              className="w-1.5 h-1.5 shrink-0"
-              style={{ backgroundColor: getGenreColor(genre) }}
-            />
-            <span className="text-xs text-[#6B7280] flex-1">{genre}</span>
-            <span className="text-[11px] text-[#C4C4C4] font-[family-name:var(--font-dm-mono)]">
-              {count}
-            </span>
-          </div>
-        );
-      })}
+      <div className="space-y-2">
+        {genreList.map((genre) => {
+          const count = similar.filter((a) => a.genres.includes(genre)).length;
+          return (
+            <div key={genre} className="flex items-center gap-3">
+              <div
+                className="w-1.5 h-1.5 shrink-0"
+                style={{ backgroundColor: getGenreColor(genre) }}
+              />
+              <span className="text-[11px] font-mono text-shift5-dark/70 flex-1 uppercase tracking-tight font-bold">{genre}</span>
+              <span className="text-[10px] text-shift5-dark/20 font-mono font-bold">
+                {count.toString().padStart(2, '0')}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -169,6 +173,8 @@ function DiscographyPanel({
   onAlbumClick,
   expandedAlbum,
   bio,
+  isFocused = false,
+  onResetFocus,
 }: {
   albums: Album[];
   topTracks: PreviewTrack[];
@@ -179,26 +185,29 @@ function DiscographyPanel({
   onAlbumClick: (albumId: number) => void;
   expandedAlbum: number | null;
   bio?: string;
+  isFocused?: boolean;
+  onResetFocus?: () => void;
 }) {
+  const focusedAlbum = isFocused ? albums.find(a => a.id === expandedAlbum) : null;
+
   return (
     <div>
       {/* Bio snippet */}
       {bio && (
-        <p className="text-xs text-[#6B7280] leading-relaxed mb-4">
+        <p className="text-[11px] font-mono text-white/40 leading-relaxed mb-8 uppercase tracking-tight border-l border-shift5-orange/20 pl-4">
           {truncateBio(bio)}
         </p>
       )}
 
-      {/* Top tracks */}
-      {topTracks.length > 0 && (
-        <div className="mb-4">
+      {/* Top tracks - Hidden in focused mode */}
+      {topTracks.length > 0 && !isFocused && (
+        <div className="mb-8">
           <div
-            className="text-[11px] font-semibold text-[#9CA3AF] uppercase mb-2"
-            style={{ letterSpacing: "0.08em" }}
+            className="text-[10px] font-mono text-white/30 uppercase mb-4 tracking-[0.15em] border-b border-white/5 pb-1"
           >
-            Popular Tracks
+            Popular_Tracks
           </div>
-          <div className="max-w-[500px]">
+          <div className="max-w-[500px] border border-white/5 divide-y divide-white/5">
             {topTracks.slice(0, 5).map((t, i) => {
               const isPlaying = playingUrl === t.preview;
               const mins = Math.floor(t.duration / 60);
@@ -206,22 +215,22 @@ function DiscographyPanel({
               return (
                 <div
                   key={t.id}
-                  className="flex items-center gap-3 py-2 px-1 hover:bg-[#F8F8FA] transition-colors cursor-pointer"
+                  className="flex items-center gap-4 py-3 px-3 hover:bg-white/5 transition-colors cursor-pointer group"
                   onClick={() =>
                     isPlaying ? onStop() : onPlay(t.preview, t.title)
                   }
                 >
                   <span
-                    className={`w-6 text-center text-[11px] font-[family-name:var(--font-dm-mono)] ${isPlaying ? "text-[#1D1D1F] font-bold" : "text-[#C4C4C4]"}`}
+                    className={`w-4 text-center text-[10px] font-mono ${isPlaying ? "text-shift5-orange font-bold animate-pulse" : "text-white/20"}`}
                   >
-                    {isPlaying ? "▪▪" : i + 1}
+                    {isPlaying ? ">>" : (i + 1).toString().padStart(2, '0')}
                   </span>
                   <span
-                    className={`text-sm flex-1 truncate ${isPlaying ? "text-[#1D1D1F] font-medium" : "text-[#1D1D1F]"}`}
+                    className={`text-[13px] font-mono flex-1 truncate uppercase tracking-tight transition-colors ${isPlaying ? "text-shift5-orange" : "text-white/80 group-hover:text-white"}`}
                   >
                     {t.title}
                   </span>
-                  <span className="text-[11px] text-[#C4C4C4] font-[family-name:var(--font-dm-mono)]">
+                  <span className="text-[10px] text-white/20 font-mono">
                     {mins}:{secs.toString().padStart(2, "0")}
                   </span>
                 </div>
@@ -231,58 +240,76 @@ function DiscographyPanel({
         </div>
       )}
 
+      {/* Focused Album View */}
+      {isFocused && focusedAlbum && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+            <div className="text-[10px] font-mono text-white/30 uppercase tracking-[0.15em]">
+              Selected_Album_Focus // {focusedAlbum.title}
+            </div>
+            <button
+              onClick={onResetFocus}
+              className="text-[10px] font-mono text-shift5-orange hover:text-white uppercase tracking-widest transition-colors font-bold"
+            >
+              [ Show_All_Albums ]
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Albums — vertical list with expandable track lists */}
       {albums.length > 0 && (
-        <div>
-          <div
-            className="text-[11px] font-semibold text-[#9CA3AF] uppercase mb-3"
-            style={{ letterSpacing: "0.08em" }}
-          >
-            Discography
-          </div>
-          <div className="space-y-0">
-            {albums.map((a) => {
+        <div className="mt-8">
+          {!isFocused && (
+            <div
+              className="text-[10px] font-mono text-white/30 uppercase mb-4 tracking-[0.15em] border-b border-white/5 pb-1"
+            >
+              Discography
+            </div>
+          )}
+          <div className="space-y-1">
+            {albums.filter(a => !isFocused || a.id === expandedAlbum).map((a) => {
               const year = a.release_date?.slice(0, 4);
               const isExpanded = expandedAlbum === a.id;
               const tracks = albumTracksCache[a.id];
               return (
-                <div key={a.id}>
+                <div key={a.id} className={`border border-white/5 transition-all duration-300 ${isExpanded ? 'border-shift5-orange/30 bg-white/[0.02]' : 'hover:border-white/20'}`}>
                   <div
-                    className="flex items-center gap-3 py-2.5 px-1 hover:bg-[#F8F8FA] transition-colors cursor-pointer"
+                    className="flex items-center gap-4 py-3 px-3 cursor-pointer group"
                     onClick={() => onAlbumClick(a.id)}
                   >
-                    <div className="w-[56px] h-[56px] bg-[#F0F0F0] shrink-0 overflow-hidden">
+                    <div className="w-[48px] h-[48px] bg-white/5 shrink-0 overflow-hidden border border-white/5 group-hover:border-white/20 transition-colors">
                       {a.cover_medium ? (
                         <Image
                           src={a.cover_medium}
                           alt={a.title}
-                          width={56}
-                          height={56}
-                          className="object-cover"
+                          width={48}
+                          height={48}
+                          className={`object-cover transition-all duration-500 ${isExpanded ? 'contrast-125' : 'grayscale group-hover:grayscale-0'}`}
                           unoptimized
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[#C4C4C4] text-[10px]">
-                          No art
+                        <div className="w-full h-full flex items-center justify-center text-white/10 text-[9px] font-mono uppercase">
+                          No_Img
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[#1D1D1F] truncate">
+                      <p className={`text-[13px] font-mono uppercase tracking-tight truncate transition-colors ${isExpanded ? 'text-white' : 'text-white/70 group-hover:text-white'}`}>
                         {a.title}
                       </p>
-                      <p className="text-[11px] text-[#9CA3AF]">
-                        {year}
-                        {a.nb_tracks > 0 && ` · ${a.nb_tracks} tracks`}
+                      <p className="text-[10px] font-mono text-white/20 uppercase tracking-tighter">
+                        REL_DATE_{year}
+                        {a.nb_tracks > 0 && ` // ${a.nb_tracks.toString().padStart(2, '0')}_TRACKS`}
                       </p>
                     </div>
-                    <span className="text-[11px] text-[#C4C4C4] shrink-0">
-                      {isExpanded ? "▲" : "▼"}
+                    <span className={`text-[10px] font-mono transition-colors ${isExpanded ? 'text-shift5-orange' : 'text-white/20'}`}>
+                      {isExpanded ? "[ CLOSE ]" : "[ DEPTH ]"}
                     </span>
                   </div>
                   {/* Track list */}
                   <div
-                    className="transition-all duration-200 ease-in-out"
+                    className="transition-all duration-300 ease-in-out"
                     style={{
                       display: "grid",
                       gridTemplateRows: isExpanded ? "1fr" : "0fr",
@@ -290,14 +317,14 @@ function DiscographyPanel({
                     }}
                   >
                     <div className="overflow-hidden">
-                      <div className="pl-[72px] pr-2 pb-3">
+                      <div className="pl-3 pr-3 pb-4 pt-2 border-t border-white/5 divide-y divide-white/[0.02]">
                         {!tracks ? (
-                          <p className="text-[11px] text-[#9CA3AF] py-2">
-                            Loading tracks...
+                          <p className="text-[10px] font-mono text-shift5-orange/40 py-4 text-center animate-pulse">
+                            FETCHING_ASSETS...
                           </p>
                         ) : tracks.length === 0 ? (
-                          <p className="text-[11px] text-[#9CA3AF] py-2">
-                            No tracks available
+                          <p className="text-[10px] font-mono text-white/20 py-4 text-center uppercase">
+                            No_Signal_Detected
                           </p>
                         ) : (
                           tracks.map((t, i) => {
@@ -307,7 +334,7 @@ function DiscographyPanel({
                             return (
                               <div
                                 key={t.id}
-                                className="flex items-center gap-3 py-1.5 hover:bg-[#F8F8FA] transition-colors cursor-pointer"
+                                className="flex items-center gap-4 py-2 hover:bg-white/5 transition-colors cursor-pointer group/track"
                                 onClick={() => {
                                   if (t.preview) {
                                     isPlaying ? onStop() : onPlay(t.preview, t.title);
@@ -315,21 +342,21 @@ function DiscographyPanel({
                                 }}
                               >
                                 <span
-                                  className={`w-5 text-center text-[11px] font-[family-name:var(--font-dm-mono)] ${isPlaying ? "text-[#1D1D1F] font-bold" : "text-[#C4C4C4]"}`}
+                                  className={`w-5 text-center text-[10px] font-mono ${isPlaying ? "text-shift5-orange font-bold" : "text-white/10"}`}
                                 >
-                                  {isPlaying ? "▪▪" : i + 1}
+                                  {isPlaying ? ">>" : (i + 1).toString().padStart(2, '0')}
                                 </span>
                                 <span
-                                  className={`text-xs flex-1 truncate ${isPlaying ? "text-[#1D1D1F] font-medium" : "text-[#6B7280]"}`}
+                                  className={`text-[12px] font-mono flex-1 truncate uppercase tracking-tight transition-colors ${isPlaying ? "text-shift5-orange" : "text-white/50 group-hover/track:text-white/80"}`}
                                 >
                                   {t.title}
                                 </span>
                                 {t.preview && (
-                                  <span className="text-[10px] text-[#C4C4C4]">
+                                  <span className={`text-[10px] transition-colors ${isPlaying ? 'text-shift5-orange' : 'text-white/10 group-hover/track:text-shift5-orange/50'}`}>
                                     {isPlaying ? "■" : "▶"}
                                   </span>
                                 )}
-                                <span className="text-[11px] text-[#C4C4C4] font-[family-name:var(--font-dm-mono)]">
+                                <span className="text-[10px] text-white/10 font-mono">
                                   {mins}:{secs.toString().padStart(2, "0")}
                                 </span>
                               </div>
@@ -396,15 +423,16 @@ function SimilarCard({
 }) {
   const [hovered, setHovered] = useState(false);
   const accordionRef = useRef<HTMLDivElement>(null);
-  const bg = isHighlighted ? "#F8F8FA" : hovered ? "#FCFCFC" : "#FFF";
+  const bg = isHighlighted ? "rgba(255, 88, 65, 0.05)" : hovered ? "rgba(255, 255, 255, 0.03)" : "transparent";
   const cardId = artist.mbid || artist.name;
   const isBookmarked = bookmarkedArtists.has(artist.name);
   const isBookmarking = bookmarkingIds.has(cardId);
 
   return (
     <div
+      className="border-b border-white/5"
       style={{
-        animation: `fadeSlideIn 0.3s ease ${index * 0.04}s both`,
+        animation: `fadeSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.03}s both`,
       }}
     >
       <div
@@ -416,68 +444,74 @@ function SimilarCard({
           setHovered(false);
           onHover(null);
         }}
-        className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-3.5 border-b border-[#F0F0F0] cursor-default p-4 sm:px-5 sm:py-4"
+        className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 cursor-default p-4 sm:px-6 sm:py-5 group/card transition-all duration-300"
         style={{
           backgroundColor: bg,
-          transition: "background-color 0.15s ease",
         }}
       >
-        <div className="flex items-center gap-3 sm:gap-3.5 flex-1 min-w-0">
-          <ArtistAvatar
-            name={artist.name}
-            image={artist.image}
-            size={44}
-          />
+        <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
+          <div className={`relative transition-all duration-500 overflow-hidden border ${hovered ? 'scale-110 contrast-125 border-shift5-orange/50 shadow-[0_0_15px_rgba(255,88,65,0.2)]' : 'grayscale contrast-50 opacity-30 border-white/5'}`}>
+            <ArtistAvatar
+              name={artist.name}
+              image={artist.image}
+              size={60}
+            />
+            {isHighlighted && (
+              <div className="absolute inset-0 border-2 border-shift5-orange animate-pulse pointer-events-none" />
+            )}
+          </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2.5 mb-1 flex-wrap">
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
               <span
                 onClick={() => onExplore(artist.name)}
-                className="text-[15px] font-semibold text-[#1D1D1F] cursor-pointer hover:underline"
-                style={{ letterSpacing: "-0.01em" }}
+                className="text-[16px] font-bold text-white cursor-pointer hover:text-shift5-orange font-mono uppercase tracking-tighter transition-colors"
               >
                 {artist.name}
               </span>
               <StreamingLinks artistName={artist.name} size={18} />
-              <SimilarityBar value={artist.match} />
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] font-mono text-white/30 uppercase tracking-[0.2em] hidden sm:inline font-bold">Confidence_Level:</span>
+                <SimilarityBar value={artist.match} />
+              </div>
             </div>
             {artist.genres.length > 0 && (
-              <div className="mb-1.5">
-                {artist.genres.slice(0, 5).map((g) => (
+              <div className="flex flex-wrap gap-1">
+                {artist.genres.slice(0, 3).map((g) => (
                   <GenreTag key={g} genre={g} onClick={onGenreClick} />
                 ))}
               </div>
             )}
           </div>
         </div>
-        <div className="flex gap-1.5 items-center sm:items-start sm:pt-0.5 ml-[58px] sm:ml-0">
+        <div className="flex gap-2 items-center sm:items-start sm:pt-1 ml-[68px] sm:ml-0">
           {previewUrl && (
             <button
               onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, "Preview", artist.name, artist.image))}
-              className={`flex items-center justify-center border cursor-pointer transition-all duration-150 shrink-0 ${isPlaying
-                ? "border-[#1D1D1F] bg-[#1D1D1F] text-white"
-                : "border-[#E5E5E5] bg-[#FAFAFA] text-[#1D1D1F] hover:bg-[#1D1D1F] hover:text-white hover:border-[#1D1D1F]"
+              className={`flex items-center justify-center border cursor-pointer transition-all duration-300 shrink-0 ${isPlaying
+                ? "border-shift5-orange bg-shift5-orange text-white"
+                : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white hover:border-white/30"
                 }`}
-              style={{ width: 28, height: 28 }}
+              style={{ width: 32, height: 32 }}
               title={isPlaying ? "Stop" : "Play"}
             >
               {isPlaying ? (
                 <svg
-                  width={10}
-                  height={10}
+                  width={12}
+                  height={12}
                   viewBox="0 0 12 12"
                   fill="currentColor"
                 >
-                  <rect x="1" y="1" width="4" height="10" />
-                  <rect x="7" y="1" width="4" height="10" />
+                  <rect x="2" y="1" width="3" height="10" />
+                  <rect x="7" y="1" width="3" height="10" />
                 </svg>
               ) : (
                 <svg
-                  width={10}
-                  height={10}
+                  width={12}
+                  height={12}
                   viewBox="0 0 12 12"
                   fill="currentColor"
                 >
-                  <polygon points="2,0 12,6 2,12" />
+                  <polygon points="3,0 12,6 3,12" />
                 </svg>
               )}
             </button>
@@ -485,11 +519,11 @@ function SimilarCard({
           <button
             onClick={() => onToggleBookmark(cardId, artist.name, artist.image, artist.genres)}
             disabled={isBookmarking}
-            className={`flex items-center justify-center border transition-all duration-150 rounded-sm cursor-pointer ${isBookmarked
-              ? "border-[#FF4B4B] bg-[#FFF0F0] text-[#FF4B4B]"
-              : "border-[#E5E5E5] bg-[#FAFAFA] text-[#9CA3AF] hover:text-[#1D1D1F] hover:border-[#D1D5DB]"
+            className={`flex items-center justify-center border transition-all duration-300 cursor-pointer ${isBookmarked
+              ? "border-shift5-orange/50 bg-shift5-orange/10 text-shift5-orange shadow-[0_0_10px_rgba(255,88,65,0.1)]"
+              : "border-white/10 bg-white/5 text-white/30 hover:text-white/70 hover:border-white/30"
               }`}
-            style={{ width: 32, height: 32 }}
+            style={{ width: 34, height: 34 }}
             title={isBookmarked ? "Remove bookmark" : "Bookmark artist"}
           >
             <Heart
@@ -500,13 +534,13 @@ function SimilarCard({
           </button>
           <button
             onClick={() => onToggleDiscography(artist.name)}
-            className={`text-[11px] font-semibold border cursor-pointer whitespace-nowrap transition-all duration-150 ${discographyOpen
-              ? "border-[#1D1D1F] bg-[#1D1D1F] text-white"
-              : "border-[#E5E5E5] bg-[#FAFAFA] text-[#1D1D1F] hover:bg-[#1D1D1F] hover:text-white hover:border-[#1D1D1F]"
+            className={`text-[10px] font-mono font-bold border cursor-pointer whitespace-nowrap transition-all duration-300 flex items-center gap-2 uppercase tracking-[0.1em] ${discographyOpen
+              ? "border-white bg-white text-shift5-dark"
+              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/30"
               }`}
-            style={{ padding: "5px 12px", letterSpacing: "0.03em" }}
+            style={{ padding: "8px 16px" }}
           >
-            {discographyOpen ? "Close ↑" : "Explore ↓"}
+            {discographyOpen ? "[ LESS_INF ]" : "[ MORE_INF ]"}
           </button>
         </div>
       </div>
@@ -514,7 +548,7 @@ function SimilarCard({
       {/* Accordion discography */}
       <div
         ref={accordionRef}
-        className="transition-all duration-300 ease-in-out"
+        className="transition-all duration-500 ease-in-out"
         style={{
           display: "grid",
           gridTemplateRows: discographyOpen ? "1fr" : "0fr",
@@ -522,7 +556,7 @@ function SimilarCard({
         }}
       >
         <div className="overflow-hidden">
-          <div className="px-5 py-4 bg-[#FAFAFA] border-b border-[#F0F0F0]">
+          <div className="px-5 py-8 bg-white/[0.01] border-b border-white/5">
             {discography ? (
               <DiscographyPanel
                 albums={discography.albums}
@@ -536,8 +570,8 @@ function SimilarCard({
                 bio={bio}
               />
             ) : (
-              <div className="text-xs text-[#9CA3AF] py-4">
-                Loading discography...
+              <div className="text-[10px] font-mono text-shift5-orange/40 py-8 text-center animate-pulse uppercase">
+                Synchronizing_Discography_Data...
               </div>
             )}
           </div>
@@ -665,6 +699,7 @@ export default function ArtistPage({
   const [expandedAlbumPrimary, setExpandedAlbumPrimary] = useState<
     number | null
   >(null);
+  const [isDiscoFocused, setIsDiscoFocused] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const primaryAccordionRef = useRef<HTMLDivElement>(null);
 
@@ -686,6 +721,7 @@ export default function ArtistPage({
     setAlbumTracksCache({});
     setExpandedAlbum(null);
     setExpandedAlbumPrimary(null);
+    setIsDiscoFocused(false);
     handleStop();
 
     Promise.all([
@@ -849,409 +885,233 @@ export default function ArtistPage({
   const primaryPreview = primaryDisco?.topTracks?.[0]?.preview || null;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-shift5-dark text-white selection:bg-shift5-orange/30">
       <Header />
       <Breadcrumbs />
 
-      {/* Search bar */}
-      <div className="flex items-center gap-3 border-b border-[#F0F0F0] px-4 sm:px-10 py-4">
-        <button
-          onClick={() => router.push("/")}
-          className="border-none bg-none cursor-pointer text-lg text-[#9CA3AF] p-1 hover:text-[#1D1D1F] transition-colors"
-        >
-          ←
-        </button>
-        <div className="flex-1 max-w-[360px]">
-          <SearchBar
-            onSelectArtist={handleExplore}
-            onSelectGenre={(name) => router.push(`/genre/${encodeURIComponent(name)}`)}
-            compact
-          />
-        </div>
+      {/* Detail Background Decorative Grid */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.02] overflow-hidden z-0">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#888_1px,transparent_1px),linear-gradient(to_bottom,#888_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
-      <div
-        className={`mx-auto transition-all duration-300 ${genreFilter ? "max-w-[1600px]" : "max-w-[1200px]"}`}
-        style={{ animation: "fadeIn 0.3s ease" }}
-      >
-        {/* ─── Artist Header ─────────────────────────────── */}
-        <div className="border-b border-[#F0F0F0] px-4 sm:px-10 py-6 sm:pt-8 sm:pb-6">
-          <div className="flex items-start gap-4 sm:gap-5">
-            <ArtistAvatar
-              name={artistName}
-              image={artistInfo?.image}
-              size={72}
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                <h2
-                  className="text-xl sm:text-[28px] font-semibold text-[#1D1D1F] leading-none"
-                  style={{ letterSpacing: "-0.03em" }}
-                >
-                  {artistName}
-                </h2>
-                <StreamingLinks artistName={artistName} size={24} className="mt-0.5" />
+      <main className="relative z-10 p-5 md:p-10 max-w-[1400px] mx-auto">
+        {/* Hero Header section with high-contrast Shift5 Orange */}
+        <div className="mb-12 border border-white/10 bg-shift5-orange text-shift5-dark p-8 md:p-12 relative overflow-hidden group">
+          {/* Decorative Background Text (Shift5 vibe) */}
+          <div className="absolute top-0 right-0 text-[120px] font-bold text-shift5-dark/5 select-none leading-none pointer-events-none uppercase mr-[-20px] mt-[-20px]">
+            {artistName.slice(0, 3)}
+          </div>
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-8">
+            <div className="flex items-start gap-8">
+              <div className="relative overflow-hidden border-2 border-shift5-dark p-1 bg-shift5-dark/10 backdrop-blur-sm -mt-6">
+                <ArtistAvatar name={artistName} image={artistInfo?.image} size={150} />
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              {artistInfo && artistInfo.genres.length > 0 && (
-                <div className="mb-2">
-                  {artistInfo.genres.map((g) => (
-                    <GenreTag
-                      key={g}
-                      genre={g}
-                      onClick={handleGenreClick}
-                      active={genreFilter === g}
-                    />
+
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-[10px] font-mono text-shift5-dark uppercase tracking-[0.3em] font-bold bg-white/20 px-2 py-0.5">Active_Node // {artistInfo?.deezerId || 'IDENT_PENDING'}</span>
+                  <StreamingLinks artistName={artistName} size={20} />
+                </div>
+                <h1 className="text-5xl md:text-7xl font-bold uppercase tracking-tighter leading-none mb-4 selection:bg-shift5-dark selection:text-white">
+                  {artistName}
+                </h1>
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {artistInfo?.genres.map(g => (
+                    <GenreTag key={g} genre={g} onClick={handleGenreClick} active={genreFilter === g} />
                   ))}
                 </div>
-              )}
-              {artistInfo && (
-                <div className="flex flex-wrap gap-4 text-[11px] text-[#9CA3AF]">
-                  {artistInfo.listeners > 0 && (
-                    <span>
-                      <span className="font-semibold text-[#6B7280]">
-                        {(artistInfo.listeners / 1000).toFixed(0)}K
-                      </span>{" "}
-                      listeners
-                    </span>
-                  )}
-                  {artistInfo.nbAlbums > 0 && (
-                    <span>
-                      <span className="font-semibold text-[#6B7280]">
-                        {artistInfo.nbAlbums}
-                      </span>{" "}
-                      albums
-                    </span>
-                  )}
-                  {similar.length > 0 && (
-                    <span>
-                      <span className="font-semibold text-[#6B7280]">
-                        {similar.length}
-                      </span>{" "}
-                      similar
-                    </span>
-                  )}
-                </div>
-              )}
-              {artistInfo?.bio && (
-                <p className="text-xs text-[#6B7280] leading-relaxed mt-2 max-w-[600px]">
-                  {truncateBio(artistInfo.bio)}
-                </p>
-              )}
-            </div>
-            {/* Play + Explore buttons for primary artist */}
-            <div className="flex gap-1.5 shrink-0">
-              {primaryPreview && (
-                <button
-                  onClick={() =>
-                    playingUrl === primaryPreview
-                      ? handleStop()
-                      : handlePlay(primaryPreview, primaryDisco?.topTracks?.[0]?.title, artistName, artistInfo?.image)
-                  }
-                  className={`flex items-center justify-center border cursor-pointer transition-all duration-150 ${playingUrl === primaryPreview
-                    ? "border-[#1D1D1F] bg-[#1D1D1F] text-white"
-                    : "border-[#E5E5E5] bg-[#FAFAFA] text-[#1D1D1F] hover:bg-[#1D1D1F] hover:text-white hover:border-[#1D1D1F]"
-                    }`}
-                  style={{ width: 36, height: 36 }}
-                  title={
-                    playingUrl === primaryPreview ? "Stop" : "Play preview"
-                  }
-                >
-                  {playingUrl === primaryPreview ? (
-                    <svg
-                      width={12}
-                      height={12}
-                      viewBox="0 0 12 12"
-                      fill="currentColor"
-                    >
-                      <rect x="1" y="1" width="4" height="10" />
-                      <rect x="7" y="1" width="4" height="10" />
-                    </svg>
-                  ) : (
-                    <svg
-                      width={12}
-                      height={12}
-                      viewBox="0 0 12 12"
-                      fill="currentColor"
-                    >
-                      <polygon points="2,0 12,6 2,12" />
-                    </svg>
-                  )}
-                </button>
-              )}
-              <button
-                onClick={() => setPrimaryDiscoOpen((v) => !v)}
-                className={`text-[11px] font-semibold border cursor-pointer whitespace-nowrap transition-all duration-150 ${primaryDiscoOpen
-                  ? "border-[#1D1D1F] bg-[#1D1D1F] text-white"
-                  : "border-[#E5E5E5] bg-[#FAFAFA] text-[#1D1D1F] hover:bg-[#1D1D1F] hover:text-white hover:border-[#1D1D1F]"
-                  }`}
-                style={{
-                  padding: "8px 14px",
-                  letterSpacing: "0.03em",
-                  height: 36,
-                }}
-              >
-                {primaryDiscoOpen ? "Close ↑" : "Explore ↓"}
-              </button>
-              {artistInfo && (
-                <button
-                  onClick={() => handleToggleBookmark(artistInfo.deezerId?.toString() || artistName, artistName, artistInfo.image, artistInfo.genres)}
-                  disabled={bookmarkingIds.has(artistInfo.deezerId?.toString() || "primary")}
-                  className={`flex items-center justify-center border cursor-pointer transition-all duration-150 rounded-sm ${bookmarkedArtists.has(artistName)
-                    ? "border-[#FF4B4B] bg-[#FFF0F0] text-[#FF4B4B]"
-                    : "border-[#E5E5E5] bg-[#FAFAFA] text-[#9CA3AF] hover:text-[#1D1D1F] hover:border-[#D1D5DB]"
-                    }`}
-                  style={{ width: 36, height: 36 }}
-                  title={bookmarkedArtists.has(artistName) ? "Remove bookmark" : "Bookmark artist"}
-                >
-                  <Heart
-                    size={16}
-                    className={bookmarkedArtists.has(artistName) ? "fill-current" : ""}
-                    strokeWidth={bookmarkedArtists.has(artistName) ? 2.5 : 2}
-                  />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
 
-        {/* Primary artist discography accordion */}
-        <div
-          ref={primaryAccordionRef}
-          className="transition-all duration-300 ease-in-out"
-          style={{
-            display: "grid",
-            gridTemplateRows: primaryDiscoOpen ? "1fr" : "0fr",
-            opacity: primaryDiscoOpen ? 1 : 0,
-          }}
-        >
-          <div className="overflow-hidden">
-            <div className="px-4 sm:px-10 py-5 bg-[#FAFAFA] border-b border-[#F0F0F0]">
-              {primaryDisco ? (
-                <DiscographyPanel
-                  albums={primaryDisco.albums}
-                  topTracks={primaryDisco.topTracks}
-                  playingUrl={playingUrl}
-                  onPlay={handlePlay}
-                  onStop={handleStop}
-                  albumTracksCache={albumTracksCache}
-                  onAlbumClick={handleAlbumClickPrimary}
-                  expandedAlbum={expandedAlbumPrimary}
-                />
-              ) : (
-                <div className="text-xs text-[#9CA3AF] py-4">
-                  Loading discography...
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+                <div className="mt-8 space-y-4 max-w-2xl border-l-2 border-shift5-dark/10 pl-6">
+                  <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold">Operational_Bio</div>
+                  <p className="text-[12px] font-mono text-shift5-dark/80 leading-relaxed uppercase tracking-tight font-medium">
+                    {truncateBio(artistInfo?.bio || "")}
+                  </p>
 
-        {/* Loading Skeleton */}
-        {loading && (
-          <div className="animate-pulse">
-            {/* Header Skeleton */}
-            <div className="border-b border-[#F0F0F0] px-4 sm:px-10 py-6 sm:pt-8 sm:pb-6 flex items-start gap-4 sm:gap-5">
-              <Skeleton className="w-[72px] h-[72px] rounded-full shrink-0" />
-              <div className="flex-1">
-                <Skeleton className="w-1/3 h-8 max-w-[200px] mb-3" />
-                <div className="flex gap-2 mb-3">
-                  <Skeleton className="w-16 h-6 rounded-full" />
-                  <Skeleton className="w-20 h-6 rounded-full" />
-                </div>
-                <Skeleton className="w-2/3 max-w-[400px] h-3 mb-1.5" />
-                <Skeleton className="w-1/2 max-w-[300px] h-3" />
-              </div>
-              <div className="flex gap-1.5 shrink-0">
-                <Skeleton className="w-[36px] h-[36px] rounded-sm" />
-                <Skeleton className="w-[84px] h-[36px] rounded-sm" />
-              </div>
-            </div>
+                  <div className="pt-6">
+                    <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold mb-4">Signal_Discography // Select_To_Expand</div>
 
-            <div className="flex flex-col lg:flex-row">
-              {/* Cards Skeleton */}
-              <div className="flex-1 border-r border-[#F0F0F0]">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-3.5 border-b border-[#F0F0F0] p-4 sm:px-5 sm:py-4">
-                    <div className="flex items-center gap-3 sm:gap-3.5 flex-1 w-full">
-                      <Skeleton className="w-[44px] h-[44px] rounded-full shrink-0" />
-                      <div className="flex-1 w-full">
-                        <div className="flex items-center gap-2 mb-2.5">
-                          <Skeleton className="w-1/3 h-4 max-w-[120px]" />
-                          <Skeleton className="w-8 h-1.5 rounded-full" />
+                    {/* Horizontal Scroll Discography */}
+                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide no-scrollbar -mx-2 px-2 mask-linear-right">
+                      {primaryDisco ? (
+                        primaryDisco.albums.map((a) => (
+                          <div
+                            key={a.id}
+                            onClick={() => {
+                              if (expandedAlbumPrimary === a.id && primaryDiscoOpen) {
+                                setPrimaryDiscoOpen(false);
+                                setIsDiscoFocused(false);
+                                setExpandedAlbumPrimary(null);
+                              } else {
+                                setPrimaryDiscoOpen(true);
+                                setIsDiscoFocused(true);
+                                if (expandedAlbumPrimary !== a.id) {
+                                  handleAlbumClickPrimary(a.id);
+                                }
+                                // Smooth scroll to the accordion if it opens below
+                                setTimeout(() => {
+                                  primaryAccordionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }, 100);
+                              }
+                            }}
+                            className={`relative min-w-[120px] aspect-square bg-shift5-dark/10 border-2 transition-all cursor-pointer group/album ${expandedAlbumPrimary === a.id ? 'border-shift5-dark scale-105 z-10' : 'border-shift5-dark/20 hover:border-shift5-dark/40'}`}
+                          >
+                            {a.cover_medium ? (
+                              <Image
+                                src={a.cover_medium}
+                                alt={a.title}
+                                fill
+                                className={`object-cover transition-all duration-500 ${expandedAlbumPrimary === a.id ? 'contrast-125 brightness-110' : 'grayscale group-hover/album:grayscale-0 contrast-110'}`}
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[10px] font-mono text-shift5-dark/20 uppercase">No_Signal</div>
+                            )}
+                            <div className="absolute inset-0 bg-shift5-dark/40 opacity-0 group-hover/album:opacity-100 transition-opacity flex items-end p-2">
+                              <span className="text-[8px] font-mono text-white uppercase leading-tight truncate w-full">{a.title}</span>
+                            </div>
+                            {expandedAlbumPrimary === a.id && (
+                              <div className="absolute -top-2 -right-2 w-5 h-5 bg-shift5-dark border-2 border-shift5-orange flex items-center justify-center">
+                                <span className="text-[10px] text-shift5-orange animate-pulse">■</span>
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex gap-4">
+                          {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} className="min-w-[120px] aspect-square bg-shift5-dark/5 animate-pulse border border-shift5-dark/10" />
+                          ))}
                         </div>
-                        <div className="flex gap-1.5">
-                          <Skeleton className="w-14 h-5 rounded-full" />
-                          <Skeleton className="w-16 h-5 rounded-full" />
+                      )}
+                    </div>
+
+                    <div
+                      ref={primaryAccordionRef}
+                      className="transition-all duration-500 ease-in-out"
+                      style={{
+                        display: "grid",
+                        gridTemplateRows: primaryDiscoOpen ? "1fr" : "0fr",
+                        opacity: primaryDiscoOpen ? 1 : 0,
+                      }}
+                    >
+                      <div className="overflow-hidden">
+                        <div className="pt-8">
+                          {primaryDisco ? (
+                            <div className="bg-shift5-dark/5 p-6 border-2 border-shift5-dark/10 relative">
+                              <div className="absolute top-0 right-0 p-3">
+                                <button
+                                  onClick={() => setPrimaryDiscoOpen(false)}
+                                  className="text-[10px] font-mono text-shift5-dark/40 hover:text-shift5-dark font-bold uppercase transition-colors"
+                                >
+                                  [ Terminate_Sync ]
+                                </button>
+                              </div>
+                              <DiscographyPanel
+                                albums={primaryDisco.albums}
+                                topTracks={primaryDisco.topTracks}
+                                playingUrl={playingUrl}
+                                onPlay={handlePlay}
+                                onStop={handleStop}
+                                albumTracksCache={albumTracksCache}
+                                onAlbumClick={handleAlbumClickPrimary}
+                                expandedAlbum={expandedAlbumPrimary}
+                                isFocused={isDiscoFocused}
+                                onResetFocus={() => setIsDiscoFocused(false)}
+                              />
+                            </div>
+                          ) : (
+                            <div className="p-10 text-center text-[10px] font-mono text-shift5-dark/20 animate-pulse">INIT_DISCO_SYNC...</div>
+                          )}
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-1.5 items-center sm:items-start ml-[58px] sm:ml-0">
-                      <Skeleton className="w-[28px] h-[28px] rounded-sm" />
-                      <Skeleton className="w-[72px] h-[28px] rounded-sm" />
-                    </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Sidebar Skeleton (desktop) */}
-              <div className="hidden lg:block w-[360px] shrink-0 p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <Skeleton className="w-24 h-4" />
-                  <Skeleton className="w-16 h-6 rounded-sm" />
                 </div>
-                <Skeleton className="w-full aspect-square rounded-full mb-6" />
-                <Skeleton className="w-full h-24 rounded-sm mb-4" />
-                <Skeleton className="w-full h-32 rounded-sm" />
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Error */}
-        {error && !loading && (
-          <div className="flex flex-col items-center justify-center py-20 px-5">
-            <p className="text-sm text-[#9CA3AF] mb-4">{error}</p>
-            <button
-              onClick={() => router.push("/")}
-              className="text-sm font-semibold border border-[#1D1D1F] bg-[#1D1D1F] text-white px-6 py-2 cursor-pointer hover:bg-white hover:text-[#1D1D1F] transition-all duration-150"
-            >
-              ← Back to search
-            </button>
-          </div>
-        )}
-
-        {/* ─── Similar Artists ────────────────────────────── */}
-        {!loading && similar.length > 0 && (
-          <>
-            {/* Expanded constellation */}
-            {constellationExpanded && (
-              <div
-                className="border-b border-[#F0F0F0] bg-[#FAFAFA]"
-                style={{ animation: "fadeIn 0.2s ease" }}
-              >
-                <div className="flex items-center justify-between px-4 sm:px-10 pt-5 pb-2">
-                  <GraphModeDropdown value={graphMode} onChange={setGraphMode} />
-                  <button
-                    onClick={() => setConstellationExpanded(false)}
-                    className="text-[11px] font-semibold text-[#9CA3AF] cursor-pointer border border-[#E5E5E5] bg-white transition-all duration-150 hover:text-[#1D1D1F] hover:border-[#1D1D1F]"
-                    style={{ padding: "4px 12px", letterSpacing: "0.03em" }}
-                  >
-                    Collapse ↑
-                  </button>
-                </div>
-                <div className="flex flex-col items-center lg:flex-row lg:items-start lg:justify-center gap-6 lg:gap-12 px-4 sm:px-10 pb-6">
-                  <div className="lg:hidden flex justify-center">
-                    <GraphSwitch
-                      center={artistName}
-                      centerGenres={artistInfo?.genres}
-                      similar={constellationData}
-                      highlightedId={highlightedId}
-                      onHover={setHighlightedId}
-                      onExplore={handleExplore}
-                      size={280}
-                      mode={graphMode}
-                    />
-                  </div>
-                  <div className="hidden lg:block">
-                    <GraphSwitch
-                      center={artistName}
-                      centerGenres={artistInfo?.genres}
-                      similar={constellationData}
-                      highlightedId={highlightedId}
-                      onHover={setHighlightedId}
-                      onExplore={handleExplore}
-                      size={520}
-                      mode={graphMode}
-                    />
-                  </div>
-                  <div className="pt-0 lg:pt-4 min-w-[180px] w-full lg:w-auto">
-                    <div className="text-[11px] text-[#C4C4C4] leading-relaxed mb-5">
-                      Inner ring = top matches.
-                      <br />
-                      Outer ring = extended network.
-                      <br />
-                      Colors = primary genre. Click to explore.
-                    </div>
-                    {genreList.length > 0 && (
-                      <GenreMap genreList={genreList} similar={similar} />
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Mobile constellation toggle */}
-            {!constellationExpanded && (
-              <div className="lg:hidden border-b border-[#F0F0F0] px-4 sm:px-10 py-3">
+            <div className="flex flex-col items-end gap-6 h-full justify-between pb-4">
+              <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => setConstellationExpanded(true)}
-                  className="w-full flex items-center justify-between text-[11px] font-semibold text-[#9CA3AF] cursor-pointer border border-[#E5E5E5] bg-white transition-all duration-150 hover:text-[#1D1D1F] hover:border-[#1D1D1F]"
-                  style={{ padding: "8px 14px", letterSpacing: "0.03em" }}
+                  onClick={() => {
+                    if (primaryDisco && primaryDisco.topTracks.length > 0) {
+                      const top = primaryDisco.topTracks[0];
+                      playingUrl === top.preview ? handleStop() : handlePlay(top.preview, top.title);
+                    }
+                  }}
+                  className={`flex items-center gap-3 px-8 py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'bg-white/10 border-shift5-dark/40 hover:border-shift5-dark hover:bg-white/20 text-shift5-dark'}`}
                 >
-                  <span
-                    className="uppercase"
-                    style={{ letterSpacing: "0.08em" }}
-                  >
-                    {GRAPH_MODES.find((m) => m.key === graphMode)?.label || "Constellation"}
-                  </span>
-                  <span>Show ↓</span>
+                  {playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? (
+                    <>
+                      <span className="w-2 h-2 rounded-full bg-shift5-orange animate-pulse" />
+                      ENGAGED
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-[14px]">▶</span>
+                      PLAY_SIGNAL
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleToggleBookmark(artistInfo?.deezerId?.toString() || artistName, artistName, artistInfo?.image, artistInfo?.genres)}
+                  className={`flex items-center gap-3 px-8 py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${bookmarkedArtists.has(artistName) ? 'bg-shift5-dark border-shift5-dark text-white' : 'border-shift5-dark/30 hover:border-shift5-dark text-shift5-dark/70 hover:text-shift5-dark'}`}
+                >
+                  <Heart size={16} className={bookmarkedArtists.has(artistName) ? 'fill-current' : ''} />
+                  {bookmarkedArtists.has(artistName) ? 'SAVED_NODE' : 'SAVE_NODE'}
                 </button>
               </div>
-            )}
 
-            {/* Filters */}
-            <div className="flex flex-wrap items-center gap-2 border-b border-[#F0F0F0] px-4 sm:px-10 py-3 sm:py-4">
-              <span className="text-xs text-[#9CA3AF] mr-2 font-medium">
-                {genreFilter ? "Filtered by:" : "Filter:"}
-              </span>
-              {genreFilter ? (
-                <>
-                  <GenreTag
-                    genre={genreFilter}
-                    onClick={handleGenreClick}
-                    active
-                  />
-                  <button
-                    onClick={() => setGenreFilter(null)}
-                    className="text-[11px] text-[#9CA3AF] cursor-pointer hover:text-[#1D1D1F] transition-colors"
-                    style={{ background: "none", border: "none" }}
-                  >
-                    Clear
-                  </button>
-                </>
-              ) : (
-                FILTERS.map((f) => (
-                  <FilterPill
-                    key={f.key}
-                    label={f.label}
-                    active={activeFilter === f.key}
-                    onClick={() => setActiveFilter(f.key)}
-                  />
-                ))
-              )}
-              <span className="ml-auto text-xs text-[#C4C4C4]">
-                {filteredSimilar.length} results
-              </span>
+              <div className="flex flex-col items-end gap-1 opacity-60">
+                <span className="text-[9px] font-mono text-shift5-dark uppercase tracking-widest font-bold">Sys_Confidence</span>
+                <span className="text-[12px] font-mono text-shift5-dark uppercase tracking-widest flex items-center gap-2 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-shift5-dark animate-pulse" />
+                  OPTIMAL_SIGNAL_LOCKED
+                </span>
+              </div>
             </div>
+          </div>
+        </div>
 
-            <div className="flex">
-              {/* Results list */}
-              <div className="flex-1 min-w-0">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* Main Content Column */}
+          <div className="lg:col-span-8 space-y-12">
+
+            <section>
+              <div className="flex flex-col gap-6 mb-8 border-b border-white/5 pb-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-white/40 uppercase tracking-[0.15em]">Detected_Signals // {filteredSimilar.length.toString().padStart(2, '0')}</span>
+                  <div className="flex items-center gap-2 text-[9px] font-mono text-white/20 select-none">
+                    SORT: [CONFIDENCE_DESC]
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {FILTERS.map((f) => (
+                    <FilterPill
+                      key={f.key}
+                      label={f.label}
+                      active={activeFilter === f.key}
+                      onClick={() => { setActiveFilter(f.key); setGenreFilter(null); }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="border border-white/5 divide-y divide-white/[0.02]">
                 {filteredSimilar.map((a, i) => (
                   <SimilarCard
                     key={a.mbid || a.name}
                     artist={a}
                     index={i}
                     onExplore={handleExplore}
-                    isHighlighted={
-                      highlightedId === (a.mbid || a.name)
-                    }
                     onHover={setHighlightedId}
+                    isHighlighted={highlightedId === (a.mbid || a.name)}
                     previewUrl={previewMap[a.mbid || a.name]}
-                    isPlaying={
-                      playingUrl === previewMap[a.mbid || a.name] &&
-                      playingUrl !== null
-                    }
+                    isPlaying={isPlaying && currentTrack?.artist === a.name}
                     onPlay={handlePlay}
                     onStop={handleStop}
                     onGenreClick={handleGenreClick}
@@ -1269,51 +1129,63 @@ export default function ArtistPage({
                   />
                 ))}
               </div>
+            </section>
+          </div>
 
-              {/* Sidebar (desktop) */}
-              {(!constellationExpanded && !genreFilter) && (
-                <div className="hidden lg:block w-[360px] border-l border-[#F0F0F0] shrink-0 sticky top-0 h-fit p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <GraphModeDropdown value={graphMode} onChange={setGraphMode} />
-                    <button
-                      onClick={() => setConstellationExpanded(true)}
-                      className="text-[11px] font-semibold text-[#9CA3AF] cursor-pointer border border-[#E5E5E5] bg-white transition-all duration-150 hover:text-[#1D1D1F] hover:border-[#1D1D1F]"
-                      style={{
-                        padding: "4px 12px",
-                        letterSpacing: "0.03em",
-                      }}
-                    >
-                      Expand ↓
-                    </button>
-                  </div>
-                  <GraphSwitch
-                    center={artistName}
-                    centerGenres={artistInfo?.genres}
-                    similar={constellationData}
-                    highlightedId={highlightedId}
-                    onHover={setHighlightedId}
-                    onExplore={handleExplore}
-                    mode={graphMode}
-                  />
-                  <div className="mt-4 pt-3 border-t border-[#F0F0F0]">
-                    <div className="text-[11px] text-[#C4C4C4] leading-relaxed">
-                      Inner = top matches. Outer = extended.
-                      <br />
-                      Colors = primary genre. Click to explore.
-                    </div>
-                  </div>
-                  {genreList.length > 0 && (
-                    <div className="mt-5">
-                      <GenreMap genreList={genreList} similar={similar} />
-                    </div>
-                  )}
+          {/* Sidebar Column */}
+          <aside className="lg:col-span-4 space-y-10">
+            {/* Relational Constellation Section - Moved to sidebar */}
+            <section className="border border-white/5 bg-white/[0.01]">
+              <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/[0.02]">
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-mono text-white/40 uppercase tracking-[0.15em]">Relational_Constellation</span>
                 </div>
-              )}
+                <GraphModeDropdown value={graphMode} onChange={setGraphMode} />
+              </div>
+
+              <div className={`relative bg-shift5-dark transition-all duration-700 overflow-hidden ${constellationExpanded ? 'h-[600px]' : 'h-[350px]'}`}>
+                <GraphSwitch
+                  center={artistName}
+                  centerGenres={artistInfo?.genres}
+                  similar={constellationData}
+                  onExplore={handleExplore}
+                  onHover={setHighlightedId}
+                  highlightedId={highlightedId}
+                  mode={graphMode}
+                />
+
+                <div className="absolute inset-0 pointer-events-none border border-white/5 m-px z-10" />
+
+                <button
+                  onClick={() => setConstellationExpanded(!constellationExpanded)}
+                  className="absolute bottom-4 right-4 z-20 bg-shift5-dark/90 border border-white/10 px-3 py-1.5 text-[9px] font-mono hover:text-shift5-orange transition-colors uppercase tracking-widest backdrop-blur-sm pointer-events-auto"
+                >
+                  [{constellationExpanded ? 'REDUCE_FRM' : 'EXPAND_FRM'}]
+                </button>
+              </div>
+            </section>
+            {/* Primary Artist Stats - Light Gray Theme for 'Block' Contrast */}
+            <div className="border border-white/5 p-8 bg-shift5-light text-shift5-dark">
+              <div className="text-[10px] font-mono text-shift5-dark/40 uppercase mb-8 tracking-[0.3em] border-b border-shift5-dark/10 pb-2 font-bold">Central_Node_Assets</div>
+
+              <div className="p-4 border border-shift5-dark/5 bg-shift5-dark/5">
+                <GenreMap genreList={genreList} similar={similar} />
+              </div>
             </div>
-          </>
-        )}
-      </div>
-      <Toast message={toastMessage} onDone={() => setToastMessage(null)} />
-    </div>
+
+            {/* Global Context or other widgets could go here */}
+            <div className="hidden lg:block border border-dashed border-white/5 p-6 animate-pulse hover:animate-none group">
+              <div className="text-[9px] font-mono text-shift5-orange/40 uppercase mb-2">System_Nexus_Status</div>
+              <div className="text-[10px] font-mono text-white/10 group-hover:text-white/30 transition-colors uppercase leading-tight">
+                Atlas is monitoring {similar.length} related signal paths. Confidence threshold set to optimal. Background reconnaissance active.
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      <Footer />
+      {toastMessage && <Toast message={toastMessage} onDone={() => setToastMessage(null)} />}
+    </div >
   );
 }

@@ -167,11 +167,12 @@ export async function getTagTopArtists(
       image: { "#text": string; size: string }[];
     }) => {
       const rawImg = a.image?.find((img) => img.size === "large")?.["#text"];
+      const isPlaceholder = rawImg?.includes("2a96cbd8b46e442fc41c2b86b821562f");
       return {
         name: a.name,
         mbid: a.mbid || "",
         url: a.url,
-        image: rawImg && rawImg.length > 0 ? rawImg : null,
+        image: rawImg && rawImg.length > 0 && !isPlaceholder ? rawImg : null,
       };
     }
   );

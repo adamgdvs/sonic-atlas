@@ -21,14 +21,16 @@ export default function GenreTag({
   const resolvedHref = href || `/genre/${encodeURIComponent(genre)}`;
 
   const style = {
-    padding: "2px 8px",
-    color: active || isPlaying ? "#FFF" : "black",
-    border: "1px solid black",
-    backgroundColor: active || isPlaying ? "#ff4500" : "white",
-    boxShadow: (active || isPlaying) ? "1px 1px 0 0 black" : "2px 2px 0 0 black",
+    padding: "6px 12px",
+    color: active || isPlaying ? "#FFF" : "rgba(255, 255, 255, 0.5)",
+    border: active || isPlaying ? "1px solid #ff5841" : "1px solid #444",
+    backgroundColor: active || isPlaying ? "#ff5841" : "rgba(255, 255, 255, 0.02)",
+    fontSize: "10px",
+    letterSpacing: "0.1em",
+    fontWeight: "600",
   };
 
-  const wrapperClass = `group inline-flex items-center text-xs font-mono mr-2 mb-2 transition-all duration-75 ${onClick || onPlayClick ? "hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_black]" : ""} ${active || isPlaying ? "translate-x-[1px] translate-y-[1px] shadow-[1px_1px_0_0_black]" : ""}`;
+  const wrapperClass = `group inline-flex items-center font-mono mr-2 mb-2 transition-all duration-300 uppercase ${onClick || onPlayClick ? "cursor-pointer hover:border-white/50 hover:bg-white/5 hover:text-white" : ""} ${active || isPlaying ? "shadow-[0_0_20px_rgba(255,88,65,0.3)] contrast-125" : ""}`;
 
 
   // If we have an onPlayClick handler, we split the button into a "play" text region and a "navigate" icon
@@ -37,20 +39,22 @@ export default function GenreTag({
       <div className={wrapperClass} style={style}>
         <span
           onClick={() => onPlayClick(genre)}
-          className="cursor-pointer flex items-center gap-1"
+          className="flex items-center gap-2"
         >
           {isPlaying ? (
-            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-          ) : null}
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+          ) : (
+            <span className="w-1 h-1 bg-white/20 rounded-full group-hover:bg-shift5-orange transition-colors" />
+          )}
           {genre}
         </span>
         {resolvedHref && (
           <Link
             href={resolvedHref}
-            className="w-5 opacity-100 ml-1 pl-1 border-l border-current cursor-pointer no-underline flex items-center justify-center whitespace-nowrap hover:text-[#ff4500] transition-colors"
+            className="opacity-40 hover:opacity-100 ml-2 pl-2 border-l border-white/10 cursor-pointer no-underline flex items-center justify-center whitespace-nowrap transition-all"
             title="Explore Genre"
           >
-            →
+            [DIVE]
           </Link>
         )}
       </div>
@@ -69,7 +73,7 @@ export default function GenreTag({
   return (
     <span
       onClick={() => onClick && onClick(genre)}
-      className={`${wrapperClass} ${onClick ? 'cursor-pointer' : ''}`}
+      className={wrapperClass}
       style={style}
     >
       {genre}

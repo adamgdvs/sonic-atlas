@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useAudio } from "@/contexts/AudioContext";
 import { getSimilarArtists, getArtistPreviewData } from "@/lib/api";
 import { Play, Pause, X, Radio } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function GlobalPlayer() {
     const {
@@ -105,20 +106,42 @@ export default function GlobalPlayer() {
                     />
                 </div>
 
-                {/* Art */}
-                <div className={`w-14 h-14 rounded-full overflow-hidden shrink-0 bg-[#F0F0F0] border border-[#E5E5E5] flex items-center justify-center ${isPlaying ? 'animate-[spin_8s_linear_infinite]' : ''}`}>
-                    {currentTrack.coverUrl ? (
-                        <Image
-                            src={currentTrack.coverUrl}
-                            alt={currentTrack.title}
-                            width={56}
-                            height={56}
-                            className="object-cover w-full h-full"
-                            unoptimized
-                        />
-                    ) : (
-                        <div className="text-[10px] text-[#C4C4C4] font-medium tracking-tighter">♪</div>
-                    )}
+                {/* Art - Vinyl Record Style */}
+                <div className="relative group shrink-0">
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#E5E5E5] shadow-lg relative bg-[#F0F0F0]" style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}>
+                        <motion.div
+                            animate={isPlaying ? { rotate: 360 } : { rotate: 0 }}
+                            transition={isPlaying ? { duration: 8, repeat: Infinity, ease: "linear" } : { duration: 0.5 }}
+                            className="w-full h-full flex items-center justify-center relative rounded-full"
+                            style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
+                        >
+                            {currentTrack.coverUrl ? (
+                                <img
+                                    src={currentTrack.coverUrl}
+                                    alt={currentTrack.title}
+                                    className="object-cover w-full h-full rounded-full"
+                                    style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
+                                />
+                            ) : (
+                                <div className="text-[10px] text-[#C4C4C4] font-medium tracking-tighter">♪</div>
+                            )}
+
+                            {/* Vinyl Grooves Effect */}
+                            <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.05)_41%,transparent_42%,rgba(0,0,0,0.05)_43%,transparent_44%)] pointer-events-none opacity-50 rounded-full" />
+
+                            {/* Center Label (The white part of the record) */}
+                            <div
+                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white/90 rounded-full z-10 shadow-sm flex items-center justify-center"
+                                style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
+                            >
+                                {/* Actual Hole */}
+                                <div
+                                    className="w-1.5 h-1.5 bg-gray-200 rounded-full shadow-inner border border-black/5"
+                                    style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
+                                />
+                            </div>
+                        </motion.div>
+                    </div>
                 </div>
 
                 {/* Track Info */}

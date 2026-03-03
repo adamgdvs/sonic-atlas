@@ -55,7 +55,10 @@ export default function SearchBar({
   };
 
   return (
-    <div className="relative">
+    <div className="relative group/search">
+      <div className={`absolute -top-6 left-0 text-[10px] font-mono transition-opacity duration-300 ${focused ? 'opacity-100 text-shift5-orange' : 'opacity-40 text-white/50'}`}>
+        {loading ? 'SCN//SCANNING_ARRAY...' : 'SYS//READY_FOR_INPUT'}
+      </div>
       <input
         ref={inputRef}
         value={query}
@@ -67,60 +70,67 @@ export default function SearchBar({
         }}
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 200)}
-        placeholder={compact ? "SEARCH ANOTHER ARTIST..." : "ARTIST NAME..."}
-        className="w-full outline-none text-black font-mono transition-none placeholder:text-gray-500 uppercase"
+        placeholder={compact ? "NEXT_RECON..." : "SIG_IDENT_INPUT..."}
+        className="w-full outline-none text-white font-mono transition-all duration-300 placeholder:text-white/20 uppercase tracking-wider"
         style={{
-          padding: compact ? "10px 16px" : "14px 20px",
-          fontSize: compact ? "14px" : "16px",
-          fontWeight: 600,
-          border: "1px solid black",
-          backgroundColor: focused ? "white" : (compact ? "#e6e6e6" : "white"),
-          boxShadow: focused ? "2px 2px 0 0 black" : "inset 1px 1px 0 0 black",
+          padding: compact ? "12px 16px" : "16px 20px",
+          fontSize: compact ? "13px" : "15px",
+          fontWeight: 500,
+          border: focused ? "1px solid #ff5841" : "1px solid #333",
+          backgroundColor: focused ? "#212121" : (compact ? "#1a1a1a" : "#1a1a1a"),
+          boxShadow: focused ? "0 0 15px rgba(255, 88, 65, 0.1)" : "none",
         }}
       />
       {focused && (results.length > 0 || loading) && (
-        <div className="absolute top-full left-0 right-0 bg-white border border-black border-t-0 z-10 shadow-[2px_2px_0_0_black]">
+        <div className="absolute top-full left-0 right-0 bg-shift5-gray border border-shift5-orange/30 border-t-0 z-50 shadow-2xl backdrop-blur-md">
           {loading && results.length === 0 && (
-            <div className="px-4 py-3 text-xs text-black font-mono">
-              SEARCHING...
+            <div className="px-4 py-8 text-[11px] text-shift5-orange font-mono animate-pulse flex flex-col items-center gap-2">
+              <div className="w-12 h-1 bg-shift5-orange/20 overflow-hidden relative">
+                <div className="absolute inset-y-0 left-0 bg-shift5-orange w-1/3 animate-[loading-scan_1s_infinite]" />
+              </div>
+              RUNNING_RECONNAISSANCE...
             </div>
           )}
           {results.map((r, i) => (
             <div
               key={`${r.type}-${r.name}-${i}`}
               onClick={() => handleSelect(r)}
-              className="flex items-center gap-2.5 cursor-pointer hover:bg-black hover:text-white group border-b border-dashed border-black last:border-b-0"
-              style={{ padding: "10px 16px", fontSize: "14px" }}
+              className="flex items-center gap-4 cursor-pointer hover:bg-white/5 group border-b border-white/5 last:border-b-0 transition-colors"
+              style={{ padding: "12px 16px", fontSize: "13px" }}
             >
               {r.type === "artist" ? (
-                <div className="border border-black bg-white shrink-0 group-hover:border-white">
-                  <ArtistInitials name={r.name} size={compact ? 24 : 28} />
+                <div className="border border-white/10 shrink-0 group-hover:border-shift5-orange/50 transition-colors">
+                  <ArtistInitials name={r.name} size={compact ? 28 : 32} />
                 </div>
               ) : (
                 <div
-                  className="flex items-center justify-center border border-black shrink-0 group-hover:border-white"
+                  className="flex items-center justify-center border border-white/10 shrink-0 group-hover:border-shift5-orange/50 transition-colors"
                   style={{
-                    width: compact ? 24 : 28,
-                    height: compact ? 24 : 28,
-                    backgroundColor: "black",
-                    color: "white"
+                    width: compact ? 28 : 32,
+                    height: compact ? 28 : 32,
+                    backgroundColor: "#1a1a1a",
+                    color: "#ff5841"
                   }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
                     <line x1="7" y1="7" x2="7.01" y2="7"></line>
                   </svg>
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <div className="font-bold text-black group-hover:text-[#ff4500] truncate uppercase font-mono tracking-tighter">
+                <div className="font-bold text-white group-hover:text-shift5-orange truncate uppercase font-mono tracking-tight transition-colors">
                   {r.name}
                 </div>
                 {!compact && (
-                  <div className="text-[11px] text-gray-500 group-hover:text-gray-300 truncate uppercase font-mono">
-                    {r.type}
+                  <div className="text-[10px] text-white/30 group-hover:text-white/50 truncate uppercase font-mono tracking-widest transition-colors flex items-center gap-2">
+                    <span className="w-1 h-1 bg-white/10 rounded-full" />
+                    SIG_TYPE_{r.type}
                   </div>
                 )}
+              </div>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity text-shift5-orange font-mono text-[10px]">
+                [SELECT]
               </div>
             </div>
           ))}
