@@ -938,7 +938,7 @@ export default function ArtistPage({
               <div>
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-[10px] font-mono text-shift5-dark uppercase tracking-[0.3em] font-bold bg-white/20 px-2 py-0.5">Active_Node // {artistInfo?.deezerId || 'IDENT_PENDING'}</span>
-                  <StreamingLinks artistName={artistName} size={20} />
+                  <StreamingLinks artistName={artistName} size={20} isHero={true} />
                 </div>
                 <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold uppercase tracking-tighter leading-none mb-4 selection:bg-shift5-dark selection:text-white break-words">
                   {artistName}
