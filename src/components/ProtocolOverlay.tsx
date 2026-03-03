@@ -47,40 +47,40 @@ export default function ProtocolOverlay({ isOpen, onClose }: ProtocolOverlayProp
                         animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20, x: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="absolute top-24 right-6 w-full max-w-[400px] bg-[#dcdcdc] shadow-2xl overflow-hidden border border-black/5 pointer-events-auto"
+                        className="absolute top-24 right-6 w-full max-w-[340px] bg-[#dcdcdc] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] overflow-hidden border border-black/5 pointer-events-auto rounded-[2.5rem]"
                     >
                         {/* Header / Close */}
-                        <div className="p-6 pb-2 flex justify-end">
+                        <div className="p-5 pb-0 flex justify-end">
                             <button
                                 onClick={onClose}
                                 className="flex items-center gap-2 text-shift5-dark/60 hover:text-shift5-dark transition-colors group"
                             >
-                                <X size={14} className="group-hover:rotate-90 transition-transform duration-300" />
-                                <span className="text-[9px] font-mono font-bold tracking-[0.2em] uppercase">Close</span>
+                                <X size={12} className="group-hover:rotate-90 transition-transform duration-300" />
+                                <span className="text-[8px] font-mono font-bold tracking-[0.2em] uppercase">Close</span>
                             </button>
                         </div>
 
                         {/* Navigation Section */}
-                        <div className="px-10 py-6">
-                            <nav className="space-y-4">
+                        <div className="px-8 py-4">
+                            <nav className="space-y-3">
                                 {tabs.map((tab, idx) => {
                                     return (
                                         <button
                                             key={tab.id}
                                             onClick={() => setActiveTab(tab.id)}
                                             className={`block w-full text-left group transition-all duration-300 ${activeTab === tab.id
-                                                    ? "text-shift5-dark"
-                                                    : "text-shift5-dark/35 hover:text-shift5-dark/60"
+                                                ? "text-shift5-dark scale-[1.02]"
+                                                : "text-shift5-dark/30 hover:text-shift5-dark/50"
                                                 }`}
                                         >
-                                            <div className="flex items-start gap-1">
-                                                <span className="text-3xl sm:text-5xl font-black uppercase tracking-tighter leading-[0.85]">
+                                            <div className="flex items-start gap-0.5">
+                                                <span className="text-3xl sm:text-4xl font-extrabold font-sans uppercase tracking-tighter leading-[0.8]">
                                                     {tab.id === "VIBE" && "Platform"}
                                                     {tab.id === "PATH" && "Journey"}
                                                     {tab.id === "DIAG" && "Systems"}
                                                     {tab.id === "LABS" && "Insights"}
                                                 </span>
-                                                <span className="text-[10px] font-mono font-bold mt-0.5 text-shift5-orange">
+                                                <span className="text-[9px] font-mono font-bold mt-0 text-shift5-orange">
                                                     {idx + 1}
                                                 </span>
                                             </div>
@@ -91,7 +91,7 @@ export default function ProtocolOverlay({ isOpen, onClose }: ProtocolOverlayProp
                         </div>
 
                         {/* Bottom Content / Details */}
-                        <div className="px-10 py-8 border-t border-black/5 bg-black/5 min-h-[120px] flex flex-col justify-center">
+                        <div className="px-8 py-6 border-t border-black/5 bg-black/[0.03] min-h-[100px] flex flex-col justify-center">
                             <AnimatePresence mode="wait">
                                 {activeTab === "VIBE" && (
                                     <motion.div

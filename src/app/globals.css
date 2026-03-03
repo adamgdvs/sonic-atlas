@@ -10,16 +10,17 @@
 
   --color-background: var(--color-shift5-dark);
   --color-foreground: #ffffff;
-  --font-sans: var(--font-roboto-mono);
-  /* Primarily mono for technical feel */
-  --font-mono: var(--font-roboto-mono);
-  --font-retro: var(--font-vt323);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-space-mono);
 
   --spacing-18: 4.5rem;
 }
 
 * {
   box-sizing: border-box;
+}
+
+.no-round {
   border-radius: 0 !important;
 }
 

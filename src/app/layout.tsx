@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
-import { Roboto_Mono, VT323 } from "next/font/google";
+import { Inter, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { GlobalProviders } from "@/providers/GlobalProviders";
 
-const robotoMono = Roboto_Mono({
-  variable: "--font-roboto-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
 });
 
-const vt323 = VT323({
-  variable: "--font-vt323",
+const spaceMono = Space_Mono({
+  variable: "--font-space-mono",
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -28,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${robotoMono.variable} ${vt323.variable} antialiased`}>
+      <body className={`${inter.variable} ${spaceMono.variable} antialiased`}>
         <GlobalProviders>
           {children}
         </GlobalProviders>
