@@ -24,17 +24,17 @@ export default function Header() {
         </Link>
         <div className="flex items-center gap-4 sm:gap-6 text-[10px] text-white/50 font-mono uppercase tracking-[0.05em]">
           <button
-            onClick={() => setIsProtocolOpen(true)}
+            onClick={() => setIsProtocolOpen(!isProtocolOpen)}
             className="hidden md:flex items-center gap-3 mr-4 border-r border-shift5-accent pr-6 group hover:text-white transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-shift5-orange animate-pulse" />
-              SYSTEM_STATUS
+              <span className={`w-1.5 h-1.5 rounded-full ${isProtocolOpen ? 'bg-shift5-orange scale-125' : 'bg-shift5-orange animate-pulse'}`} />
+              {isProtocolOpen ? 'HIDE_PROTOCOL' : 'SYSTEM_STATUS'}
             </span>
             <span className="text-white/20">|</span>
             <span className="flex items-center gap-2">
-              <Terminal size={12} className="text-shift5-orange group-hover:animate-pulse" />
-              OPS: OK
+              <Terminal size={12} className={`text-shift5-orange ${isProtocolOpen ? 'animate-pulse' : 'group-hover:animate-pulse'}`} />
+              {isProtocolOpen ? 'TERM_ACTIVE' : 'OPS: OK'}
             </span>
           </button>
 
