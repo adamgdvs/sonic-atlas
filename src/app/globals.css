@@ -10,7 +10,7 @@
 
   --color-background: var(--color-shift5-dark);
   --color-foreground: #ffffff;
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-non-sans);
   --font-mono: var(--font-space-mono);
 
   --spacing-18: 4.5rem;

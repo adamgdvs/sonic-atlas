@@ -47,7 +47,7 @@ export default function ProtocolOverlay({ isOpen, onClose }: ProtocolOverlayProp
                         animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20, x: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="absolute top-24 right-6 w-full max-w-[340px] bg-[#dcdcdc] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] overflow-hidden border border-black/5 pointer-events-auto rounded-[2.5rem]"
+                        className="absolute top-24 right-6 w-full max-w-[340px] bg-[#dcdcdc] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] overflow-hidden border border-black/5 pointer-events-auto rounded-2xl"
                     >
                         {/* Header / Close */}
                         <div className="p-5 pb-0 flex justify-end">
@@ -62,19 +62,19 @@ export default function ProtocolOverlay({ isOpen, onClose }: ProtocolOverlayProp
 
                         {/* Navigation Section */}
                         <div className="px-8 py-4">
-                            <nav className="space-y-3">
+                            <nav className="space-y-2">
                                 {tabs.map((tab, idx) => {
                                     return (
                                         <button
                                             key={tab.id}
                                             onClick={() => setActiveTab(tab.id)}
                                             className={`block w-full text-left group transition-all duration-300 ${activeTab === tab.id
-                                                ? "text-shift5-dark scale-[1.02]"
+                                                ? "text-shift5-dark translate-x-1"
                                                 : "text-shift5-dark/30 hover:text-shift5-dark/50"
                                                 }`}
                                         >
                                             <div className="flex items-start gap-0.5">
-                                                <span className="text-3xl sm:text-4xl font-extrabold font-sans uppercase tracking-tighter leading-[0.8]">
+                                                <span className="text-4xl sm:text-5xl font-medium font-sans uppercase tracking-tight leading-[0.95]">
                                                     {tab.id === "VIBE" && "Platform"}
                                                     {tab.id === "PATH" && "Journey"}
                                                     {tab.id === "DIAG" && "Systems"}

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Inter, Space_Mono } from "next/font/google";
+import localFont from "next/font/local";
+import { Space_Mono } from "next/font/google";
 import "./globals.css";
 import { GlobalProviders } from "@/providers/GlobalProviders";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+const nonSans = localFont({
+  src: "../../public/fonts/NON-Sans-Medium.woff2",
+  variable: "--font-non-sans",
 });
 
 const spaceMono = Space_Mono({
@@ -27,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${spaceMono.variable} antialiased`}>
+      <body className={`${nonSans.variable} ${spaceMono.variable} antialiased`}>
         <GlobalProviders>
           {children}
         </GlobalProviders>
