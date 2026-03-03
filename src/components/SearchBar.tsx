@@ -8,10 +8,12 @@ export default function SearchBar({
   onSelectArtist,
   onSelectGenre,
   compact,
+  headerMode,
 }: {
   onSelectArtist: (name: string) => void;
   onSelectGenre?: (name: string) => void;
   compact?: boolean;
+  headerMode?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -55,10 +57,12 @@ export default function SearchBar({
   };
 
   return (
-    <div className="relative group/search">
-      <div className={`absolute -top-6 left-0 text-[10px] font-mono transition-opacity duration-300 ${focused ? 'opacity-100 text-shift5-orange' : 'opacity-40 text-white/50'}`}>
-        {loading ? 'SCN//SCANNING_ARRAY...' : 'SYS//READY_FOR_INPUT'}
-      </div>
+    <div className={`relative group/search ${headerMode ? 'w-full' : ''}`}>
+      {!headerMode && (
+        <div className={`absolute -top-6 left-0 text-[10px] font-mono transition-opacity duration-300 ${focused ? 'opacity-100 text-shift5-orange' : 'opacity-40 text-white/50'}`}>
+          {loading ? 'SCN//SCANNING_ARRAY...' : 'SYS//READY_FOR_INPUT'}
+        </div>
+      )}
       <input
         ref={inputRef}
         value={query}
@@ -70,15 +74,15 @@ export default function SearchBar({
         }}
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 200)}
-        placeholder={compact ? "NEXT_RECON..." : "SIG_IDENT_INPUT..."}
-        className="w-full outline-none text-white font-mono transition-all duration-300 placeholder:text-white/20 uppercase tracking-wider"
+        placeholder={headerMode ? "SCAN_ID..." : (compact ? "NEXT_RECON..." : "SIG_IDENT_INPUT...")}
+        className={`w-full outline-none text-white font-mono transition-all duration-300 placeholder:text-white/20 uppercase tracking-wider ${headerMode ? 'border-b border-white/10 focus:border-shift5-orange' : 'border'}`}
         style={{
-          padding: compact ? "12px 16px" : "16px 20px",
-          fontSize: compact ? "13px" : "15px",
+          padding: headerMode ? "8px 12px" : (compact ? "12px 16px" : "16px 20px"),
+          fontSize: headerMode ? "11px" : (compact ? "13px" : "15px"),
           fontWeight: 500,
-          border: focused ? "1px solid #ff5841" : "1px solid #333",
-          backgroundColor: focused ? "#212121" : (compact ? "#1a1a1a" : "#1a1a1a"),
-          boxShadow: focused ? "0 0 15px rgba(255, 88, 65, 0.1)" : "none",
+          border: headerMode ? undefined : (focused ? "1px solid #ff5841" : "1px solid #333"),
+          backgroundColor: headerMode ? "transparent" : (focused ? "#212121" : "#1a1a1a"),
+          boxShadow: focused && !headerMode ? "0 0 15px rgba(255, 88, 65, 0.1)" : "none",
         }}
       />
       {focused && (results.length > 0 || loading) && (

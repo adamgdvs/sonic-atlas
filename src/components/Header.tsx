@@ -2,27 +2,46 @@
 
 import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState } from "react";
-import { Menu, Terminal } from "lucide-react";
+import { Terminal } from "lucide-react";
 import ProtocolOverlay from "./ProtocolOverlay";
+import SearchBar from "./SearchBar";
 
 export default function Header() {
   const { data: session } = useSession();
   const [isProtocolOpen, setIsProtocolOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const isHome = pathname === "/";
 
   return (
     <>
-      <header className="border-b-2 border-shift5-accent bg-shift5-dark h-16 flex items-center justify-between px-6 sm:px-12 z-50 relative">
-        <Link href="/" className="flex items-center gap-3 no-underline group">
-          <div className="w-4 h-4 bg-shift5-orange border-2 border-white/20 group-hover:scale-125 transition-all duration-300 shadow-[0_0_10px_rgba(255,88,65,0.4)]" />
-          <span
-            className="text-[14px] sm:text-[16px] font-black text-white font-mono uppercase tracking-[0.2em] group-hover:text-shift5-orange transition-colors truncate"
-          >
-            sonic_//_atlas
-          </span>
-        </Link>
-        <div className="flex items-center gap-4 sm:gap-6 text-[10px] text-white/50 font-mono uppercase tracking-[0.05em]">
+      <header className="border-b-2 border-shift5-accent bg-shift5-dark h-16 flex items-center justify-between px-6 sm:px-12 z-50 relative gap-8">
+        <div className="flex items-center gap-8 flex-1 min-w-0">
+          <Link href="/" className="flex items-center gap-3 no-underline group shrink-0">
+            <div className="w-4 h-4 bg-shift5-orange border-2 border-white/20 group-hover:scale-125 transition-all duration-300 shadow-[0_0_10px_rgba(255,88,65,0.4)]" />
+            <span
+              className="text-[14px] sm:text-[16px] font-black text-white font-mono uppercase tracking-[0.2em] group-hover:text-shift5-orange transition-colors truncate"
+            >
+              sonic_//_atlas
+            </span>
+          </Link>
+
+          {!isHome && (
+            <div className="hidden lg:block w-full max-w-[320px] animate-fade-in">
+              <SearchBar
+                headerMode
+                onSelectArtist={(name) => router.push(`/artist/${encodeURIComponent(name)}`)}
+                onSelectGenre={(name) => router.push(`/genre/${encodeURIComponent(name)}`)}
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-4 sm:gap-6 text-[10px] text-white/50 font-mono uppercase tracking-[0.05em] shrink-0">
           <button
             onClick={() => setIsProtocolOpen(!isProtocolOpen)}
             className="hidden md:flex items-center gap-3 mr-4 border-r border-shift5-accent pr-6 group hover:text-white transition-colors cursor-pointer"
