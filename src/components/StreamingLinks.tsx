@@ -43,7 +43,7 @@ export default function StreamingLinks({ artistName, className = "", size = 20 }
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center bg-transparent text-[#9CA3AF] hover:text-[#1D1D1F] hover:bg-[#F0F0F0] transition-colors rounded-full cursor-pointer"
+                    className="flex items-center justify-center bg-white text-black hover:bg-white/80 transition-all rounded-full cursor-pointer shadow-sm active:scale-95"
                     style={{ width: size, height: size }}
                     title={`Open in ${link.name}`}
                     onClick={(e) => e.stopPropagation()}
