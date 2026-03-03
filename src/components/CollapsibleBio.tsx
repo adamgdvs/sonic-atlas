@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { truncateBio } from "@/lib/utils";
+import { truncateBio, stripHtml } from "@/lib/utils";
 
 interface CollapsibleBioProps {
     bio: string;
@@ -12,11 +12,12 @@ interface CollapsibleBioProps {
 }
 
 export default function CollapsibleBio({
-    bio,
+    bio: rawBio,
     maxLen = 260,
     className = "",
     theme = "dark",
 }: CollapsibleBioProps) {
+    const bio = stripHtml(rawBio);
     const [isExpanded, setIsExpanded] = useState(false);
     const isLong = bio.length > maxLen;
 

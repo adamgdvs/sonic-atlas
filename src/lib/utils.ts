@@ -37,11 +37,21 @@ export function getNameHue(name: string): number {
 
 export function stripHtml(html: string): string {
   if (!html) return "";
-  // Remove Last.fm "Read more" links specifically
-  const withoutLastFm = html.replace(/<a\s+href="https:\/\/www\.last\.fm\/music\/[^>]+>Read more on Last\.fm<\/a>/gi, "");
-  const withoutGenericLastFm = withoutLastFm.replace(/Read more on Last\.fm/gi, "");
-  // Remove all other HTML tags
-  return withoutGenericLastFm.replace(/<[^>]*>/g, "").trim();
+
+  // 1. Remove Last.fm specific links and text (case-insensitive)
+  let clean = html.replace(/<a\s+[^>]*>Read more on Last\.fm<\/a>/gi, "");
+  clean = clean.replace(/Read more on Last\.fm/gi, "");
+
+  // 2. Remove all generic <a> tags and their content if they look like "Read more" links
+  clean = clean.replace(/<a\s+[^>]*>.*?<\/a>/gi, "");
+
+  // 3. Remove any remaining URLs (http/https)
+  clean = clean.replace(/https?:\/\/[^\s<>"]+/gi, "");
+
+  // 4. Strip all remaining HTML tags
+  clean = clean.replace(/<[^>]*>/g, "");
+
+  return clean.trim();
 }
 
 export function truncateBio(bio: string, maxLen = 200): string {
