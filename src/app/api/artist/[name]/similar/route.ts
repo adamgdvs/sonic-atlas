@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSimilarArtists, getTopTags } from "@/lib/lastfm";
 import { getArtistImage } from "@/lib/deezer";
 import { parseGenres } from "@/lib/genreUtils";
+import { getDiscogsGenres } from "@/lib/discogs";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -21,7 +22,7 @@ export async function GET(
     const similar = await getSimilarArtists(artistName, limit);
 
     // Enrich artists with genres + Deezer image in batches of 5
-    // to respect Deezer rate limits (~50 req/5s)
+    // Phase 23: Adding Discogs enrichment for hierarchical genres
     const enriched = [];
     const artists = similar.slice(0, limit);
     for (let i = 0; i < artists.length; i += 5) {
@@ -29,17 +30,20 @@ export async function GET(
       const batch = artists.slice(i, i + 5);
       const results = await Promise.all(
         batch.map(async (artist) => {
-          const [tagsResult, imageResult] = await Promise.allSettled([
+          const [tagsResult, imageResult, discogsResult] = await Promise.allSettled([
             getTopTags(artist.name),
             getArtistImage(artist.name),
+            getDiscogsGenres(artist.name)
           ]);
 
           const tags =
             tagsResult.status === "fulfilled" ? tagsResult.value : [];
           const image =
             imageResult.status === "fulfilled" ? imageResult.value : null;
+          const discogs =
+            discogsResult.status === "fulfilled" ? discogsResult.value : { genres: [], styles: [] };
 
-          const genres = parseGenres(tags, 1);
+          const genres = parseGenres(tags, 1, discogs.genres, discogs.styles);
 
           return { ...artist, genres, image: image || artist.image };
         })
@@ -48,6 +52,7 @@ export async function GET(
     }
 
     return NextResponse.json({ similar: enriched });
+
   } catch (error) {
     console.error("Similar artists error:", error);
     return NextResponse.json(

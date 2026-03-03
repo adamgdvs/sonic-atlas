@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchArtist, getArtistDetails } from "@/lib/deezer";
-import { getArtistInfo } from "@/lib/lastfm";
-import { getTopTags } from "@/lib/lastfm";
+import { getArtistInfo, getTopTags } from "@/lib/lastfm";
 import { parseGenres } from "@/lib/genreUtils";
+import { searchDiscogsArtist, getDiscogsArtistDetails, getDiscogsGenres } from "@/lib/discogs";
 
 export async function GET(
   _request: NextRequest,
@@ -12,32 +12,46 @@ export async function GET(
   const artistName = name;
 
   try {
-    // Fetch from Deezer and Last.fm in parallel
-    const [deezerResult, lastfmResult, tagsResult] = await Promise.allSettled([
+    // Fetch from all sources in parallel
+    const [deezerRes, lastfmRes, tagsRes, discogsGenresRes] = await Promise.allSettled([
       searchArtist(artistName).then(async (a) => {
         if (!a) return null;
         return getArtistDetails(a.id);
       }),
       getArtistInfo(artistName),
       getTopTags(artistName),
+      getDiscogsGenres(artistName)
     ]);
 
-    const deezer =
-      deezerResult.status === "fulfilled" ? deezerResult.value : null;
-    const lastfm =
-      lastfmResult.status === "fulfilled" ? lastfmResult.value : null;
-    const tags =
-      tagsResult.status === "fulfilled" ? tagsResult.value : [];
+    const deezer = deezerRes.status === "fulfilled" ? deezerRes.value : null;
+    const lastfm = lastfmRes.status === "fulfilled" ? lastfmRes.value : null;
+    const tags = tagsRes.status === "fulfilled" ? tagsRes.value : [];
+    const discogsG = discogsGenresRes.status === "fulfilled" ? discogsGenresRes.value : { genres: [], styles: [] };
 
-    // --- Phase 9: Genre Classification Engine ---
-    const genres = parseGenres(tags, 1);
+    // Fetch deep Discogs details (bio/metadata) if we have a match
+    let discogsArtist = null;
+    const discogsId = await searchDiscogsArtist(artistName);
+    if (discogsId) {
+      discogsArtist = await getDiscogsArtistDetails(discogsId);
+    }
 
-    // --- Extract Metadata Scans ---
-    const bioText = lastfm?.bio || "";
+    // --- Phase 23: Genre Classification Engine (Discogs Hierarchical) ---
+    const genres = parseGenres(tags, 1, discogsG.genres, discogsG.styles);
+
+    // --- Metadata Scans ---
+    const rawBioText = lastfm?.bio || "";
+    const discogsBio = discogsArtist?.profile || "";
+
+    // Use Discogs bio if available, as it's often more "dossier-like"
+    const bioText = discogsBio && discogsBio.length > 50 ? discogsBio : rawBioText;
+
+    // --- Extract Year Started ---
     const yearMatch = bioText.match(/\b(19|20)\d{2}\b/);
     const yearStarted = yearMatch ? yearMatch[0] : null;
 
-    // Simple location extraction (very rough, usually follows "from " or "formed in ")
+    // --- Location Extraction (Discogs override available in some cases) ---
+    // Note: Discogs doesn't have a direct 'location' field on the Artist object standard, 
+    // but sometimes it's in the profile. We'll keep the current logic but clean it.
     let location = null;
     const fromMatch = bioText.match(/from ([\w\s,]+)\./);
     const formedMatch = bioText.match(/formed in ([\w\s,]+)\./i);
@@ -56,7 +70,9 @@ export async function GET(
       nbFans: deezer?.nb_fan || 0,
       location,
       yearStarted,
+      discogsId: discogsId || null
     });
+
   } catch (error) {
     console.error("Artist info error:", error);
     return NextResponse.json(
