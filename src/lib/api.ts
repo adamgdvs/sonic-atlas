@@ -160,7 +160,7 @@ export interface AlbumTrack {
 }
 
 export async function getTopGenres(
-  limit = 2000
+  limit = 7500
 ): Promise<GenreInfo[]> {
   const res = await fetch(`/api/genres?limit=${limit}`);
   if (!res.ok) return [];

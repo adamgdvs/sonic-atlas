@@ -403,6 +403,7 @@ function SimilarCard({
   bookmarkedArtists,
   bookmarkingIds,
   onToggleBookmark,
+  previewTitle,
 }: {
   artist: SimilarArtistResult;
   index: number;
@@ -425,6 +426,7 @@ function SimilarCard({
   bookmarkedArtists: Set<string>;
   bookmarkingIds: Set<string>;
   onToggleBookmark: (id: string, name: string, img?: string | null, genres?: string[]) => void;
+  previewTitle?: string;
 }) {
   const [hovered, setHovered] = useState(false);
   const accordionRef = useRef<HTMLDivElement>(null);
@@ -492,7 +494,7 @@ function SimilarCard({
         <div className="flex gap-2 items-center sm:items-start sm:pt-1 ml-[68px] sm:ml-0">
           {previewUrl && (
             <button
-              onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, "Preview", artist.name, artist.image, info?.genres))}
+              onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, previewTitle || "Track Preview", artist.name, artist.image, info?.genres))}
               className={`flex items-center justify-center border cursor-pointer transition-all duration-300 shrink-0 ${isPlaying
                 ? "border-shift5-orange bg-shift5-orange text-white"
                 : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white hover:border-white/30"
@@ -647,7 +649,7 @@ export default function ArtistPage({
   const [graphMode, setGraphMode] = useState<GraphMode>("cloud");
   const { playTrack, currentTrack, isPlaying, togglePlayPause } = useAudio();
   const playingUrl = isPlaying ? (currentTrack?.url ?? null) : null;
-  const [previewMap, setPreviewMap] = useState<Record<string, string>>({});
+  const [previewMap, setPreviewMap] = useState<Record<string, { url: string; title: string }>>({});
   const [primaryDiscoOpen, setPrimaryDiscoOpen] = useState(false);
   const [openDisco, setOpenDisco] = useState<string | null>(null);
 
@@ -778,7 +780,12 @@ export default function ArtistPage({
         const results = await Promise.allSettled(
           batch.map(async (a) => {
             const data = await getArtistPreviewData(a.name);
-            return { key: a.mbid || a.name, url: data.tracks[0]?.preview || null };
+            const track = data.tracks[0];
+            return {
+              key: a.mbid || a.name,
+              url: track?.preview || null,
+              title: track?.title || null
+            };
           })
         );
         if (cancelled) return;
@@ -786,7 +793,10 @@ export default function ArtistPage({
           const next = { ...prev };
           for (const r of results) {
             if (r.status === "fulfilled" && r.value.url) {
-              next[r.value.key] = r.value.url;
+              next[r.value.key] = {
+                url: r.value.url,
+                title: r.value.title || "Track Preview"
+              };
             }
           }
           return next;
@@ -1164,7 +1174,8 @@ export default function ArtistPage({
                     onExplore={handleExplore}
                     onHover={setHighlightedId}
                     isHighlighted={highlightedId === (a.mbid || a.name)}
-                    previewUrl={previewMap[a.mbid || a.name]}
+                    previewUrl={previewMap[a.mbid || a.name]?.url}
+                    previewTitle={previewMap[a.mbid || a.name]?.title}
                     isPlaying={isPlaying && currentTrack?.artist === a.name}
                     onPlay={handlePlay}
                     onStop={handleStop}

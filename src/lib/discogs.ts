@@ -111,8 +111,9 @@ export async function getDiscogsArtistReleases(id: number, limit = 50): Promise<
  * or provided in secondary lookups. 
  * Actually, Discogs Search results often include genre/style tags for the artist.
  */
-export async function getDiscogsGenres(name: string): Promise<{ genres: string[]; styles: string[] }> {
-    const url = `${DISCOGS_BASE_URL}/database/search?q=${encodeURIComponent(name)}&type=artist&limit=1`;
+export async function getDiscogsGenres(name: string, limit = 1): Promise<{ genres: string[]; styles: string[] }> {
+    // Search for the artist's master releases using the artist parameter for precision
+    const url = `${DISCOGS_BASE_URL}/database/search?artist=${encodeURIComponent(name)}&type=master&limit=${limit}`;
 
     try {
         const res = await fetch(url, {
@@ -123,14 +124,66 @@ export async function getDiscogsGenres(name: string): Promise<{ genres: string[]
         if (!res.ok) return { genres: [], styles: [] };
 
         const data = await res.json();
-        const result = data.results?.[0];
+        const results = data.results || [];
+
+        const allGenres = new Set<string>();
+        const allStyles = new Set<string>();
+
+        results.forEach((r: any) => {
+            (r.genre || []).forEach((g: string) => allGenres.add(g));
+            (r.style || []).forEach((s: string) => allStyles.add(s));
+        });
 
         return {
-            genres: result?.genre || [],
-            styles: result?.style || [],
+            genres: Array.from(allGenres),
+            styles: Array.from(allStyles),
         };
     } catch (error) {
         console.error("Discogs genre fetch failed:", error);
         return { genres: [], styles: [] };
+    }
+}
+
+/**
+ * Fetch artists for a specific genre/style from Discogs.
+ */
+export async function getDiscogsGenreArtists(genre: string, limit = 100): Promise<{ name: string; resource_url: string }[]> {
+    if (!DISCOGS_KEY || !DISCOGS_SECRET) return [];
+
+    // Increase per_page to discover more unique artists in niche genres
+    const url = `${DISCOGS_BASE_URL}/database/search?q=${encodeURIComponent(genre)}&type=release&per_page=100`;
+
+    try {
+        const res = await fetch(url, {
+            headers: DEFAULT_HEADERS,
+            next: { revalidate: 86400 },
+        });
+
+        if (!res.ok) return [];
+
+        const data = await res.json();
+        const results = data.results || [];
+
+        // Extract unique artists from release titles (e.g. "Artist - Title")
+        const artistMap = new Map<string, string>();
+
+        results.forEach((r: any) => {
+            const titleParts = r.title.split(" - ");
+            if (titleParts.length > 1) {
+                const name = titleParts[0].trim();
+                // Avoid "Various", "Unknown Artist", etc.
+                if (name && !["various", "unknown artist", "unknown"].includes(name.toLowerCase())) {
+                    artistMap.set(name.toLowerCase(), name);
+                }
+            }
+        });
+
+        return Array.from(artistMap.values()).map(name => ({
+            name,
+            resource_url: "" // We don't have a direct artist resource URL here without extra lookups
+        }));
+    } catch (error) {
+        console.error("Discogs genre artists fetch failed:", error);
+        return [];
     }
 }

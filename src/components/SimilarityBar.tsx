@@ -1,4 +1,4 @@
-export default function SimilarityBar({ value }: { value: number }) {
+export default function SimilarityBar({ value, showPercentage = false }: { value: number, showPercentage?: boolean }) {
   const barColor =
     value > 0.85 ? "var(--color-shift5-orange)" : value > 0.7 ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.15)";
 
@@ -14,9 +14,11 @@ export default function SimilarityBar({ value }: { value: number }) {
           }}
         />
       </div>
-      <span className="text-[10px] text-white/30 font-mono tracking-tighter tabular-nums">
-        {Math.round(value * 100)}%
-      </span>
+      {showPercentage && (
+        <span className="text-[10px] text-white/30 font-mono tracking-tighter tabular-nums">
+          {Math.round(value * 100)}%
+        </span>
+      )}
     </div>
   );
 }

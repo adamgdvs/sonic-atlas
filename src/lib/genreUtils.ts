@@ -24,24 +24,70 @@ export function parseGenres(
     discogsGenres: string[] = [],
     discogsStyles: string[] = []
 ): string[] {
-    // 1. If we have Discogs data, use it as the high-confidence source
-    if (discogsGenres.length > 0 || discogsStyles.length > 0) {
-        // We take up to 2 broad genres and 3 specific styles
-        const broad = discogsGenres.map(g => g.toLowerCase()).slice(0, 2);
-        const specific = discogsStyles.map(s => s.toLowerCase()).slice(0, 3);
+    const allCandidates = new Set<string>();
 
-        // Return unique combination
-        return Array.from(new Set([...broad, ...specific]));
-    }
+    // 1. Add Discogs (High Priority)
+    discogsGenres.forEach(g => allCandidates.add(g.toLowerCase()));
+    discogsStyles.forEach(s => allCandidates.add(s.toLowerCase()));
 
-    // 2. Fallback to Last.fm tags logic if Discogs data is unavailable
-    const validTags = tags
-        .filter((t) => t.count >= minCount && !NOISE_FILTER.has(t.name.toLowerCase()))
-        .map((t) => t.name.toLowerCase());
+    // 2. Add Last.fm Tags (High Detail)
+    tags.filter(t => t.count >= minCount && !NOISE_FILTER.has(t.name.toLowerCase()))
+        .forEach(t => allCandidates.add(t.name.toLowerCase()));
 
-    const broadCategories = validTags.filter((t) => BROAD_GENRES.has(t)).slice(0, 2);
-    const nicheCategories = validTags.filter((t) => !BROAD_GENRES.has(t)).slice(0, 3);
+    const validTags = Array.from(allCandidates);
+
+    // Filter into Broad and Niche
+    const broadCategories = validTags.filter((t) => BROAD_GENRES.has(t)).slice(0, 3); // Take up to 3 broad
+    const nicheCategories = validTags.filter((t) => !BROAD_GENRES.has(t)).slice(0, 10); // Take up to 10 niche
 
     return Array.from(new Set([...broadCategories, ...nicheCategories]));
+}
+
+/**
+ * Calculates a similarity score (0-1) between two sets of genres.
+ * Favors niche sub-genres over broad categories.
+ */
+export function calculateGenreSimilarity(source: string[], candidate: string[]): number {
+    if (source.length === 0 || candidate.length === 0) return 0;
+
+    const sourceSet = new Set(source.map(g => g.toLowerCase()));
+    const candidateSet = new Set(candidate.map(g => g.toLowerCase()));
+
+    let score = 0;
+    let matches = 0;
+
+    candidateSet.forEach(genre => {
+        if (sourceSet.has(genre)) {
+            matches++;
+            // Specific styles (not in BROAD_GENRES) provide a MUCH higher weight
+            if (!BROAD_GENRES.has(genre)) {
+                score += 10; // Significant boost for niche overlap
+            } else {
+                score += 1;
+            }
+        }
+    });
+
+    if (matches === 0) return 0;
+
+    // Normalize score. 
+    // We want a high score for even 1-2 niche matches.
+    const maxPotential = sourceSet.size * 5;
+    return Math.min(1, score / maxPotential);
+}
+
+/**
+ * Returns only the niche sub-genres from a list of genres.
+ */
+export function getNicheStyles(genres: string[]): string[] {
+    const BROAD_GENRES_LOCAL = new Set([
+        "rock", "pop", "alternative", "alternative rock", "indie", "indie rock", "indie pop",
+        "electronic", "electronica", "hip-hop", "hip hop", "rap", "r&b", "rnb", "soul", "funk",
+        "jazz", "blues", "metal", "heavy metal", "punk", "punk rock", "folk", "country",
+        "classical", "reggae", "dance", "house", "techno", "trance", "ambient", "acoustic",
+        "instrumental", "singer-songwriter", "world", "latin", "pop rock", "hard rock",
+        "classic rock"
+    ]);
+    return genres.filter(g => !BROAD_GENRES_LOCAL.has(g.toLowerCase()));
 }
 

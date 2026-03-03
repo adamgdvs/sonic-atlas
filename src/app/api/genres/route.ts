@@ -8,10 +8,11 @@ export async function GET(request: Request) {
       "IDM", "Shoegaze", "Trip Hop", "Krautrock", "Post-Punk",
       "Ambient House", "Minimal Techno", "Glitch", "Dream Pop",
       "Indie Rock", "Noise", "Industrial", "Experimental", "Dub",
-      "Techno", "House", "Trance", "Drum and Bass", "Jungle"
+      "Techno", "House", "Trance", "Drum and Bass", "Jungle",
+      "Oxford Indie"
     ].map(s => s.toLowerCase());
 
-    const limit = parseInt(searchParams.get("limit") || "2000");
+    const limit = parseInt(searchParams.get("limit") || "7500");
     const total = genresData.genres.length;
 
     // 1. Evenly distribute selection from the main dataset
