@@ -79,8 +79,9 @@ export default function GenresPage() {
         <div className="mb-12 border-b border-white/5 pb-8">
           <div className="flex items-center gap-3 mb-4">
             <span className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em] bg-shift5-orange/10 px-2 py-0.5 border border-shift5-orange/20">Sector_Catalog</span>
-            <span className="text-[10px] font-mono text-white/20 uppercase tracking-widest whitespace-nowrap">Source: LAST_FM_DATA_STREAM</span>
+            <span className="text-[10px] font-mono text-white/20 uppercase tracking-widest whitespace-nowrap">Source: MULTI_SOURCE_INTELLIGENCE (LAST_FM + DISCOGS)</span>
           </div>
+
 
           <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-tighter leading-none mb-4">Browse Genres</h1>
           <p className="text-[11px] text-white/40 font-mono uppercase tracking-[0.1em]">
@@ -124,7 +125,9 @@ export default function GenresPage() {
                       genre={g.name}
                       onPlayClick={handlePlayGenre}
                       isPlaying={isPlaying && currentTrack?.id === g.name}
+                      isAuthoritative={g.isAuthoritative}
                     />
+
                   ))}
                 </div>
               </div>

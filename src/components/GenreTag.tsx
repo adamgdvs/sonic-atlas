@@ -10,6 +10,7 @@ export default function GenreTag({
   href,
   onPlayClick,
   isPlaying,
+  isAuthoritative,
 }: {
   genre: string;
   onClick?: (genre: string) => void;
@@ -17,18 +18,20 @@ export default function GenreTag({
   href?: string;
   onPlayClick?: (genre: string) => void;
   isPlaying?: boolean;
+  isAuthoritative?: boolean;
 }) {
   const resolvedHref = href || `/genre/${encodeURIComponent(genre)}`;
 
   const style = {
     padding: "6px 12px",
-    color: active || isPlaying ? "#FFF" : "rgba(255, 255, 255, 0.5)",
-    border: active || isPlaying ? "1px solid #ff5841" : "1px solid #444",
-    backgroundColor: active || isPlaying ? "#ff5841" : "rgba(255, 255, 255, 0.02)",
+    color: active || isPlaying || isAuthoritative ? "#FFF" : "rgba(255, 255, 255, 0.5)",
+    border: isAuthoritative ? "1px solid rgba(255, 88, 65, 0.5)" : (active || isPlaying ? "1px solid #ff5841" : "1px solid #444"),
+    backgroundColor: active || isPlaying ? "#ff5841" : (isAuthoritative ? "rgba(255, 88, 65, 0.05)" : "rgba(255, 255, 255, 0.02)"),
     fontSize: "10px",
     letterSpacing: "0.1em",
     fontWeight: "600",
   };
+
 
   const wrapperClass = `group inline-flex items-center font-mono mr-2 mb-2 transition-all duration-300 uppercase ${onClick || onPlayClick ? "cursor-pointer hover:border-white/50 hover:bg-white/5 hover:text-white" : ""} ${active || isPlaying ? "shadow-[0_0_20px_rgba(255,88,65,0.3)] contrast-125" : ""}`;
 
@@ -43,11 +46,14 @@ export default function GenreTag({
         >
           {isPlaying ? (
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+          ) : isAuthoritative ? (
+            <span className="w-1.5 h-1.5 rounded-full bg-shift5-orange shadow-[0_0_8px_rgba(255,88,65,0.8)]" />
           ) : (
             <span className="w-1 h-1 bg-white/20 rounded-full group-hover:bg-shift5-orange transition-colors" />
           )}
           {genre}
         </span>
+
         {resolvedHref && (
           <Link
             href={resolvedHref}

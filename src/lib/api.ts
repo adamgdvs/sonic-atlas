@@ -141,6 +141,7 @@ export async function getDiscography(
 export interface GenreInfo {
   name: string;
   count: number;
+  isAuthoritative?: boolean;
 }
 
 export interface GenreArtist {
