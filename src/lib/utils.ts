@@ -36,7 +36,12 @@ export function getNameHue(name: string): number {
 }
 
 export function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").trim();
+  if (!html) return "";
+  // Remove Last.fm "Read more" links specifically
+  const withoutLastFm = html.replace(/<a\s+href="https:\/\/www\.last\.fm\/music\/[^>]+>Read more on Last\.fm<\/a>/gi, "");
+  const withoutGenericLastFm = withoutLastFm.replace(/Read more on Last\.fm/gi, "");
+  // Remove all other HTML tags
+  return withoutGenericLastFm.replace(/<[^>]*>/g, "").trim();
 }
 
 export function truncateBio(bio: string, maxLen = 200): string {
