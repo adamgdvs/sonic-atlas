@@ -68,9 +68,9 @@ export default function BubbleChart({ similar, highlightedId, onHover, onExplore
 
   return (
     <div className="relative">
-      <svg width={size} height={size} className="block">
+      <svg width={size} height={size} className="block bg-neutral-900/40 rounded-lg">
         {packed.map((node) => {
-          const color = node.genres.length > 0 ? getGenreColor(node.genres[0]) : "#6B7280";
+          const shift5Orange = "#ff5841";
           const isHl = highlightedId === node.id;
           const showLabel = node.r > 10 * scale;
 
@@ -85,8 +85,8 @@ export default function BubbleChart({ similar, highlightedId, onHover, onExplore
               <circle
                 cx={node.x} cy={node.y}
                 r={isHl ? node.r + 2 : node.r}
-                fill={isHl ? `${color}30` : `${color}12`}
-                stroke={color}
+                fill={isHl ? `${shift5Orange}20` : "transparent"}
+                stroke={isHl ? shift5Orange : "#333"}
                 strokeWidth={isHl ? 1.5 : 0.75}
                 style={{ transition: "all 0.15s ease" }}
               />
@@ -96,8 +96,8 @@ export default function BubbleChart({ similar, highlightedId, onHover, onExplore
                   textAnchor="middle" dominantBaseline="central"
                   fontSize={Math.min(node.r * 0.6, 7 * scale)}
                   fontWeight="600"
-                  letterSpacing="0.02em"
-                  fill={isHl ? "#1D1D1F" : color}
+                  fill={isHl ? shift5Orange : "#666"}
+                  fontFamily="'Roboto Mono', monospace"
                   style={{ pointerEvents: "none", transition: "fill 0.15s ease" }}
                 >
                   {getInitials(node.name)}
@@ -107,18 +107,21 @@ export default function BubbleChart({ similar, highlightedId, onHover, onExplore
                 <>
                   <text
                     x={node.x} y={node.y + node.r + 8 * scale}
-                    textAnchor="middle" fontSize={6 * scale} fontWeight="600" fill="#1D1D1F"
+                    textAnchor="middle" fontSize={6 * scale} fontWeight="700"
+                    fill={shift5Orange}
+                    fontFamily="'Roboto Mono', monospace"
                     style={{ pointerEvents: "none" }}
                   >
-                    {node.name}
+                    {node.name.toUpperCase()}
                   </text>
                   <text
                     x={node.x} y={node.y + node.r + 16 * scale}
-                    textAnchor="middle" fontSize={4.5 * scale} fill="#9CA3AF"
+                    textAnchor="middle" fontSize={4.5 * scale}
+                    fill="#444"
                     style={{ pointerEvents: "none" }}
-                    fontFamily="var(--font-dm-mono), monospace"
+                    fontFamily="'Roboto Mono', monospace"
                   >
-                    {node.genres[0] ? `${node.genres[0]} · ` : ""}{Math.round(node.similarity * 100)}%
+                    [{node.genres[0]?.toUpperCase() || "UNKNOWN"}] · {Math.round(node.similarity * 100)}%
                   </text>
                 </>
               )}

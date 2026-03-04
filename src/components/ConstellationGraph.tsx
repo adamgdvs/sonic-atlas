@@ -70,31 +70,17 @@ export default function ConstellationGraph({
     const _links = sorted.map((node) => ({
       source: "CENTER_NODE",
       target: node.id,
-      // higher similarity = shorter distance
-      distance: Math.max(size * 0.15, size * 0.45 * (1 - (node.similarity || 0.5)))
+      // technical radar distance
+      distance: Math.max(size * 0.20, size * 0.48 * (1 - (node.similarity || 0.5)))
     }));
 
-    // Links between similar nodes if they share genres
-    for (let i = 0; i < sorted.length; i++) {
-      for (let j = i + 1; j < sorted.length; j++) {
-        const a = sorted[i];
-        const b = sorted[j];
-        const shared = a.genres.filter(g => b.genres.includes(g)).length;
-        if (shared > 0) {
-          // If they share genres, they should cluster closer
-          _links.push({
-            source: a.id,
-            target: b.id,
-            distance: size * 0.2
-          });
-        }
-      }
-    }
+    // NO secondary links between similar nodes to reduce visual noise
 
     const simulation = d3.forceSimulation(_nodes)
-      .force("link", d3.forceLink(_links).id((d: any) => d.id).distance((d: any) => d.distance).strength((d: any) => d.source.id === "CENTER_NODE" ? 1 : 0.2))
-      .force("charge", d3.forceManyBody().strength(-200)) // Repel each other
-      .force("collide", d3.forceCollide().radius(25)) // Prevent overlap
+      .force("link", d3.forceLink(_links).id((d: any) => d.id).distance((d: any) => d.distance).strength(1))
+      .force("charge", d3.forceManyBody().strength(-350)) // INCREASED repulsion for cleaner layout
+      .force("collide", d3.forceCollide().radius(30)) // Increased collision radius
+      .force("center", d3.forceCenter(cx, cy).strength(0.05)) // Gentle centering force
       .stop();
 
     // Run the simulation synchronously
@@ -112,12 +98,15 @@ export default function ConstellationGraph({
   const nodeRHl = 13 * scale;
   const centerR = 15 * scale;
 
+  // Shift5 branding
+  const shift5Orange = "#ff5841";
+  const shift5Gray = "#1a1a1a";
+
   function nodeColor(genres: string[]): string {
-    if (genres.length === 0) return "#6B7280";
-    return getGenreColor(genres[0]);
+    return shift5Orange; // Unified technical branding
   }
 
-  const centerColor = centerGenres?.length ? getGenreColor(centerGenres[0]) : "#1D1D1F";
+  const centerColor = shift5Gray;
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
@@ -158,7 +147,7 @@ export default function ConstellationGraph({
 
   function renderNode(node: LayoutNode, i: number, keyPrefix: string) {
     const isHl = highlightedId === node.id;
-    const color = nodeColor(node.genres);
+    const color = shift5Orange;
     const r = isHl ? nodeRHl : nodeR;
 
     return (
@@ -169,50 +158,47 @@ export default function ConstellationGraph({
         onClick={(e) => { e.stopPropagation(); onExplore(node.name); }}
         style={{ cursor: "pointer" }}
       >
+        {/* Radar point style */}
         <circle
           cx={node.x} cy={node.y} r={r}
-          fill={isHl ? color : `${color}18`}
+          fill={isHl ? color : "#000"}
           stroke={color}
-          strokeWidth={isHl ? 1.5 : 0.75}
-          style={{ transition: "all 0.2s ease" }}
+          strokeWidth={1}
+          style={{ transition: "all 0.15s ease" }}
         />
         <text
           x={node.x} y={node.y}
           textAnchor="middle" dominantBaseline="central"
-          fontSize={5.5 * scale} fontWeight="600" letterSpacing="0.02em"
-          fill={isHl ? "#FFF" : color}
-          style={{ transition: "fill 0.2s ease", pointerEvents: "none" }}
+          fontSize={5.5 * scale} fontWeight="600"
+          fill={isHl ? "#000" : color}
+          fontFamily="'Roboto Mono', monospace"
+          style={{ transition: "fill 0.15s ease", pointerEvents: "none" }}
         >
           {getInitials(node.name)}
         </text>
         {isHl && (
           <>
             <text
-              x={node.x} y={node.y + r + 7 * scale}
-              textAnchor="middle" fontSize={6.5 * scale} fontWeight="600" fill="#1D1D1F"
+              x={node.x} y={node.y + r + 8 * scale}
+              textAnchor="middle" fontSize={6.5 * scale} fontWeight="700"
+              fill={shift5Orange}
+              fontFamily="'Roboto Mono', monospace"
               style={{ pointerEvents: "none" }}
             >
-              {node.name}
+              {node.name.toUpperCase()}
             </text>
             {node.genres.length > 0 && (
               <text
                 x={node.x} y={node.y + r + 15 * scale}
-                textAnchor="middle" fontSize={5 * scale} fontWeight="400" fill={color}
+                textAnchor="middle" fontSize={4.5 * scale} fontWeight="400"
+                fill="#666"
+                fontFamily="'Roboto Mono', monospace"
                 style={{ pointerEvents: "none" }}
               >
-                {node.genres[0]}
+                [{node.genres[0].toUpperCase()}]
               </text>
             )}
           </>
-        )}
-        {!isHl && node.genres.length > 0 && (
-          <text
-            x={node.x} y={node.y + r + 6 * scale}
-            textAnchor="middle" fontSize={4 * scale} fontWeight="400" fill={`${color}99`}
-            style={{ pointerEvents: "none" }}
-          >
-            {node.genres[0]}
-          </text>
         )}
       </g>
     );
@@ -223,7 +209,7 @@ export default function ConstellationGraph({
       <svg
         width={width} height={height}
         viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
-        className="block"
+        className="block bg-neutral-900/50 rounded-lg"
         style={{ cursor: isPanning ? "grabbing" : "grab" }}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
@@ -231,40 +217,35 @@ export default function ConstellationGraph({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        {/* Draw Links */}
+        {/* Draw Links (Dashed Technical Style) */}
         {layoutLinks.map((link: any, i: number) => {
-          // highlight primary links, fade secondary links
-          const isPrimary = link.source.id === "CENTER_NODE";
           const isHighlighted = highlightedId === link.target.id || highlightedId === link.source.id;
-
-          let stroke = "#F0F0F0";
-          let strokeWidth = 0.5;
-
-          if (isHighlighted) {
-            // Highlight the full path from the hovered node
-            stroke = nodeColor(link.target.genres);
-            strokeWidth = 1.0;
-          } else if (isPrimary) {
-            stroke = "#E5E5E5";
-          }
 
           return (
             <line key={`link-${i}`} x1={link.source.x} y1={link.source.y} x2={link.target.x} y2={link.target.y}
-              stroke={stroke}
-              strokeWidth={strokeWidth}
-              style={{ transition: "all 0.2s ease", opacity: isPrimary || isHighlighted ? 1 : 0.3 }}
+              stroke={isHighlighted ? shift5Orange : "#333"}
+              strokeWidth={0.75}
+              strokeDasharray="2,2"
+              style={{ transition: "all 0.15s ease" }}
             />
           );
         })}
-        {/* Draw Nodes (skip center, render later for z-index) */}
+        {/* Draw Nodes */}
         {layoutNodes.filter((n) => !n.isCenter).map((node, i) => renderNode(node, i, "n"))}
 
-        {/* Center node */}
-        <circle cx={cx} cy={cy} r={centerR} fill={centerColor} style={{ filter: "drop-shadow(0px 4px 12px rgba(0,0,0,0.15))" }} />
+        {/* Center node (The Core) */}
+        <circle cx={cx} cy={cy} r={centerR} fill="#000" stroke={shift5Orange} strokeWidth={2} />
+        <rect
+          x={cx - 10 * scale} y={cy - 10 * scale}
+          width={20 * scale} height={20 * scale}
+          fill="none" stroke={shift5Orange} strokeWidth={0.5} opacity={0.3}
+          transform={`rotate(45, ${cx}, ${cy})`}
+        />
         <text
-          x={cx} y={cy - 1.5 * scale}
+          x={cx} y={cy}
           textAnchor="middle" dominantBaseline="central"
-          fontSize={6.5 * scale} fontWeight="700" fill="#FFF" letterSpacing="0.02em"
+          fontSize={7 * scale} fontWeight="700" fill={shift5Orange}
+          fontFamily="'Roboto Mono', monospace"
         >
           {getInitials(center)}
         </text>
