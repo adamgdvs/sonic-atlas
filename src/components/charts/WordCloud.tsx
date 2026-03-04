@@ -30,8 +30,9 @@ export default function WordCloud({ similar, highlightedId, onHover, onExplore, 
     if (similar.length === 0) return [];
 
     const sorted = [...similar].sort((a, b) => b.similarity - a.similarity);
-    const minFont = Math.max(8, size * 0.025);
-    const maxFont = size * 0.065;
+    // Technical proportional scaling
+    const minFont = Math.max(7, size * 0.022);
+    const maxFont = size * 0.12; // Dramatically larger for top matches
     const cx = size / 2;
     const cy = size / 2;
 
@@ -40,7 +41,9 @@ export default function WordCloud({ similar, highlightedId, onHover, onExplore, 
     const boxes: { x: number; y: number; w: number; h: number }[] = [];
 
     for (const node of sorted) {
-      const fontSize = minFont + (maxFont - minFont) * node.similarity;
+      // Use power scale (x^2) to reward high similarity more dramatically
+      const weight = Math.pow(node.similarity, 2);
+      const fontSize = minFont + (maxFont - minFont) * weight;
       const rotate = Math.random() < 0.15 ? (Math.random() - 0.5) * 20 : 0;
       // Estimate text dimensions
       const charWidth = fontSize * 0.6;
