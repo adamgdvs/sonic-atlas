@@ -92,9 +92,9 @@ export default function WordCloud({ similar, highlightedId, onHover, onExplore, 
 
   return (
     <div className="relative">
-      <svg width={size} height={size} className="block">
+      <svg width={size} height={size} className="block bg-neutral-900/40 rounded-lg">
         {placed.map((word) => {
-          const color = word.genres.length > 0 ? getGenreColor(word.genres[0]) : "#6B7280";
+          const shift5Orange = "#ff5841";
           const isHl = highlightedId === word.id;
 
           return (
@@ -112,24 +112,26 @@ export default function WordCloud({ similar, highlightedId, onHover, onExplore, 
                 dominantBaseline="central"
                 fontSize={word.fontSize}
                 fontWeight={isHl ? "700" : "600"}
-                fill={isHl ? "#1D1D1F" : color}
-                opacity={isHl ? 1 : 0.75}
+                fill={isHl ? shift5Orange : "#666"}
+                opacity={isHl ? 1 : 0.8}
                 transform={word.rotate !== 0 ? `rotate(${word.rotate}, ${word.x}, ${word.y})` : undefined}
-                style={{ transition: "all 0.15s ease" }}
+                fontFamily="'Roboto Mono', monospace"
+                style={{ transition: "all 0.15s ease", letterSpacing: "0.05em" }}
               >
-                {word.name}
+                {word.name.toUpperCase()}
               </text>
               {isHl && (
                 <text
                   x={word.x}
                   y={word.y + word.fontSize * 0.8}
                   textAnchor="middle"
-                  fontSize={Math.max(8, word.fontSize * 0.5)}
-                  fill="#9CA3AF"
+                  fontSize={Math.max(8, word.fontSize * 0.4)}
+                  fill={shift5Orange}
+                  opacity={0.6}
                   style={{ pointerEvents: "none" }}
-                  fontFamily="var(--font-dm-mono), monospace"
+                  fontFamily="'Roboto Mono', monospace"
                 >
-                  {Math.round(word.similarity * 100)}% match
+                  [{Math.round(word.similarity * 100)}%_MATCH]
                 </text>
               )}
             </g>
