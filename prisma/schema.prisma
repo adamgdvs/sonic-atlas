@@ -69,3 +69,13 @@ model BookmarkedArtist {
   // A user can only bookmark an artist once
   @@unique([userId, artistId])
 }
+
+// Persistent API response cache
+model ApiCache {
+  key       String   @id          // e.g. "lastfm:tags:radiohead"
+  data      String   @db.Text     // JSON stringified response
+  expiresAt DateTime              // When this entry should be considered stale
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
