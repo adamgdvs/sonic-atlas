@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { useAudio } from "@/contexts/AudioContext";
 import { getSimilarArtists, getArtistPreviewData } from "@/lib/api";
@@ -25,6 +25,9 @@ export default function GlobalPlayer() {
     const [isSurging, setIsSurging] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Protection for Radio Mode to prevent infinite skip-loops
+    const lastProcessedTrackEndedRef = useRef<number>(0);
+
     const handleSurge = async () => {
         if (!currentTrack?.genres || currentTrack.genres.length === 0) {
             setError("NO_SECTOR_DATA_AVAILABLE");
@@ -35,8 +38,8 @@ export default function GlobalPlayer() {
         setError(null);
 
         try {
-            // Pick a random genre from current track
-            const randomGenre = currentTrack.genres[Math.floor(Math.random() * currentTrack.genres.length)];
+            const genres = currentTrack.genres;
+            const randomGenre = genres[Math.floor(Math.random() * genres.length)];
             const artists = await getGenreArtists(randomGenre, 20);
 
             if (artists.length === 0) {
@@ -44,21 +47,29 @@ export default function GlobalPlayer() {
                 return;
             }
 
-            // Pick a random artist from that genre
-            const randomArtist = artists[Math.floor(Math.random() * artists.length)];
-            const previewData = await getArtistPreviewData(randomArtist.name);
-            const trackWithPreview = previewData.tracks.find(t => t.preview);
+            // Shuffle and try up to 5 artists to find one with a preview
+            const shuffled = [...artists].sort(() => Math.random() - 0.5).slice(0, 5);
+            let found = false;
 
-            if (trackWithPreview) {
-                playTrack({
-                    id: randomGenre,
-                    url: trackWithPreview.preview,
-                    title: trackWithPreview.title,
-                    artist: randomArtist.name,
-                    coverUrl: previewData.image || undefined,
-                    genres: [randomGenre] // Pass the genre for the next surge
-                });
-            } else {
+            for (const randomArtist of shuffled) {
+                const previewData = await getArtistPreviewData(randomArtist.name);
+                const trackWithPreview = previewData.tracks.find(t => t.preview);
+
+                if (trackWithPreview) {
+                    playTrack({
+                        id: randomGenre,
+                        url: trackWithPreview.preview,
+                        title: trackWithPreview.title,
+                        artist: randomArtist.name,
+                        coverUrl: previewData.image || undefined,
+                        genres: [randomGenre] // Perpetuate the genre context
+                    });
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
                 setError("SIGNAL_LOST");
             }
         } catch (e) {
@@ -71,7 +82,11 @@ export default function GlobalPlayer() {
 
     // Radio Mode Engine
     useEffect(() => {
-        if (!radioMode || trackEndedRaw === 0 || !currentTrack) return;
+        // Condition checks: We need radioMode active, a signal that a track ended, and a track to base similarity on.
+        // We ALSO check if we've already processed this specific 'ended' event to avoid infinite loops when currentTrack changes.
+        if (!radioMode || trackEndedRaw === 0 || !currentTrack || lastProcessedTrackEndedRef.current === trackEndedRaw) return;
+
+        lastProcessedTrackEndedRef.current = trackEndedRaw;
 
         let cancelled = false;
         const fetchNextTrack = async () => {
@@ -92,6 +107,7 @@ export default function GlobalPlayer() {
                 // Try iterating through top similar artists until we find one with a preview track
                 let nextTrack = null;
                 let nextArtistName = "";
+                let nextGenres: string[] = [];
 
                 for (const artist of similar) {
                     const previewData = await getArtistPreviewData(artist.name);
@@ -101,6 +117,8 @@ export default function GlobalPlayer() {
                     if (playableTrack) {
                         nextTrack = playableTrack;
                         nextArtistName = artist.name;
+                        // Radio Mode needs to pass genres to keep Surge working
+                        nextGenres = artist.genres || [];
                         break;
                     }
                 }
@@ -115,8 +133,8 @@ export default function GlobalPlayer() {
                     url: nextTrack.preview,
                     title: nextTrack.title,
                     artist: nextArtistName,
-                    // We could fetch artist image here, but for speed we'll let it fallback to default styling
                     coverUrl: null,
+                    genres: nextGenres
                 });
 
             } catch (err) {

@@ -494,7 +494,7 @@ function SimilarCard({
         <div className="flex gap-2 items-center sm:items-start sm:pt-1 ml-[68px] sm:ml-0">
           {previewUrl && (
             <button
-              onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, previewTitle || "Track Preview", artist.name, artist.image, info?.genres))}
+              onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, previewTitle || "Track Preview", artist.name, artist.image, artist.genres))}
               className={`flex items-center justify-center border cursor-pointer transition-all duration-300 shrink-0 ${isPlaying
                 ? "border-shift5-orange bg-shift5-orange text-white"
                 : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white hover:border-white/30"
