@@ -404,6 +404,7 @@ function SimilarCard({
   bookmarkingIds,
   onToggleBookmark,
   previewTitle,
+  onVisible,
 }: {
   artist: SimilarArtistResult;
   index: number;
@@ -427,16 +428,39 @@ function SimilarCard({
   bookmarkingIds: Set<string>;
   onToggleBookmark: (id: string, name: string, img?: string | null, genres?: string[]) => void;
   previewTitle?: string;
+  onVisible?: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const accordionRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const hasTriggeredVisible = useRef(false);
   const bg = isHighlighted ? "rgba(255, 88, 65, 0.05)" : hovered ? "rgba(255, 255, 255, 0.03)" : "transparent";
   const cardId = artist.mbid || artist.name;
   const isBookmarked = bookmarkedArtists.has(artist.name);
   const isBookmarking = bookmarkingIds.has(cardId);
 
+  // Auto-fetch preview when card enters viewport (for mobile / no-hover)
+  useEffect(() => {
+    if (!onVisible || hasTriggeredVisible.current) return;
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasTriggeredVisible.current) {
+          hasTriggeredVisible.current = true;
+          onVisible();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [onVisible]);
+
   return (
     <div
+      ref={cardRef}
       className="border-b border-white/5"
       style={{
         animation: `fadeSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.03}s both`,
@@ -457,7 +481,7 @@ function SimilarCard({
         }}
       >
         <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
-          <div className={`relative transition-all duration-500 overflow-hidden border ${hovered ? 'scale-110 contrast-125 border-shift5-orange/50 shadow-[0_0_15px_rgba(255,88,65,0.2)]' : 'grayscale contrast-50 opacity-30 border-white/5'}`}>
+          <div className={`relative transition-all duration-500 overflow-hidden border ${hovered ? 'scale-110 contrast-125 border-shift5-orange/50 shadow-[0_0_15px_rgba(255,88,65,0.2)]' : 'md:grayscale contrast-75 md:contrast-50 opacity-70 md:opacity-30 border-white/10 md:border-white/5'}`}>
             <ArtistAvatar
               name={artist.name}
               image={artist.image}
@@ -491,7 +515,7 @@ function SimilarCard({
             )}
           </div>
         </div>
-        <div className="flex gap-2 items-center sm:items-start sm:pt-1 ml-[68px] sm:ml-0">
+        <div className="flex gap-2 items-center sm:items-start sm:pt-1 ml-[68px] sm:ml-0 touch-manipulation">
           {previewUrl && (
             <button
               onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, previewTitle || "Track Preview", artist.name, artist.image, artist.genres))}
@@ -1229,6 +1253,7 @@ export default function ArtistPage({
                       setHighlightedId(id);
                       if (id) handlePreviewFetch(a.mbid || a.name, a.name);
                     }}
+                    onVisible={() => handlePreviewFetch(a.mbid || a.name, a.name)}
                     isHighlighted={highlightedId === (a.mbid || a.name)}
                     previewUrl={previewMap[a.mbid || a.name]?.url}
                     previewTitle={previewMap[a.mbid || a.name]?.title}
