@@ -59,6 +59,16 @@ input::placeholder {
   background: var(--color-shift5-orange);
 }
 
+/* Hide scrollbar utility (for horizontal scroll areas) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 @keyframes fadeSlideIn {
   from {
     opacity: 0;

@@ -1006,7 +1006,7 @@ export default function ArtistPage({
                     <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold mb-4">Signal_Discography // Select_To_Expand</div>
 
                     {/* Horizontal Scroll Discography */}
-                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide no-scrollbar -mx-2 px-2 mask-linear-right">
+                    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2 snap-x snap-mandatory scroll-smooth">
                       {primaryDisco ? (
                         primaryDisco.albums.map((a) => (
                           <div
@@ -1028,7 +1028,7 @@ export default function ArtistPage({
                                 }, 100);
                               }
                             }}
-                            className={`relative min-w-[120px] aspect-square bg-shift5-dark/10 border-2 transition-all cursor-pointer group/album ${expandedAlbumPrimary === a.id ? 'border-shift5-dark scale-105 z-10' : 'border-shift5-dark/20 hover:border-shift5-dark/40'}`}
+                            className={`relative min-w-[100px] sm:min-w-[120px] aspect-square bg-shift5-dark/10 border-2 transition-all cursor-pointer group/album snap-start ${expandedAlbumPrimary === a.id ? 'border-shift5-dark scale-105 z-10' : 'border-shift5-dark/20 hover:border-shift5-dark/40'}`}
                           >
                             {a.cover_medium ? (
                               <Image

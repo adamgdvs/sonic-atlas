@@ -4,27 +4,46 @@ import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { useState } from "react";
-import { Terminal } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Terminal, Menu, X, Search } from "lucide-react";
 import ProtocolOverlay from "./ProtocolOverlay";
 import SearchBar from "./SearchBar";
 
 export default function Header() {
   const { data: session } = useSession();
   const [isProtocolOpen, setIsProtocolOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const isHome = pathname === "/";
 
+  // Close mobile menu on navigation
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Close mobile menu on outside click
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [isMobileMenuOpen]);
+
   return (
     <>
-      <header className="border-b-2 border-shift5-accent bg-shift5-dark h-16 flex items-center justify-between px-6 sm:px-12 z-50 relative gap-8">
-        <div className="flex items-center gap-8 flex-1 min-w-0">
-          <Link href="/" className="flex items-center gap-3 no-underline group shrink-0">
-            <div className="w-4 h-4 bg-shift5-orange border-2 border-white/20 group-hover:scale-125 transition-all duration-300 shadow-[0_0_10px_rgba(255,88,65,0.4)]" />
+      <header className="border-b-2 border-shift5-accent bg-shift5-dark h-16 flex items-center justify-between px-4 sm:px-6 md:px-12 z-50 relative gap-4 md:gap-8">
+        <div className="flex items-center gap-4 md:gap-8 flex-1 min-w-0">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 no-underline group shrink-0">
+            <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-shift5-orange border-2 border-white/20 group-hover:scale-125 transition-all duration-300 shadow-[0_0_10px_rgba(255,88,65,0.4)]" />
             <span
-              className="text-[14px] sm:text-[16px] font-black text-white font-mono uppercase tracking-[0.2em] group-hover:text-shift5-orange transition-colors truncate"
+              className="text-[12px] sm:text-[14px] md:text-[16px] font-black text-white font-mono uppercase tracking-[0.15em] sm:tracking-[0.2em] group-hover:text-shift5-orange transition-colors truncate"
             >
               sonic_//_atlas
             </span>
@@ -41,10 +60,11 @@ export default function Header() {
           )}
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-6 text-[10px] text-white/50 font-mono uppercase tracking-[0.05em] shrink-0">
+        {/* Desktop Nav */}
+        <div className="hidden md:flex items-center gap-4 sm:gap-6 text-[10px] text-white/50 font-mono uppercase tracking-[0.05em] shrink-0">
           <button
             onClick={() => setIsProtocolOpen(!isProtocolOpen)}
-            className="hidden md:flex items-center gap-3 mr-4 border-r border-shift5-accent pr-6 group hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-3 mr-4 border-r border-shift5-accent pr-6 group hover:text-white transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-1.5">
               <span className={`w-1.5 h-1.5 rounded-full ${isProtocolOpen ? 'bg-shift5-orange scale-125' : 'bg-shift5-orange animate-pulse'}`} />
@@ -73,11 +93,11 @@ export default function Header() {
             </Link>
           )}
 
-          <Link href="/about" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 hidden sm:inline text-nowrap">
+          <Link href="/about" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
             ABOUT
           </Link>
 
-          <Link href="/help" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 hidden sm:inline text-nowrap">
+          <Link href="/help" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
             HELP
           </Link>
 
@@ -106,7 +126,147 @@ export default function Header() {
             </button>
           )}
         </div>
+
+        {/* Mobile: Quick actions + Hamburger */}
+        <div className="flex md:hidden items-center gap-3 shrink-0">
+          {session ? (
+            <Link
+              href="/my-atlas"
+              className="text-[9px] font-mono font-bold text-white/60 uppercase tracking-widest no-underline"
+            >
+              ATLAS
+            </Link>
+          ) : (
+            <button
+              onClick={() => signIn(undefined, { callbackUrl: "/my-atlas" })}
+              className="text-white font-bold bg-shift5-accent px-3 py-1 hover:bg-shift5-orange transition-all border border-white/10 uppercase tracking-widest font-mono text-[9px]"
+            >
+              LOGIN
+            </button>
+          )}
+
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"
+            aria-label="Menu"
+          >
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </header>
+
+      {/* Mobile Menu Overlay */}
+      <div
+        className={`md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+
+      {/* Mobile Menu Panel */}
+      <div
+        ref={menuRef}
+        className={`md:hidden fixed top-0 right-0 w-[85vw] max-w-[320px] h-full bg-shift5-dark border-l-2 border-shift5-accent z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Menu Header */}
+          <div className="flex items-center justify-between px-5 h-16 border-b-2 border-shift5-accent shrink-0">
+            <span className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em] font-bold">Navigation</span>
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Search */}
+          <div className="px-5 py-4 border-b border-white/5">
+            <div className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-2">Search</div>
+            <SearchBar
+              compact
+              onSelectArtist={(name) => {
+                setIsMobileMenuOpen(false);
+                router.push(`/artist/${encodeURIComponent(name)}`);
+              }}
+              onSelectGenre={(name) => {
+                setIsMobileMenuOpen(false);
+                router.push(`/genre/${encodeURIComponent(name)}`);
+              }}
+            />
+          </div>
+
+          {/* Nav Links */}
+          <div className="px-5 py-4 space-y-1 border-b border-white/5">
+            <div className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-3">Navigate</div>
+            {[
+              { href: "/", label: "HOME" },
+              ...(session ? [{ href: "/my-atlas", label: "MY ATLAS" }] : []),
+              { href: "/genres", label: "GENRES" },
+              { href: "/about", label: "ABOUT" },
+              { href: "/help", label: "HELP" },
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 text-[11px] font-mono uppercase tracking-widest no-underline transition-all ${pathname === link.href
+                    ? 'text-shift5-orange bg-shift5-orange/10 border-l-2 border-shift5-orange'
+                    : 'text-white/60 hover:text-white hover:bg-white/5 border-l-2 border-transparent'
+                  }`}
+              >
+                <span className="text-white/20">▸</span>
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Protocol Menu Toggle */}
+          <div className="px-5 py-4 border-b border-white/5">
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setIsProtocolOpen(true);
+              }}
+              className="w-full flex items-center gap-3 px-3 py-3 text-[11px] font-mono uppercase tracking-widest text-white/60 hover:text-shift5-orange hover:bg-shift5-orange/5 transition-all border border-white/10 hover:border-shift5-orange/30"
+            >
+              <Terminal size={14} className="text-shift5-orange" />
+              <span>Protocol Menu</span>
+              <span className="ml-auto w-1.5 h-1.5 rounded-full bg-shift5-orange animate-pulse" />
+            </button>
+          </div>
+
+          {/* User Section */}
+          <div className="mt-auto px-5 py-5 border-t border-white/5">
+            {session ? (
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 border-2 border-white/20 overflow-hidden relative shrink-0">
+                  {session.user?.image ? (
+                    <Image src={session.user.image} alt="User" fill className="object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-white/10" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] font-mono text-white/80 truncate">{session.user?.name || session.user?.email}</div>
+                  <button
+                    onClick={() => signOut()}
+                    className="text-[9px] font-mono text-white/30 hover:text-shift5-orange transition-colors uppercase tracking-widest"
+                  >
+                    [ Terminate ]
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => signIn(undefined, { callbackUrl: "/my-atlas" })}
+                className="w-full text-white font-bold bg-shift5-accent px-4 py-2.5 hover:bg-shift5-orange transition-all border-2 border-white/10 hover:border-white/30 uppercase tracking-widest font-mono text-[10px]"
+              >
+                Sign In / Register
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       <ProtocolOverlay
         isOpen={isProtocolOpen}
         onClose={() => setIsProtocolOpen(false)}

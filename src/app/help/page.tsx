@@ -153,17 +153,34 @@ export default function HelpPage() {
             </div>
 
             <main className="relative z-10 max-w-6xl mx-auto px-6 pt-24 pb-32">
-                <div className="flex flex-col md:flex-row gap-12">
-                    {/* Navigation Sidebar */}
+                <div className="flex flex-col md:flex-row gap-8 md:gap-12">
+                    {/* Navigation — horizontal scroll on mobile, sticky sidebar on desktop */}
                     <aside className="w-full md:w-64 shrink-0">
-                        <div className="sticky top-24">
-                            <div className="mb-6 flex items-center gap-2">
+                        <div className="md:sticky md:top-24">
+                            <div className="mb-4 md:mb-6 flex items-center gap-2">
                                 <HelpCircle size={18} className="text-shift5-orange" />
                                 <h1 className="text-[12px] font-mono font-bold tracking-[0.2em] text-white uppercase">
                                     OPERATIONAL_GUIDE
                                 </h1>
                             </div>
-                            <nav className="flex flex-col gap-2 border-l border-white/10 ml-2">
+
+                            {/* Mobile: Horizontal scrollable pills */}
+                            <nav className="flex md:hidden gap-2 overflow-x-auto pb-3 -mx-6 px-6 scroll-smooth snap-x snap-mandatory no-scrollbar">
+                                {sections.map((s) => (
+                                    <button
+                                        key={s.id}
+                                        onClick={() => {
+                                            document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth" });
+                                        }}
+                                        className="shrink-0 snap-start py-1.5 px-3 text-[9px] font-mono text-white/50 hover:text-shift5-orange active:text-shift5-orange bg-white/5 hover:bg-white/10 border border-white/10 transition-all uppercase tracking-widest whitespace-nowrap"
+                                    >
+                                        {s.title.split(" ")[0]}
+                                    </button>
+                                ))}
+                            </nav>
+
+                            {/* Desktop: Vertical sidebar nav */}
+                            <nav className="hidden md:flex flex-col gap-2 border-l border-white/10 ml-2">
                                 {sections.map((s) => (
                                     <button
                                         key={s.id}
