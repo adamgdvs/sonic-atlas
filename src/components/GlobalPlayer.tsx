@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import Image from "next/image";
 import { useAudio } from "@/contexts/AudioContext";
 import { getSimilarArtists, getArtistPreviewData } from "@/lib/api";
 import { Play, Pause, X, Radio, Zap, Music } from "lucide-react";
@@ -240,9 +239,9 @@ export default function GlobalPlayer() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
                         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                        className="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 lg:bottom-10 lg:right-10 z-50 pointer-events-auto"
+                        className="fixed bottom-3 left-3 right-3 sm:left-auto sm:bottom-6 sm:right-6 lg:bottom-10 lg:right-10 z-50 pointer-events-auto"
                     >
-                        <div className="bg-white/90 backdrop-blur-xl border border-[#F0F0F0] shadow-[0_12px_48px_rgba(0,0,0,0.12)] rounded-3xl p-3 flex items-center gap-3 sm:gap-4 w-full sm:w-[340px] relative overflow-hidden group">
+                        <div className="bg-white/90 backdrop-blur-xl border border-[#F0F0F0] shadow-[0_12px_48px_rgba(0,0,0,0.12)] rounded-2xl sm:rounded-3xl p-2.5 sm:p-3 w-full sm:w-[360px] relative overflow-hidden group touch-manipulation">
 
                             {/* Progress Bar Background */}
                             <div className="absolute top-0 left-0 w-full h-[3px] bg-[#F8F8FA]">
@@ -252,98 +251,101 @@ export default function GlobalPlayer() {
                                 />
                             </div>
 
-                            {/* Art - Vinyl Record Style */}
-                            <div className="relative group shrink-0">
-                                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#E5E5E5] shadow-lg relative bg-[#F0F0F0]" style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}>
-                                    <motion.div
-                                        animate={isPlaying ? { rotate: 360 } : { rotate: 0 }}
-                                        transition={isPlaying ? { duration: 8, repeat: Infinity, ease: "linear" } : { duration: 0.5 }}
-                                        className="w-full h-full flex items-center justify-center relative rounded-full"
-                                        style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
-                                    >
-                                        {currentTrack.coverUrl ? (
-                                            <img
-                                                src={currentTrack.coverUrl}
-                                                alt={currentTrack.title}
-                                                className="object-cover w-full h-full rounded-full"
-                                                style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
-                                            />
-                                        ) : (
-                                            <div className="text-[10px] text-[#C4C4C4] font-medium tracking-tighter">♪</div>
-                                        )}
-
-                                        {/* Vinyl Grooves Effect */}
-                                        <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.05)_41%,transparent_42%,rgba(0,0,0,0.05)_43%,transparent_44%)] pointer-events-none opacity-50 rounded-full" />
-
-                                        {/* Center Label */}
-                                        <div
-                                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white/90 rounded-full z-10 shadow-sm flex items-center justify-center"
-                                            style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
-                                        >
-                                            <div
-                                                className="w-1.5 h-1.5 bg-gray-200 rounded-full shadow-inner border border-black/5"
-                                                style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
-                                            />
-                                        </div>
-                                    </motion.div>
-                                </div>
-                            </div>
-
-                            {/* Track Info */}
-                            <div className="flex-1 min-w-0 pr-2">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-sm font-semibold text-[#1D1D1F] truncate" style={{ letterSpacing: "-0.01em" }}>
-                                        {currentTrack.title}
-                                    </h3>
-                                    {loadingNext && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />}
-                                </div>
-                                <p className="text-xs truncate mt-0.5">
-                                    <a
-                                        href={`/artist/${encodeURIComponent(currentTrack.artist)}`}
-                                        className="text-[#9CA3AF] hover:text-[#1D1D1F] hover:underline transition-colors"
-                                    >
-                                        {currentTrack.artist}
-                                    </a>
-                                </p>
-                                {error && <p className="text-[10px] text-red-500 mt-1 truncate">{error}</p>}
-                            </div>
-
-                            {/* Controls */}
-                            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                                <button
-                                    onClick={handleSurge}
-                                    disabled={isSurging}
-                                    className={`p-1.5 rounded-full transition-all duration-300 ${isSurging ? 'bg-shift5-orange text-white animate-pulse' : 'text-[#C4C4C4] hover:text-shift5-orange hover:bg-shift5-orange/10'}`}
-                                    title="Surge Relay (New artist in same genre)"
-                                >
-                                    <Zap size={16} fill={isSurging ? "currentColor" : "none"} className={isSurging ? "animate-bounce" : ""} />
-                                </button>
-
-                                <button
-                                    onClick={() => setRadioMode(!radioMode)}
-                                    className={`p-1.5 rounded-full transition-colors ${radioMode ? 'bg-[#1D1D1F] text-white' : 'text-[#C4C4C4] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]'}`}
-                                    title="Radio Mode"
-                                >
-                                    <Radio size={16} />
-                                </button>
-
-                                <button
-                                    onClick={togglePlayPause}
-                                    className="w-10 h-10 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md"
-                                >
-                                    {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
-                                </button>
-                            </div>
-
-                            {/* Close Button Trigger (Appears on Hover) */}
+                            {/* Close Button — always visible on mobile, hover on desktop */}
                             <button
                                 onClick={closePlayer}
-                                className="absolute -top-2 -right-2 p-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-1.5 right-1.5 sm:-top-2 sm:-right-2 p-2 sm:p-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10"
                             >
-                                <div className="w-5 h-5 rounded-full bg-black/10 flex items-center justify-center text-[#1D1D1F] backdrop-blur-md">
+                                <div className="w-6 h-6 sm:w-5 sm:h-5 rounded-full bg-black/10 flex items-center justify-center text-[#1D1D1F] backdrop-blur-md">
                                     <X size={12} />
                                 </div>
                             </button>
+
+                            {/* Main player content */}
+                            <div className="flex items-center gap-2.5 sm:gap-3">
+                                {/* Art - Vinyl Record Style */}
+                                <div className="relative shrink-0">
+                                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-[#E5E5E5] shadow-lg relative bg-[#F0F0F0]" style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}>
+                                        <motion.div
+                                            animate={isPlaying ? { rotate: 360 } : { rotate: 0 }}
+                                            transition={isPlaying ? { duration: 8, repeat: Infinity, ease: "linear" } : { duration: 0.5 }}
+                                            className="w-full h-full flex items-center justify-center relative rounded-full"
+                                            style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
+                                        >
+                                            {currentTrack.coverUrl ? (
+                                                <img
+                                                    src={currentTrack.coverUrl}
+                                                    alt={currentTrack.title}
+                                                    className="object-cover w-full h-full rounded-full"
+                                                    style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
+                                                />
+                                            ) : (
+                                                <div className="text-[10px] text-[#C4C4C4] font-medium tracking-tighter">♪</div>
+                                            )}
+
+                                            {/* Vinyl Grooves Effect */}
+                                            <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.05)_41%,transparent_42%,rgba(0,0,0,0.05)_43%,transparent_44%)] pointer-events-none opacity-50 rounded-full" />
+
+                                            {/* Center Label */}
+                                            <div
+                                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 bg-white/90 rounded-full z-10 shadow-sm flex items-center justify-center"
+                                                style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
+                                            >
+                                                <div
+                                                    className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-gray-200 rounded-full shadow-inner border border-black/5"
+                                                    style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
+                                                />
+                                            </div>
+                                        </motion.div>
+                                    </div>
+                                </div>
+
+                                {/* Track Info */}
+                                <div className="flex-1 min-w-0 pr-1">
+                                    <div className="flex items-center gap-1.5">
+                                        <h3 className="text-[13px] sm:text-sm font-semibold text-[#1D1D1F] truncate" style={{ letterSpacing: "-0.01em" }}>
+                                            {currentTrack.title}
+                                        </h3>
+                                        {loadingNext && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0" />}
+                                    </div>
+                                    <p className="text-[11px] sm:text-xs truncate mt-0.5">
+                                        <a
+                                            href={`/artist/${encodeURIComponent(currentTrack.artist)}`}
+                                            className="text-[#9CA3AF] hover:text-[#1D1D1F] active:text-[#1D1D1F] hover:underline transition-colors"
+                                        >
+                                            {currentTrack.artist}
+                                        </a>
+                                    </p>
+                                    {error && <p className="text-[9px] sm:text-[10px] text-red-500 mt-0.5 truncate">{error}</p>}
+                                </div>
+
+                                {/* Controls */}
+                                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                                    <button
+                                        onClick={handleSurge}
+                                        disabled={isSurging}
+                                        className={`w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-full transition-all duration-300 ${isSurging ? 'bg-shift5-orange text-white animate-pulse' : 'text-[#C4C4C4] hover:text-shift5-orange hover:bg-shift5-orange/10 active:bg-shift5-orange/20'}`}
+                                        title="Surge Relay (New artist in same genre)"
+                                    >
+                                        <Zap size={15} fill={isSurging ? "currentColor" : "none"} className={isSurging ? "animate-bounce" : ""} />
+                                    </button>
+
+                                    <button
+                                        onClick={() => setRadioMode(!radioMode)}
+                                        className={`w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-full transition-colors ${radioMode ? 'bg-[#1D1D1F] text-white' : 'text-[#C4C4C4] hover:text-[#1D1D1F] hover:bg-[#F0F0F0] active:bg-[#E5E5E5]'}`}
+                                        title="Radio Mode"
+                                    >
+                                        <Radio size={15} />
+                                    </button>
+
+                                    <button
+                                        onClick={togglePlayPause}
+                                        className="w-10 h-10 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md"
+                                    >
+                                        {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </motion.div>
                 )}
