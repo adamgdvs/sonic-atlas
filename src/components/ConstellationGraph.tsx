@@ -23,7 +23,8 @@ export default function ConstellationGraph({
   highlightedId,
   onHover,
   onExplore,
-  size = 320,
+  width = 320,
+  height = 350,
 }: {
   center: string;
   centerGenres?: string[];
@@ -31,18 +32,17 @@ export default function ConstellationGraph({
   highlightedId: string | null;
   onHover: (id: string | null) => void;
   onExplore: (name: string) => void;
-  size?: number;
+  width?: number;
+  height?: number;
 }) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const lastMouse = useRef({ x: 0, y: 0 });
 
-  const width = size;
-  const height = size;
   const cx = width / 2;
   const cy = height / 2;
-  const scale = size / 320;
+  const scale = width / 320;
 
   const sorted = [...similar].sort((a, b) => b.similarity - a.similarity);
 
@@ -71,15 +71,15 @@ export default function ConstellationGraph({
       source: "CENTER_NODE",
       target: node.id,
       // technical radar distance
-      distance: Math.max(size * 0.20, size * 0.48 * (1 - (node.similarity || 0.5)))
+      distance: Math.max(width * 0.20, width * 0.48 * (1 - (node.similarity || 0.5)))
     }));
 
     // NO secondary links between similar nodes to reduce visual noise
 
     const simulation = d3.forceSimulation(_nodes)
       .force("link", d3.forceLink(_links).id((d: any) => d.id).distance((d: any) => d.distance).strength(1))
-      .force("charge", d3.forceManyBody().strength(-350)) // INCREASED repulsion for cleaner layout
-      .force("collide", d3.forceCollide().radius(30)) // Increased collision radius
+      .force("charge", d3.forceManyBody().strength(-500)) // INCREASED repulsion for cleaner layout
+      .force("collide", d3.forceCollide().radius(25)) // Optimized collision radius
       .force("center", d3.forceCenter(cx, cy).strength(0.05)) // Gentle centering force
       .stop();
 
@@ -90,13 +90,15 @@ export default function ConstellationGraph({
       nodes: _nodes,
       links: _links
     };
-  }, [center, centerGenres, sorted, cx, cy, size]);
+  }, [center, centerGenres, sorted, cx, cy, width, height]);
 
   // ─── Node rendering ────────────────────────────────────────────
 
-  const nodeR = 10 * scale;
-  const nodeRHl = 13 * scale;
-  const centerR = 15 * scale;
+  // Cap the text/node scale so expanded mode doesn't make everything huge
+  const textScale = Math.min(scale, 1.8);
+  const nodeR = 5 * textScale;
+  const nodeRHl = 7 * textScale;
+  const centerR = 9 * textScale;
 
   // Shift5 branding
   const shift5Orange = "#ff5841";
@@ -169,7 +171,7 @@ export default function ConstellationGraph({
         <text
           x={node.x} y={node.y}
           textAnchor="middle" dominantBaseline="central"
-          fontSize={5.5 * scale} fontWeight="600"
+          fontSize={3 * textScale} fontWeight="600"
           fill={isHl ? "#000" : color}
           fontFamily="'Roboto Mono', monospace"
           style={{ transition: "fill 0.15s ease", pointerEvents: "none" }}
@@ -179,8 +181,8 @@ export default function ConstellationGraph({
         {isHl && (
           <>
             <text
-              x={node.x} y={node.y + r + 8 * scale}
-              textAnchor="middle" fontSize={6.5 * scale} fontWeight="700"
+              x={node.x} y={node.y + r + 5 * textScale}
+              textAnchor="middle" fontSize={3.5 * textScale} fontWeight="700"
               fill={shift5Orange}
               fontFamily="'Roboto Mono', monospace"
               style={{ pointerEvents: "none" }}
@@ -189,8 +191,8 @@ export default function ConstellationGraph({
             </text>
             {node.genres.length > 0 && (
               <text
-                x={node.x} y={node.y + r + 15 * scale}
-                textAnchor="middle" fontSize={4.5 * scale} fontWeight="400"
+                x={node.x} y={node.y + r + 9 * textScale}
+                textAnchor="middle" fontSize={2.5 * textScale} fontWeight="400"
                 fill="#666"
                 fontFamily="'Roboto Mono', monospace"
                 style={{ pointerEvents: "none" }}
@@ -205,9 +207,9 @@ export default function ConstellationGraph({
   }
 
   return (
-    <div className="relative">
+    <div className="w-full h-full relative">
       <svg
-        width={width} height={height}
+        width="100%" height="100%"
         viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
         className="block bg-neutral-900/50 rounded-lg"
         style={{ cursor: isPanning ? "grabbing" : "grab" }}
@@ -224,7 +226,7 @@ export default function ConstellationGraph({
           return (
             <line key={`link-${i}`} x1={link.source.x} y1={link.source.y} x2={link.target.x} y2={link.target.y}
               stroke={isHighlighted ? shift5Orange : "#333"}
-              strokeWidth={0.75}
+              strokeWidth={0.5}
               strokeDasharray="2,2"
               style={{ transition: "all 0.15s ease" }}
             />
@@ -234,24 +236,24 @@ export default function ConstellationGraph({
         {layoutNodes.filter((n) => !n.isCenter).map((node, i) => renderNode(node, i, "n"))}
 
         {/* Center node (The Core) */}
-        <circle cx={cx} cy={cy} r={centerR} fill="#000" stroke={shift5Orange} strokeWidth={2} />
+        <circle cx={cx} cy={cy} r={centerR} fill="#000" stroke={shift5Orange} strokeWidth={1.5} />
         <rect
-          x={cx - 10 * scale} y={cy - 10 * scale}
-          width={20 * scale} height={20 * scale}
-          fill="none" stroke={shift5Orange} strokeWidth={0.5} opacity={0.3}
+          x={cx - 7 * scale} y={cy - 7 * scale}
+          width={14 * scale} height={14 * scale}
+          fill="none" stroke={shift5Orange} strokeWidth={0.4} opacity={0.3}
           transform={`rotate(45, ${cx}, ${cy})`}
         />
         <text
           x={cx} y={cy}
           textAnchor="middle" dominantBaseline="central"
-          fontSize={7 * scale} fontWeight="700" fill={shift5Orange}
+          fontSize={4 * textScale} fontWeight="700" fill={shift5Orange}
           fontFamily="'Roboto Mono', monospace"
         >
           {getInitials(center)}
         </text>
         <text
-          x={cx} y={cy + 6 * scale}
-          textAnchor="middle" fontSize={3.5 * scale}
+          x={cx} y={cy + 3.5 * textScale}
+          textAnchor="middle" fontSize={2 * textScale}
           fill="rgba(255,255,255,0.6)" letterSpacing="0.04em"
         >
           CENTER

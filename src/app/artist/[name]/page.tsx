@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, use } from "react";
+import { useState, useEffect, useRef, use, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -347,17 +347,17 @@ function DiscographyPanel({
                                 }}
                               >
                                 <span
-                                  className={`w-5 text-center text-[10px] font-mono ${isPlaying ? "text-shift5-orange font-bold" : "text-white/10"}`}
+                                  className={`w-5 text-center text-[10px] font-mono ${isPlaying ? "text-neutral-800 font-bold animate-pulse" : "text-white/10"}`}
                                 >
                                   {isPlaying ? ">>" : (i + 1).toString().padStart(2, '0')}
                                 </span>
                                 <span
-                                  className={`text-[12px] font-mono flex-1 truncate uppercase tracking-tight transition-colors ${isPlaying ? "text-shift5-orange" : "text-white/50 group-hover/track:text-white/80"}`}
+                                  className={`text-[12px] font-mono flex-1 truncate uppercase tracking-tight transition-colors ${isPlaying ? "text-neutral-800 font-bold" : "text-white/50 group-hover/track:text-white/80"}`}
                                 >
                                   {t.title}
                                 </span>
                                 {t.preview && (
-                                  <span className={`text-[10px] transition-colors ${isPlaying ? 'text-shift5-orange' : 'text-white/10 group-hover/track:text-shift5-orange/50'}`}>
+                                  <span className={`text-[10px] transition-colors ${isPlaying ? 'text-neutral-800' : 'text-white/10 group-hover/track:text-shift5-orange/50'}`}>
                                     {isPlaying ? "■" : "▶"}
                                   </span>
                                 )}
@@ -653,6 +653,36 @@ export default function ArtistPage({
   const [primaryDiscoOpen, setPrimaryDiscoOpen] = useState(false);
   const [openDisco, setOpenDisco] = useState<string | null>(null);
 
+  // Separate graph dimensions for normal vs expanded (prevents stale sizing)
+  const [normalGraphRect, setNormalGraphRect] = useState({ width: 320, height: 350 });
+  const [expandedGraphRect, setExpandedGraphRect] = useState({ width: 800, height: 600 });
+  const normalObserverRef = useRef<ResizeObserver | null>(null);
+  const expandedObserverRef = useRef<ResizeObserver | null>(null);
+
+  const normalGraphRef = useCallback((node: HTMLDivElement | null) => {
+    if (normalObserverRef.current) normalObserverRef.current.disconnect();
+    if (node) {
+      normalObserverRef.current = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setNormalGraphRect({ width: entry.contentRect.width, height: entry.contentRect.height });
+        }
+      });
+      normalObserverRef.current.observe(node);
+    }
+  }, []);
+
+  const expandedGraphRef = useCallback((node: HTMLDivElement | null) => {
+    if (expandedObserverRef.current) expandedObserverRef.current.disconnect();
+    if (node) {
+      expandedObserverRef.current = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setExpandedGraphRect({ width: entry.contentRect.width, height: entry.contentRect.height });
+        }
+      });
+      expandedObserverRef.current.observe(node);
+    }
+  }, []);
+
   const { data: session } = useSession();
   const [bookmarkedArtists, setBookmarkedArtists] = useState<Set<string>>(new Set());
   const [bookmarkingIds, setBookmarkingIds] = useState<Set<string>>(new Set());
@@ -750,8 +780,12 @@ export default function ArtistPage({
     setIsDiscoFocused(false);
     handleStop();
 
+    // Read Discovery controls from Protocol Menu
+    const storedLimit = typeof window !== "undefined" ? parseInt(localStorage.getItem("sonic_resultCount") || "30") : 30;
+    const storedNiche = typeof window !== "undefined" ? parseInt(localStorage.getItem("sonic_nicheDepth") || "60") : 60;
+
     Promise.all([
-      getSimilarArtists(artistName, 30),
+      getSimilarArtists(artistName, storedLimit, storedNiche),
       getArtistInfo(artistName),
       getDiscography(artistName),
     ])
@@ -766,47 +800,28 @@ export default function ArtistPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artistName]);
 
-  // Fetch previews for similar artists in batches to respect Deezer rate limits
-  useEffect(() => {
-    if (similar.length === 0) return;
-    let cancelled = false;
+  // On-demand preview fetching (lazy) — replaces batch pre-load
+  const fetchingRef = useRef<Set<string>>(new Set());
+  const handlePreviewFetch = useCallback(async (artistKey: string, artistNameToFetch: string) => {
+    // Already fetched or currently fetching
+    if (previewMap[artistKey] || fetchingRef.current.has(artistKey)) return;
+    fetchingRef.current.add(artistKey);
 
-    async function fetchPreviews() {
-      for (let i = 0; i < similar.length; i += 3) {
-        if (cancelled) return;
-        if (i > 0) await new Promise((r) => setTimeout(r, 800));
-        if (cancelled) return;
-        const batch = similar.slice(i, i + 3);
-        const results = await Promise.allSettled(
-          batch.map(async (a) => {
-            const data = await getArtistPreviewData(a.name);
-            const track = data.tracks[0];
-            return {
-              key: a.mbid || a.name,
-              url: track?.preview || null,
-              title: track?.title || null
-            };
-          })
-        );
-        if (cancelled) return;
-        setPreviewMap((prev) => {
-          const next = { ...prev };
-          for (const r of results) {
-            if (r.status === "fulfilled" && r.value.url) {
-              next[r.value.key] = {
-                url: r.value.url,
-                title: r.value.title || "Track Preview"
-              };
-            }
-          }
-          return next;
-        });
+    try {
+      const data = await getArtistPreviewData(artistNameToFetch);
+      const track = data.tracks[0];
+      if (track?.preview) {
+        setPreviewMap((prev) => ({
+          ...prev,
+          [artistKey]: { url: track.preview, title: track.title || "Track Preview" }
+        }));
       }
+    } catch {
+      // Silently fail — preview is non-critical
+    } finally {
+      fetchingRef.current.delete(artistKey);
     }
-
-    fetchPreviews();
-    return () => { cancelled = true; };
-  }, [similar]);
+  }, [previewMap]);
 
   // Filter
   const filteredSimilar = similar.filter((a) => {
@@ -1140,10 +1155,48 @@ export default function ArtistPage({
           </div>
         </div>
 
+        {/* Relational Constellation Section - Moved out of columns when expanded */}
+        <div className={`mb-10 transition-all duration-700 ease-in-out ${constellationExpanded ? 'col-span-12' : 'lg:hidden'}`}>
+          {constellationExpanded && (
+            <section className="border border-white/5 bg-white/[0.01]">
+              <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/[0.02]">
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-mono text-white/40 uppercase tracking-[0.15em]">Relational_Constellation // EXPANDED_VIEW</span>
+                </div>
+                <GraphModeDropdown value={graphMode} onChange={setGraphMode} />
+              </div>
+              <div
+                ref={expandedGraphRef}
+                className="relative bg-shift5-dark overflow-hidden h-[600px]"
+              >
+                <GraphSwitch
+                  center={artistName}
+                  centerGenres={artistInfo?.genres}
+                  similar={constellationData}
+                  onExplore={handleExplore}
+                  onHover={setHighlightedId}
+                  highlightedId={highlightedId}
+                  mode={graphMode}
+                  width={expandedGraphRect.width}
+                  height={expandedGraphRect.height}
+                />
+
+                <div className="absolute inset-0 pointer-events-none border border-white/5 m-px z-10" />
+
+                <button
+                  onClick={() => setConstellationExpanded(!constellationExpanded)}
+                  className="absolute bottom-4 right-4 z-20 bg-shift5-dark/90 border border-white/10 px-3 py-1.5 text-[9px] font-mono hover:text-shift5-orange transition-colors uppercase tracking-widest backdrop-blur-sm pointer-events-auto"
+                >
+                  [REDUCE_FRM]
+                </button>
+              </div>
+            </section>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Main Content Column */}
           <div className="lg:col-span-8 space-y-12">
-
             <section>
               <div className="flex flex-col gap-6 mb-8 border-b border-white/5 pb-6">
                 <div className="flex items-center justify-between">
@@ -1172,7 +1225,10 @@ export default function ArtistPage({
                     artist={a}
                     index={i}
                     onExplore={handleExplore}
-                    onHover={setHighlightedId}
+                    onHover={(id) => {
+                      setHighlightedId(id);
+                      if (id) handlePreviewFetch(a.mbid || a.name, a.name);
+                    }}
                     isHighlighted={highlightedId === (a.mbid || a.name)}
                     previewUrl={previewMap[a.mbid || a.name]?.url}
                     previewTitle={previewMap[a.mbid || a.name]?.title}
@@ -1199,36 +1255,43 @@ export default function ArtistPage({
 
           {/* Sidebar Column */}
           <aside className="lg:col-span-4 space-y-10">
-            {/* Relational Constellation Section - Moved to sidebar */}
-            <section className="border border-white/5 bg-white/[0.01]">
-              <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/[0.02]">
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-mono text-white/40 uppercase tracking-[0.15em]">Relational_Constellation</span>
+            {/* Relational Constellation Section - Sidebar View */}
+            {!constellationExpanded && (
+              <section className="border border-white/5 bg-white/[0.01]">
+                <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/[0.02]">
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-mono text-white/40 uppercase tracking-[0.15em]">Relational_Constellation</span>
+                  </div>
+                  <GraphModeDropdown value={graphMode} onChange={setGraphMode} />
                 </div>
-                <GraphModeDropdown value={graphMode} onChange={setGraphMode} />
-              </div>
-
-              <div className={`relative bg-shift5-dark transition-all duration-700 overflow-hidden ${constellationExpanded ? 'h-[600px]' : 'h-[350px]'}`}>
-                <GraphSwitch
-                  center={artistName}
-                  centerGenres={artistInfo?.genres}
-                  similar={constellationData}
-                  onExplore={handleExplore}
-                  onHover={setHighlightedId}
-                  highlightedId={highlightedId}
-                  mode={graphMode}
-                />
-
-                <div className="absolute inset-0 pointer-events-none border border-white/5 m-px z-10" />
-
-                <button
-                  onClick={() => setConstellationExpanded(!constellationExpanded)}
-                  className="absolute bottom-4 right-4 z-20 bg-shift5-dark/90 border border-white/10 px-3 py-1.5 text-[9px] font-mono hover:text-shift5-orange transition-colors uppercase tracking-widest backdrop-blur-sm pointer-events-auto"
+                <div
+                  ref={normalGraphRef}
+                  className="relative bg-shift5-dark h-[350px] overflow-hidden"
                 >
-                  [{constellationExpanded ? 'REDUCE_FRM' : 'EXPAND_FRM'}]
-                </button>
-              </div>
-            </section>
+                  <GraphSwitch
+                    center={artistName}
+                    centerGenres={artistInfo?.genres}
+                    similar={constellationData}
+                    onExplore={handleExplore}
+                    onHover={setHighlightedId}
+                    highlightedId={highlightedId}
+                    mode={graphMode}
+                    width={normalGraphRect.width}
+                    height={normalGraphRect.height}
+                  />
+
+                  <div className="absolute inset-0 pointer-events-none border border-white/5 m-px z-10" />
+
+                  <button
+                    onClick={() => setConstellationExpanded(!constellationExpanded)}
+                    className="absolute bottom-4 right-4 z-20 bg-shift5-dark/90 border border-white/10 px-3 py-1.5 text-[9px] font-mono hover:text-shift5-orange transition-colors uppercase tracking-widest backdrop-blur-sm pointer-events-auto"
+                  >
+                    [EXPAND_FRM]
+                  </button>
+                </div>
+              </section>
+            )}
+
             {/* Primary Artist Stats - Light Gray Theme for 'Block' Contrast */}
             <div className="border border-white/5 p-8 bg-shift5-light text-shift5-dark">
               <div className="text-[10px] font-mono text-shift5-dark/40 uppercase mb-8 tracking-[0.3em] border-b border-shift5-dark/10 pb-2 font-bold">Central_Node_Assets</div>

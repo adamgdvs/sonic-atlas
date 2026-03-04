@@ -16,6 +16,9 @@ import ArtistInitials from "@/components/ArtistInitials";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { useJourney } from "@/contexts/JourneyContext";
 import { useAudio } from "@/contexts/AudioContext";
+import { useSession } from "next-auth/react";
+import { useToast } from "@/components/ToastProvider";
+import { Heart } from "lucide-react";
 import Footer from "@/components/Footer";
 
 export default function GenreDetailPage({
@@ -27,6 +30,8 @@ export default function GenreDetailPage({
   const genreName = decodeURIComponent(rawName);
   const router = useRouter();
   const { pushNode } = useJourney();
+  const { data: session } = useSession();
+  const { showToast } = useToast();
 
   useEffect(() => {
     pushNode({
@@ -44,16 +49,84 @@ export default function GenreDetailPage({
   const { playTrack, currentTrack, isPlaying } = useAudio();
   const [imageMap, setImageMap] = useState<Record<string, string>>({});
 
+  // Bookmark state
+  const [bookmarkedArtists, setBookmarkedArtists] = useState<Set<string>>(new Set());
+  const [bookmarkingIds, setBookmarkingIds] = useState<Set<string>>(new Set());
+
+  // Fetch bookmarks on session load
+  useEffect(() => {
+    if (session?.user) {
+      fetch("/api/bookmarks")
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setBookmarkedArtists(new Set(data.map((b: any) => b.name)));
+          }
+        })
+        .catch((err) => console.error("Failed to load bookmarks", err));
+    }
+  }, [session]);
+
+  const handleToggleBookmark = async (name: string, image?: string | null) => {
+    if (!session?.user) {
+      showToast({
+        message: "Sign in required to bookmark artists",
+        type: "auth",
+        action: {
+          label: "Sign In",
+          href: "/api/auth/signin",
+        },
+        duration: 5000,
+      });
+      return;
+    }
+
+    const id = name;
+    setBookmarkingIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+
+    const isCurrentlyBookmarked = bookmarkedArtists.has(name);
+
+    try {
+      const url = isCurrentlyBookmarked ? `/api/bookmarks?artistId=${id}` : "/api/bookmarks";
+      const res = await fetch(url, {
+        method: isCurrentlyBookmarked ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: isCurrentlyBookmarked ? null : JSON.stringify({
+          name,
+          artistId: id,
+          imageUrl: image,
+          genres: [genreName],
+        }),
+      });
+      if (res.ok) {
+        setBookmarkedArtists((prev) => {
+          const next = new Set(prev);
+          if (isCurrentlyBookmarked) next.delete(name);
+          else next.add(name);
+          return next;
+        });
+      }
+    } finally {
+      setBookmarkingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
   useEffect(() => {
     if (artists.length === 0) return;
     let cancelled = false;
 
     async function fetchMissingImages() {
-      // Find artists with no images (now that Last.fm placeholders are null)
       const missing = artists.filter(a => !a.image && !imageMap[a.name]);
       if (missing.length === 0) return;
 
-      // Process in small batches to respect rate limits
       for (let i = 0; i < missing.length; i += 3) {
         if (cancelled) return;
         const batch = missing.slice(i, i + 3);
@@ -85,7 +158,7 @@ export default function GenreDetailPage({
 
     fetchMissingImages();
     return () => { cancelled = true; };
-  }, [artists]); // Run whenever artists list changes
+  }, [artists]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -193,6 +266,8 @@ export default function GenreDetailPage({
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {artists.map((a, i) => {
                   const isCurrentPlaying = isPlaying && currentTrack?.artist === a.name;
+                  const isBookmarked = bookmarkedArtists.has(a.name);
+                  const isBookmarking = bookmarkingIds.has(a.name);
                   return (
                     <div
                       key={a.name}
@@ -218,6 +293,19 @@ export default function GenreDetailPage({
 
                         <div className="absolute inset-0 bg-shift5-dark/20 group-hover:bg-transparent transition-colors" />
 
+                        {/* Heart / Bookmark Button */}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleToggleBookmark(a.name, imageMap[a.name] || a.image); }}
+                          disabled={isBookmarking}
+                          className={`absolute top-3 right-3 w-9 h-9 flex items-center justify-center border transition-all duration-300 backdrop-blur-md ${isBookmarked
+                              ? 'bg-shift5-orange border-shift5-orange text-white'
+                              : 'bg-shift5-dark/80 border-white/10 text-white/60 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:bg-shift5-orange/20 hover:border-shift5-orange/40 hover:text-shift5-orange'
+                            } ${isBookmarking ? 'animate-pulse' : ''}`}
+                        >
+                          <Heart size={14} fill={isBookmarked ? "currentColor" : "none"} />
+                        </button>
+
+                        {/* Play Button */}
                         <button
                           onClick={(e) => { e.stopPropagation(); handlePlayArtist(a.name, undefined, a.image); }}
                           className={`absolute bottom-3 right-3 w-10 h-10 flex items-center justify-center border transition-all duration-300 backdrop-blur-md ${isCurrentPlaying ? 'bg-shift5-orange border-shift5-orange text-white' : 'bg-shift5-dark/80 border-white/10 text-white opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:bg-shift5-orange hover:border-shift5-orange'}`}
@@ -236,8 +324,15 @@ export default function GenreDetailPage({
                       </div>
 
                       <div className="p-4 border-t border-white/5">
-                        <div className="text-[9px] font-mono text-white/20 uppercase tracking-widest mb-1">Identified_Node</div>
-                        <h3 className="text-sm font-bold uppercase tracking-tight truncate group-hover:text-shift5-orange transition-colors">{a.name}</h3>
+                        <div className="flex items-center justify-between">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[9px] font-mono text-white/20 uppercase tracking-widest mb-1">Identified_Node</div>
+                            <h3 className="text-sm font-bold uppercase tracking-tight truncate group-hover:text-shift5-orange transition-colors">{a.name}</h3>
+                          </div>
+                          {isBookmarked && (
+                            <Heart size={12} fill="currentColor" className="text-shift5-orange shrink-0 ml-2" />
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

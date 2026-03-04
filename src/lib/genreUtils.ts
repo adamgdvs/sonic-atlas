@@ -45,13 +45,22 @@ export function parseGenres(
 
 /**
  * Calculates a similarity score (0-1) between two sets of genres.
- * Favors niche sub-genres over broad categories.
+ * Heavily favors Discogs-sourced niche styles over Last.fm broad tags.
  */
-export function calculateGenreSimilarity(source: string[], candidate: string[]): number {
+export function calculateGenreSimilarity(
+    source: string[],
+    candidate: string[],
+    sourceDiscogsStyles?: string[],
+    candidateDiscogsStyles?: string[]
+): number {
     if (source.length === 0 || candidate.length === 0) return 0;
 
     const sourceSet = new Set(source.map(g => g.toLowerCase()));
     const candidateSet = new Set(candidate.map(g => g.toLowerCase()));
+
+    // Build Discogs style sets for provenance-aware weighting
+    const sourceDiscogsSet = new Set((sourceDiscogsStyles || []).map(s => s.toLowerCase()));
+    const candidateDiscogsSet = new Set((candidateDiscogsStyles || []).map(s => s.toLowerCase()));
 
     let score = 0;
     let matches = 0;
@@ -59,10 +68,22 @@ export function calculateGenreSimilarity(source: string[], candidate: string[]):
     candidateSet.forEach(genre => {
         if (sourceSet.has(genre)) {
             matches++;
-            // Specific styles (not in BROAD_GENRES) provide a MUCH higher weight
-            if (!BROAD_GENRES.has(genre)) {
-                score += 10; // Significant boost for niche overlap
+
+            const isSourceDiscogs = sourceDiscogsSet.has(genre);
+            const isCandidateDiscogs = candidateDiscogsSet.has(genre);
+            const isBroad = BROAD_GENRES.has(genre);
+
+            if (!isBroad && isSourceDiscogs && isCandidateDiscogs) {
+                // MAXIMUM weight: Both sides have this as a Discogs style (curated, sonic)
+                score += 20;
+            } else if (!isBroad && (isSourceDiscogs || isCandidateDiscogs)) {
+                // HIGH weight: At least one side has this as Discogs style
+                score += 14;
+            } else if (!isBroad) {
+                // MEDIUM weight: Niche match from Last.fm tags only
+                score += 8;
             } else {
+                // LOW weight: Broad genre match (rock, pop, etc.)
                 score += 1;
             }
         }
@@ -70,9 +91,8 @@ export function calculateGenreSimilarity(source: string[], candidate: string[]):
 
     if (matches === 0) return 0;
 
-    // Normalize score. 
-    // We want a high score for even 1-2 niche matches.
-    const maxPotential = sourceSet.size * 5;
+    // Normalize score — tuned for niche-heavy results
+    const maxPotential = sourceSet.size * 8;
     return Math.min(1, score / maxPotential);
 }
 
@@ -80,14 +100,5 @@ export function calculateGenreSimilarity(source: string[], candidate: string[]):
  * Returns only the niche sub-genres from a list of genres.
  */
 export function getNicheStyles(genres: string[]): string[] {
-    const BROAD_GENRES_LOCAL = new Set([
-        "rock", "pop", "alternative", "alternative rock", "indie", "indie rock", "indie pop",
-        "electronic", "electronica", "hip-hop", "hip hop", "rap", "r&b", "rnb", "soul", "funk",
-        "jazz", "blues", "metal", "heavy metal", "punk", "punk rock", "folk", "country",
-        "classical", "reggae", "dance", "house", "techno", "trance", "ambient", "acoustic",
-        "instrumental", "singer-songwriter", "world", "latin", "pop rock", "hard rock",
-        "classic rock"
-    ]);
-    return genres.filter(g => !BROAD_GENRES_LOCAL.has(g.toLowerCase()));
+    return genres.filter(g => !BROAD_GENRES.has(g.toLowerCase()));
 }
-

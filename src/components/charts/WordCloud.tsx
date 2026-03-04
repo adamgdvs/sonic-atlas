@@ -11,7 +11,8 @@ interface WordCloudProps {
   highlightedId: string | null;
   onHover: (id: string | null) => void;
   onExplore: (name: string) => void;
-  size?: number;
+  width?: number;
+  height?: number;
 }
 
 interface PlacedWord {
@@ -25,16 +26,16 @@ interface PlacedWord {
   rotate: number;
 }
 
-export default function WordCloud({ similar, highlightedId, onHover, onExplore, size = 320 }: WordCloudProps) {
+export default function WordCloud({ similar, highlightedId, onHover, onExplore, width = 320, height = 350 }: WordCloudProps) {
   const placed = useMemo(() => {
     if (similar.length === 0) return [];
 
     const sorted = [...similar].sort((a, b) => b.similarity - a.similarity);
-    // Technical proportional scaling
-    const minFont = Math.max(7, size * 0.022);
-    const maxFont = size * 0.12; // Dramatically larger for top matches
-    const cx = size / 2;
-    const cy = size / 2;
+    // EXTREME DOWNSIZING for high-end technical aesthetic
+    const minFont = Math.max(4, width * 0.012);
+    const maxFont = width * 0.045;
+    const cx = width / 2;
+    const cy = height / 2;
 
     const results: PlacedWord[] = [];
     // Simple bounding-box collision detection
@@ -44,22 +45,22 @@ export default function WordCloud({ similar, highlightedId, onHover, onExplore, 
       // Use power scale (x^2) to reward high similarity more dramatically
       const weight = Math.pow(node.similarity, 2);
       const fontSize = minFont + (maxFont - minFont) * weight;
-      const rotate = Math.random() < 0.15 ? (Math.random() - 0.5) * 20 : 0;
+      const rotate = Math.random() < 0.1 ? (Math.random() - 0.5) * 15 : 0;
       // Estimate text dimensions
       const charWidth = fontSize * 0.6;
       const wordW = node.name.length * charWidth;
-      const wordH = fontSize * 1.2;
+      const wordH = fontSize * 1.3;
 
       let placed = false;
       // Spiral placement
-      for (let step = 0; step < 300; step++) {
-        const angle = step * 0.5;
-        const radius = step * (size * 0.004);
+      for (let step = 0; step < 600; step++) { // More steps for denser spiral
+        const angle = step * 0.2; // Denser angular step
+        const radius = step * (width * 0.0015); // Tighter radius increment
         const x = cx + Math.cos(angle) * radius;
         const y = cy + Math.sin(angle) * radius;
 
         // Check bounds
-        if (x - wordW / 2 < 0 || x + wordW / 2 > size || y - wordH / 2 < 0 || y + wordH / 2 > size) {
+        if (x - wordW / 2 < 20 || x + wordW / 2 > width - 20 || y - wordH / 2 < 20 || y + wordH / 2 > height - 20) {
           continue;
         }
 
@@ -91,11 +92,11 @@ export default function WordCloud({ similar, highlightedId, onHover, onExplore, 
     }
 
     return results;
-  }, [similar, size]);
+  }, [similar, width, height]);
 
   return (
-    <div className="relative">
-      <svg width={size} height={size} className="block bg-neutral-900/40 rounded-lg">
+    <div className="w-full h-full relative">
+      <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} className="block bg-neutral-900/40 rounded-lg">
         {placed.map((word) => {
           const shift5Orange = "#ff5841";
           const isHl = highlightedId === word.id;
@@ -126,9 +127,9 @@ export default function WordCloud({ similar, highlightedId, onHover, onExplore, 
               {isHl && (
                 <text
                   x={word.x}
-                  y={word.y + word.fontSize * 0.8}
+                  y={word.y + word.fontSize * 0.9}
                   textAnchor="middle"
-                  fontSize={Math.max(8, word.fontSize * 0.4)}
+                  fontSize={Math.max(7, word.fontSize * 0.45)}
                   fill={shift5Orange}
                   opacity={0.6}
                   style={{ pointerEvents: "none" }}

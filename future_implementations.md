@@ -48,3 +48,63 @@ Replacing standard navigation with a high-contrast, technical menu inspired by `
 *   **The Path Log (Session History):** A technical, scrollsable manifest of every artist/node scanned in the current session (e.g., `SCAN_01 -> SCAN_02`).
 *   **System Diagnostics (Account & Sync):** Live status indicators for Spotify/Apple Music encryption and session data integrity.
 *   **Experimental Labs:** Toggles for tactical high-contrast themes (Neon Cyan / Toxic Green) and reactive background visualizers.
+
+
+
+Current Bottleneck
+Right now, every artist page load makes live API calls to 4 external services:
+
+Service	What It Fetches	~Latency
+Last.fm	Similar artists list + top tags	200-400ms
+Discogs	Genres, styles (10 master releases each for 35 candidates)	2-4s total
+Deezer	Images, discography, previews	500ms-1s
+EveryNoise	Micro-genres (HTML scraping)	300-600ms
+The biggest bottleneck is enriching 35 candidates — each needs Last.fm tags + Discogs styles + EveryNoise lookup. Even with batching, that's ~4-6 seconds.
+
+Option 1: MusicBrainz Local Database (Your suggestion)
+MusicBrainz offers a full database dump (~30GB compressed, ~100GB expanded) containing:
+
+Artist-to-artist relationships (similar, member-of, collaboration)
+Community tags/genres per artist
+Release groups, recordings, labels
+It's free and updated weekly
+Pros:
+
+Eliminates Last.fm AND Discogs API calls entirely
+Zero latency for tag/genre/relationship lookups (local PostgreSQL)
+MusicBrainz tags are community-curated and very detailed
+No rate limiting
+Cons:
+
+Requires ~100GB disk space + PostgreSQL hosting
+Initial import takes hours
+Need a weekly update job to stay current
+More complex deployment (need to run the mbdump import scripts)
+Verdict: This is the best long-term solution if you're serious about scale. It would cut first-load time from 6s to under 1s.
+
+Option 2: PostgreSQL Caching Layer (Quick Win)
+Use your existing PostgreSQL database to cache API responses persistently instead of in-memory (which resets on server restart):
+
+Store Last.fm similar artist lists, Discogs styles, EveryNoise micro-genres
+Set TTL per data type (tags = 7 days, similar = 3 days, etc.)
+First load of any artist is still slow, but all subsequent loads are instant
+Pros: Uses your existing Prisma/PostgreSQL setup, no new infrastructure Cons: First-time loads are still slow, cache grows over time
+
+Option 3: Hybrid (Recommended)
+Import MusicBrainz dump for artist tags, genres, and relationships → replaces Last.fm + Discogs
+Keep Deezer for images, previews, and discography (MusicBrainz doesn't have these)
+Keep EveryNoise in PostgreSQL cache (scrape once, store for 7 days)
+This would make the flow:
+
+Artist page load:
+  1. Query local MusicBrainz DB for similar artists + tags  → ~10ms
+  2. Fetch Deezer images for top 30 results                 → ~500ms
+  3. Check EveryNoise cache (or scrape if miss)              → ~0-300ms
+  
+Total: ~500ms (down from ~6s)
+My Recommendation
+Start with Option 2 (PostgreSQL caching) since it's a quick win with your existing infrastructure. Then graduate to Option 3 (MusicBrainz hybrid) when you're ready for the bigger lift.
+
+Would you like me to implement the PostgreSQL caching layer now as an immediate win? Or would you prefer to go straight to the MusicBrainz local database approach?
+
+

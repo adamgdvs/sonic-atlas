@@ -76,10 +76,11 @@ export async function getAutocompleteSuggestions(query: string): Promise<Autocom
 
 export async function getSimilarArtists(
   artistName: string,
-  limit = 30
+  limit = 30,
+  nicheDepth = 60
 ): Promise<SimilarArtistResult[]> {
   const res = await fetch(
-    `/api/artist/${encodeURIComponent(artistName)}/similar?limit=${limit}`
+    `/api/artist/${encodeURIComponent(artistName)}/similar?limit=${limit}&nicheDepth=${nicheDepth}`
   );
   if (!res.ok) return [];
   const data = await res.json();

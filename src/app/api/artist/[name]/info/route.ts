@@ -12,25 +12,26 @@ export async function GET(
   const artistName = name;
 
   try {
-    // Fetch from all sources in parallel
-    const [deezerRes, lastfmRes, tagsRes, discogsGenresRes] = await Promise.allSettled([
+    // Fetch from ALL sources in parallel (including Discogs search)
+    const [deezerRes, lastfmRes, tagsRes, discogsGenresRes, discogsIdRes] = await Promise.allSettled([
       searchArtist(artistName).then(async (a) => {
         if (!a) return null;
         return getArtistDetails(a.id);
       }),
       getArtistInfo(artistName),
       getTopTags(artistName),
-      getDiscogsGenres(artistName)
+      getDiscogsGenres(artistName),
+      searchDiscogsArtist(artistName) // Now parallel instead of sequential
     ]);
 
     const deezer = deezerRes.status === "fulfilled" ? deezerRes.value : null;
     const lastfm = lastfmRes.status === "fulfilled" ? lastfmRes.value : null;
     const tags = tagsRes.status === "fulfilled" ? tagsRes.value : [];
     const discogsG = discogsGenresRes.status === "fulfilled" ? discogsGenresRes.value : { genres: [], styles: [] };
+    const discogsId = discogsIdRes.status === "fulfilled" ? discogsIdRes.value : null;
 
-    // Fetch deep Discogs details (bio/metadata) if we have a match
+    // Fetch deep Discogs details (bio/metadata) only if we got an ID
     let discogsArtist = null;
-    const discogsId = await searchDiscogsArtist(artistName);
     if (discogsId) {
       discogsArtist = await getDiscogsArtistDetails(discogsId);
     }

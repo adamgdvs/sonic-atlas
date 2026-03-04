@@ -126,25 +126,19 @@ export async function getAlbums(
   if (!res.ok) return [];
 
   const data = await res.json();
-  const albumList = (data.data || []).filter(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (a: any) => a.record_type === "album"
-  );
-
-  // Fetch detail for each album to get real nb_tracks (batch of 5)
-  const enriched: DeezerAlbum[] = [];
-  for (let i = 0; i < albumList.length; i += 5) {
-    const batch = albumList.slice(i, i + 5);
-    const details = await Promise.all(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      batch.map((a: any) => getAlbumDetail(a.id))
-    );
-    for (const d of details) {
-      if (d) enriched.push(d);
-    }
-  }
-
-  return enriched;
+  // Use list data directly — no need for individual album detail calls
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data.data || [])
+    .filter((a: any) => a.record_type === "album")
+    .map((a: any) => ({
+      id: a.id,
+      title: a.title,
+      cover_medium: a.cover_medium || "",
+      cover_big: a.cover_big || a.cover_medium || "",
+      release_date: a.release_date || "",
+      nb_tracks: a.nb_tracks || 0,
+      type: a.record_type || "album",
+    }));
 }
 
 export async function getAlbumTracks(

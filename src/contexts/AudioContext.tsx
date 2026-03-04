@@ -23,7 +23,9 @@ interface AudioContextType {
     closePlayer: () => void;
     radioMode: boolean;
     setRadioMode: (active: boolean) => void;
-    trackEndedRaw: number; // A counter that increments when a track finishes naturally to trigger effects
+    trackEndedRaw: number;
+    wasManuallyStopped: boolean;
+    hasEverPlayed: boolean;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -33,14 +35,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
-    const [duration, setDuration] = useState(30); // Default preview length
+    const [duration, setDuration] = useState(30);
     const [radioMode, setRadioMode] = useState(false);
     const [trackEndedRaw, setTrackEndedRaw] = useState(0);
+    // Track if the user explicitly paused — prevents auto-resume on navigation
+    const [wasManuallyStopped, setWasManuallyStopped] = useState(false);
+    // Track if a track has ever been played this session
+    const [hasEverPlayed, setHasEverPlayed] = useState(false);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
-        // Create the global audio element once
         const audio = new Audio();
         audioRef.current = audio;
 
@@ -79,22 +84,29 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const playTrack = (track: TrackParams) => {
         if (!audioRef.current) return;
 
-        // If playing the same track, just toggle pause/play
+        // If same track, toggle pause/play
         if (currentTrack?.url === track.url) {
             if (isPlaying) {
                 audioRef.current.pause();
                 setIsPlaying(false);
+                setWasManuallyStopped(true);
             } else {
-                audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+                audioRef.current.play().then(() => {
+                    setIsPlaying(true);
+                    setWasManuallyStopped(false);
+                }).catch(() => setIsPlaying(false));
             }
             return;
         }
 
-        // New track
+        // New track — only auto-play if the user hasn't manually paused
+        // Exception: direct user click always plays (wasManuallyStopped gets cleared on explicit play)
         setCurrentTrack(track);
-        setIsPlaying(true);
         setProgress(0);
         setCurrentTime(0);
+        setWasManuallyStopped(false);
+        setIsPlaying(true);
+        setHasEverPlayed(true);
 
         audioRef.current.src = track.url;
         audioRef.current.play().catch((err) => {
@@ -108,8 +120,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         if (isPlaying) {
             audioRef.current.pause();
             setIsPlaying(false);
+            setWasManuallyStopped(true);
         } else {
-            audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+            audioRef.current.play().then(() => {
+                setIsPlaying(true);
+                setWasManuallyStopped(false);
+            }).catch(() => setIsPlaying(false));
         }
     };
 
@@ -127,6 +143,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         }
         setIsPlaying(false);
         setCurrentTrack(null);
+        setWasManuallyStopped(false);
     };
 
     return (
@@ -142,7 +159,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             closePlayer,
             radioMode,
             setRadioMode,
-            trackEndedRaw
+            trackEndedRaw,
+            wasManuallyStopped,
+            hasEverPlayed
         }}>
             {children}
         </AudioContext.Provider>

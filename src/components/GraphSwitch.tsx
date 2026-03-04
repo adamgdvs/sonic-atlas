@@ -23,11 +23,12 @@ interface GraphSwitchProps {
   highlightedId: string | null;
   onHover: (id: string | null) => void;
   onExplore: (name: string) => void;
-  size?: number;
+  width?: number;
+  height?: number;
 }
 
-export default function GraphSwitch({ center, centerGenres, similar, highlightedId, onHover, onExplore, size = 320, mode = "cloud" as GraphMode }: GraphSwitchProps & { mode?: GraphMode }) {
-  const props = { center, centerGenres, similar, highlightedId, onHover, onExplore, size };
+export default function GraphSwitch({ center, centerGenres, similar, highlightedId, onHover, onExplore, width, height, mode = "cloud" as GraphMode }: GraphSwitchProps & { mode?: GraphMode }) {
+  const props = { center, centerGenres, similar, highlightedId, onHover, onExplore, width, height };
 
   switch (mode) {
     case "bubble":

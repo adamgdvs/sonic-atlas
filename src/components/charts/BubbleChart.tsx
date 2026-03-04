@@ -12,7 +12,8 @@ interface BubbleChartProps {
   highlightedId: string | null;
   onHover: (id: string | null) => void;
   onExplore: (name: string) => void;
-  size?: number;
+  width?: number;
+  height?: number;
 }
 
 interface PackedNode {
@@ -25,8 +26,8 @@ interface PackedNode {
   r: number;
 }
 
-export default function BubbleChart({ similar, highlightedId, onHover, onExplore, size = 320 }: BubbleChartProps) {
-  const scale = size / 320;
+export default function BubbleChart({ similar, highlightedId, onHover, onExplore, width = 320, height = 350 }: BubbleChartProps) {
+  const scale = width / 320;
 
   const packed = useMemo(() => {
     if (similar.length === 0) return [];
@@ -47,8 +48,8 @@ export default function BubbleChart({ similar, highlightedId, onHover, onExplore
       .sum((d: unknown) => (d as { value?: number }).value || 0);
 
     const pack = d3.pack<typeof data>()
-      .size([size - 4, size - 4])
-      .padding(2 * scale);
+      .size([width - 4, height - 4])
+      .padding(6 * scale); // Increased padding for technical spacing
 
     const packed = pack(root);
 
@@ -64,15 +65,15 @@ export default function BubbleChart({ similar, highlightedId, onHover, onExplore
         r: leaf.r,
       };
     });
-  }, [similar, size, scale]);
+  }, [similar, width, height, scale]);
 
   return (
-    <div className="relative">
-      <svg width={size} height={size} className="block bg-neutral-900/40 rounded-lg">
+    <div className="w-full h-full relative">
+      <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} className="block bg-neutral-900/40 rounded-lg">
         {packed.map((node) => {
           const shift5Orange = "#ff5841";
           const isHl = highlightedId === node.id;
-          const showLabel = node.r > 10 * scale;
+          const showLabel = node.r > 12; // Fixed threshold — show initials in all but tiniest bubbles
 
           return (
             <g
@@ -94,7 +95,7 @@ export default function BubbleChart({ similar, highlightedId, onHover, onExplore
                 <text
                   x={node.x} y={node.y}
                   textAnchor="middle" dominantBaseline="central"
-                  fontSize={Math.min(node.r * 0.6, 7 * scale)}
+                  fontSize={Math.min(node.r * 0.45, 14)}
                   fontWeight="600"
                   fill={isHl ? shift5Orange : "#666"}
                   fontFamily="'Roboto Mono', monospace"
@@ -106,8 +107,8 @@ export default function BubbleChart({ similar, highlightedId, onHover, onExplore
               {isHl && (
                 <>
                   <text
-                    x={node.x} y={node.y + node.r + 8 * scale}
-                    textAnchor="middle" fontSize={6 * scale} fontWeight="700"
+                    x={node.x} y={node.y + node.r + Math.min(8, 6 * scale)}
+                    textAnchor="middle" fontSize={Math.min(14, 4.5 * scale)} fontWeight="700"
                     fill={shift5Orange}
                     fontFamily="'Roboto Mono', monospace"
                     style={{ pointerEvents: "none" }}
@@ -115,8 +116,8 @@ export default function BubbleChart({ similar, highlightedId, onHover, onExplore
                     {node.name.toUpperCase()}
                   </text>
                   <text
-                    x={node.x} y={node.y + node.r + 16 * scale}
-                    textAnchor="middle" fontSize={4.5 * scale}
+                    x={node.x} y={node.y + node.r + Math.min(16, 12 * scale)}
+                    textAnchor="middle" fontSize={Math.min(10, 3.2 * scale)}
                     fill="#444"
                     style={{ pointerEvents: "none" }}
                     fontFamily="'Roboto Mono', monospace"
