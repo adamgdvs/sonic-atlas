@@ -190,71 +190,75 @@ async function getEnrichedData(artistName: string, limit: number): Promise<{
 }
 
 // Scoring: applied fresh each time (depends on nicheDepth)
+// The key insight: at BROAD, use mostly Last.fm's popularity-based match.
+// At DEEP NICHE, use mostly genre similarity. This creates fundamentally
+// different orderings because Last.fm match and genre similarity often disagree.
 function scoreAndSort(
   source: SourceProfile,
   candidates: EnrichedCandidate[],
   nicheDepth: number,
   limit: number
 ) {
-  const scored = candidates.map(c => {
-    let confidence = (c.match * 0.1) + (c.genreSimilarity * 0.9);
+  const depthFactor = nicheDepth / 100; // 0.0 to 1.0
 
-    // Member/group boost (always applies regardless of niche depth)
+  const scored = candidates.map(c => {
+    // ─── Core scoring weights shift with the slider ──────────
+    // BROAD (depth=0):   90% Last.fm match, 10% genre similarity
+    // DEFAULT (depth=60): 30% Last.fm match, 70% genre similarity
+    // DEEP (depth=100):   5% Last.fm match, 95% genre similarity
+    const lastfmWeight = Math.max(0.05, 0.9 - (depthFactor * 0.85));
+    const genreWeight = 1.0 - lastfmWeight;
+
+    let confidence = (c.match * lastfmWeight) + (c.genreSimilarity * genreWeight);
+
+    // Member/group boost (always applies)
     if (c.isMemberOrGroup) {
-      confidence = Math.min(1.0, confidence + 0.4);
+      confidence = Math.min(1.0, confidence + 0.35);
     }
 
-    // Micro-genre boost
+    // Micro-genre boost (scales with depth — more impactful at high depth)
     const sharedMicro = c.microGenres.filter(g => source.microGenres.includes(g));
     if (sharedMicro.length > 0) {
-      confidence = Math.min(1.0, confidence + sharedMicro.length * 0.08);
+      const microBonus = sharedMicro.length * (0.04 + depthFactor * 0.08);
+      confidence = Math.min(1.0, confidence + microBonus);
     }
 
-    // ─── Niche Depth Scoring ───────────────────────────────────
-    // This is the core of what the slider controls.
-    //
-    // At BROAD (nicheDepth=0-30): minimal genre filtering, mainstream artists kept
-    // At MID (nicheDepth=40-70): moderate preference for genre-matched artists
-    // At DEEP NICHE (nicheDepth=80-100): strong preference for niche overlap, penalize generic matches
-    //
-    // The penalty applies based on genre similarity score, not just binary niche overlap.
-    // This makes it work even when sourceNiche is empty.
+    // ─── Deep Niche Penalties (only kick in above 50%) ────────
+    if (depthFactor > 0.5) {
+      const highDepthFactor = (depthFactor - 0.5) * 2; // 0.0 to 1.0 for depth 50-100
 
-    const depthFactor = nicheDepth / 100; // 0.0 to 1.0
+      // Penalize artists with very low genre similarity
+      if (c.genreSimilarity < 0.2) {
+        confidence *= (1.0 - highDepthFactor * 0.7); // at 100%, 70% reduction
+      } else if (c.genreSimilarity < 0.4) {
+        confidence *= (1.0 - highDepthFactor * 0.35); // at 100%, 35% reduction
+      }
 
-    // Genre similarity threshold — higher nicheDepth means artists need a higher
-    // genre similarity score to avoid being penalized
-    const similarityThreshold = depthFactor * 0.5; // 0.0 at broad, 0.5 at deep niche
+      // Niche style overlap bonus/penalty
+      if (source.nicheStyles.length > 0) {
+        const nicheOverlap = c.nicheStyles.filter(g => source.nicheStyles.includes(g)).length;
+        if (nicheOverlap > 0) {
+          const nicheRatio = nicheOverlap / source.nicheStyles.length;
+          confidence = Math.min(1.0, confidence + nicheRatio * highDepthFactor * 0.3);
+        } else {
+          // Zero niche overlap at high depth = harsh penalty
+          confidence *= (1.0 - highDepthFactor * 0.5);
+        }
+      }
 
-    if (c.genreSimilarity < similarityThreshold) {
-      // Artist doesn't meet the genre similarity bar for this niche depth
-      // Penalty scales with how far below the threshold they are
-      const deficit = similarityThreshold - c.genreSimilarity;
-      const penalty = 1.0 - (deficit * depthFactor * 2.5);
-      confidence *= Math.max(0.05, penalty);
-    }
-
-    // Additional niche style bonus when slider is high
-    if (source.nicheStyles.length > 0 && depthFactor > 0.4) {
-      const nicheOverlap = c.nicheStyles.filter(g => source.nicheStyles.includes(g)).length;
-      const nicheRatio = nicheOverlap / source.nicheStyles.length;
-
-      if (nicheOverlap > 0) {
-        // Reward niche overlap proportionally to depth setting
-        confidence = Math.min(1.0, confidence + nicheRatio * depthFactor * 0.25);
-      } else if (depthFactor > 0.7) {
-        // At very high depth, penalize artists with zero niche overlap
-        confidence *= (1.0 - depthFactor * 0.5);
+      // Discogs style overlap bonus at high depth
+      if (source.discogsStyles.length > 0) {
+        const styleOverlap = c.discogsStyles.filter(s => source.discogsStyles.includes(s)).length;
+        if (styleOverlap > 0) {
+          confidence = Math.min(1.0, confidence + (styleOverlap / source.discogsStyles.length) * highDepthFactor * 0.2);
+        }
       }
     }
 
-    // Discogs style overlap bonus at high depth
-    if (source.discogsStyles.length > 0 && depthFactor > 0.5) {
-      const styleOverlap = c.discogsStyles.filter(s => source.discogsStyles.includes(s)).length;
-      if (styleOverlap > 0) {
-        const styleBonus = (styleOverlap / source.discogsStyles.length) * depthFactor * 0.15;
-        confidence = Math.min(1.0, confidence + styleBonus);
-      }
+    // ─── Broad Bonus: boost high Last.fm match at low depth ──
+    if (depthFactor < 0.4 && c.match > 0.7) {
+      const broadFactor = (0.4 - depthFactor) * 2.5; // 0.0 to 1.0 for depth 0-40
+      confidence = Math.min(1.0, confidence + c.match * broadFactor * 0.15);
     }
 
     return {
@@ -265,7 +269,11 @@ function scoreAndSort(
     };
   });
 
-  return scored
+  // Filter out very low confidence artists at high niche depth
+  const minConfidence = depthFactor > 0.7 ? 0.1 + (depthFactor - 0.7) * 0.5 : 0;
+  const filtered = scored.filter(a => a.confidence >= minConfidence);
+
+  return filtered
     .sort((a, b) => b.confidence - a.confidence)
     .slice(0, limit);
 }

@@ -844,25 +844,33 @@ export default function ArtistPage({
 
   // ─── Auto-refresh when Protocol Menu settings change ──────────
   useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout>;
+
     const handleProtocolChange = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (!detail || !artistName) return;
       const { nicheDepth, resultCount } = detail;
 
-      // Refetch similar artists with new settings (raw data is cached server-side, scoring is fresh)
-      setLoading(true);
-      getSimilarArtists(artistName, resultCount, nicheDepth)
-        .then(simData => {
-          setSimilar(simData);
-          setPreviewMap({});
-          setSimilarVotes({});
-        })
-        .catch(() => { })
-        .finally(() => setLoading(false));
+      // Debounce: wait 500ms after last slider change before refetching
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        setLoading(true);
+        getSimilarArtists(artistName, resultCount, nicheDepth)
+          .then(simData => {
+            setSimilar(simData);
+            setPreviewMap({});
+            setSimilarVotes({});
+          })
+          .catch(() => { })
+          .finally(() => setLoading(false));
+      }, 500);
     };
 
     window.addEventListener("sonic_protocol_change", handleProtocolChange);
-    return () => window.removeEventListener("sonic_protocol_change", handleProtocolChange);
+    return () => {
+      window.removeEventListener("sonic_protocol_change", handleProtocolChange);
+      clearTimeout(debounceTimer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artistName]);
 
