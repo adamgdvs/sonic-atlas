@@ -97,6 +97,10 @@ export default function Header() {
             ABOUT
           </Link>
 
+          <Link href="/frequency" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
+            FREQUENCY
+          </Link>
+
           <Link href="/help" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
             HELP
           </Link>
@@ -202,6 +206,7 @@ export default function Header() {
               ...(session ? [{ href: "/my-atlas", label: "MY ATLAS" }] : []),
               { href: "/genres", label: "GENRES" },
               { href: "/about", label: "ABOUT" },
+              { href: "/frequency", label: "FREQUENCY" },
               { href: "/help", label: "HELP" },
             ].map((link) => (
               <Link
@@ -209,8 +214,8 @@ export default function Header() {
                 href={link.href}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 text-[11px] font-mono uppercase tracking-widest no-underline transition-all ${pathname === link.href
-                    ? 'text-shift5-orange bg-shift5-orange/10 border-l-2 border-shift5-orange'
-                    : 'text-white/60 hover:text-white hover:bg-white/5 border-l-2 border-transparent'
+                  ? 'text-shift5-orange bg-shift5-orange/10 border-l-2 border-shift5-orange'
+                  : 'text-white/60 hover:text-white hover:bg-white/5 border-l-2 border-transparent'
                   }`}
               >
                 <span className="text-white/20">▸</span>

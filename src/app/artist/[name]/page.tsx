@@ -38,6 +38,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import { useJourney } from "@/contexts/JourneyContext";
 import CollapsibleBio from "@/components/CollapsibleBio";
 import ApprovalMeter from "@/components/ApprovalMeter";
+import TourBadge from "@/components/TourBadge";
 
 // ─── Sub-components ──────────────────────────────────────────────
 
@@ -839,6 +840,14 @@ export default function ArtistPage({
       })
       .catch(() => setError("Failed to load artist data"))
       .finally(() => setLoading(false));
+
+    // Log scan event for Global Frequency Hub (fire-and-forget)
+    fetch("/api/feed/scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ artistName }),
+    }).catch(() => { });
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artistName]);
 
@@ -1246,6 +1255,9 @@ export default function ArtistPage({
                     onAuthRequired={() => setToastMessage("Sign in to vote on artists")}
                   />
                 </div>
+
+                {/* Concert Tour Signal */}
+                <TourBadge artistName={artistName} />
               </div>
 
               <div className="hidden sm:flex flex-col items-end gap-1 opacity-60">

@@ -95,3 +95,14 @@ model ArtistVote {
   @@unique([userId, artistId])
   @@index([artistId])
 }
+
+// Global scan event tracking for Frequency Hub
+model ScanEvent {
+  id         String   @id @default(cuid())
+  artistName String
+  userId     String?  // nullable for anonymous visitors
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([artistName])
+}
