@@ -406,6 +406,7 @@ function SimilarCard({
   onToggleBookmark,
   previewTitle,
   onVisible,
+  voteData,
 }: {
   artist: SimilarArtistResult;
   index: number;
@@ -430,6 +431,7 @@ function SimilarCard({
   onToggleBookmark: (id: string, name: string, img?: string | null, genres?: string[]) => void;
   previewTitle?: string;
   onVisible?: () => void;
+  voteData?: { up: number; down: number; total: number; approval: number; userVote: number } | null;
 }) {
   const [hovered, setHovered] = useState(false);
   const accordionRef = useRef<HTMLDivElement>(null);
@@ -505,6 +507,19 @@ function SimilarCard({
                 <span className="text-[9px] font-mono text-white/30 uppercase tracking-[0.2em] hidden sm:inline font-bold">Confidence_Level:</span>
                 <SimilarityBar value={artist.match} />
                 <span className="text-[9px] font-mono text-shift5-orange font-bold">{(artist.match * 100).toFixed(0)}%</span>
+                {voteData && voteData.total > 0 && (
+                  <span
+                    className="text-[9px] font-mono font-bold ml-1"
+                    style={{
+                      color: voteData.approval >= 90 ? "rgba(34,197,94,0.8)" :
+                        voteData.approval >= 60 ? "rgba(234,179,8,0.7)" :
+                          "rgba(239,68,68,0.7)",
+                    }}
+                    title={`Community: ${voteData.approval}% (${voteData.total} vote${voteData.total !== 1 ? 's' : ''})`}
+                  >
+                    ● {voteData.approval}%
+                  </span>
+                )}
               </div>
             </div>
             {artist.genres.length > 0 && (
@@ -1287,6 +1302,7 @@ export default function ArtistPage({
                       if (id) handlePreviewFetch(a.mbid || a.name, a.name);
                     }}
                     onVisible={() => handlePreviewFetch(a.mbid || a.name, a.name)}
+                    voteData={similarVotes[a.name.toLowerCase()] || null}
                     isHighlighted={highlightedId === (a.mbid || a.name)}
                     previewUrl={previewMap[a.mbid || a.name]?.url}
                     previewTitle={previewMap[a.mbid || a.name]?.title}

@@ -112,8 +112,8 @@ export default function ApprovalMeter({ artistName, inline = false, initialData,
                     onClick={(e) => handleVote(e, 1)}
                     disabled={isVoting}
                     className={`flex items-center justify-center w-7 h-7 border transition-all duration-200 cursor-pointer ${voteData?.userVote === 1
-                            ? "border-green-500/40 bg-green-500/15 text-green-400"
-                            : "border-white/10 bg-white/5 text-white/25 hover:text-green-400 hover:border-green-500/30 hover:bg-green-500/10"
+                        ? "border-green-500/40 bg-green-500/15 text-green-400"
+                        : "border-white/10 bg-white/5 text-white/25 hover:text-green-400 hover:border-green-500/30 hover:bg-green-500/10"
                         }`}
                     title="Thumbs up"
                 >
@@ -133,8 +133,8 @@ export default function ApprovalMeter({ artistName, inline = false, initialData,
                     onClick={(e) => handleVote(e, -1)}
                     disabled={isVoting}
                     className={`flex items-center justify-center w-7 h-7 border transition-all duration-200 cursor-pointer ${voteData?.userVote === -1
-                            ? "border-red-400/40 bg-red-500/15 text-red-400"
-                            : "border-white/10 bg-white/5 text-white/25 hover:text-red-400 hover:border-red-400/30 hover:bg-red-500/10"
+                        ? "border-red-400/40 bg-red-500/15 text-red-400"
+                        : "border-white/10 bg-white/5 text-white/25 hover:text-red-400 hover:border-red-400/30 hover:bg-red-500/10"
                         }`}
                     title="Thumbs down"
                 >
@@ -146,53 +146,49 @@ export default function ApprovalMeter({ artistName, inline = false, initialData,
 
     // ─── Full mode: for the artist hero section (on orange bg) ──
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full">
             <button
                 onClick={(e) => handleVote(e, 1)}
                 disabled={isVoting}
-                className={`flex items-center justify-center w-9 h-9 border-2 transition-all duration-200 cursor-pointer ${voteData?.userVote === 1
-                        ? "border-green-600 bg-green-600/30 text-green-800 scale-110 shadow-[0_0_8px_rgba(34,197,94,0.3)]"
+                className={`flex-1 flex items-center justify-center py-3 border-2 transition-all duration-200 cursor-pointer ${voteData?.userVote === 1
+                        ? "border-green-600 bg-green-600/30 text-green-800 shadow-[0_0_8px_rgba(34,197,94,0.3)]"
                         : "border-shift5-dark/30 bg-shift5-dark/10 text-shift5-dark/60 hover:text-green-700 hover:border-green-600/50 hover:bg-green-500/20"
                     }`}
                 title="Thumbs up"
             >
-                <ThumbsUp size={15} className={voteData?.userVote === 1 ? "fill-current" : ""} />
+                <ThumbsUp size={16} className={voteData?.userVote === 1 ? "fill-current" : ""} />
             </button>
 
-            {hasVotes ? (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-2 border-shift5-dark/20 bg-shift5-dark/10">
+            <div className="flex items-center justify-center min-w-[60px]">
+                {hasVotes ? (
                     <span
-                        className="text-[13px] font-mono font-black"
+                        className="text-[13px] font-mono font-black flex items-center gap-1"
                         style={{
-                            color: voteData.approval >= 70 ? "#166534" :
-                                voteData.approval >= 40 ? "#854d0e" :
+                            color: voteData.approval >= 90 ? "#166534" :
+                                voteData.approval >= 60 ? "#854d0e" :
                                     "#991b1b",
                         }}
                     >
                         {voteData.approval}%
+                        <span className="text-[9px] font-mono text-shift5-dark/40 font-bold">({voteData.total})</span>
                     </span>
-                    <span className="text-[9px] font-mono text-shift5-dark/40 uppercase font-bold">
-                        ({voteData.total})
-                    </span>
-                </div>
-            ) : (
-                <div className="px-2 py-1">
+                ) : (
                     <span className="text-[9px] font-mono text-shift5-dark/30 uppercase tracking-wider font-bold">
                         No_Votes
                     </span>
-                </div>
-            )}
+                )}
+            </div>
 
             <button
                 onClick={(e) => handleVote(e, -1)}
                 disabled={isVoting}
-                className={`flex items-center justify-center w-9 h-9 border-2 transition-all duration-200 cursor-pointer ${voteData?.userVote === -1
-                        ? "border-red-700 bg-red-700/30 text-red-900 scale-110 shadow-[0_0_8px_rgba(239,68,68,0.3)]"
+                className={`flex-1 flex items-center justify-center py-3 border-2 transition-all duration-200 cursor-pointer ${voteData?.userVote === -1
+                        ? "border-red-700 bg-red-700/30 text-red-900 shadow-[0_0_8px_rgba(239,68,68,0.3)]"
                         : "border-shift5-dark/30 bg-shift5-dark/10 text-shift5-dark/60 hover:text-red-800 hover:border-red-700/50 hover:bg-red-500/20"
                     }`}
                 title="Thumbs down"
             >
-                <ThumbsDown size={15} className={voteData?.userVote === -1 ? "fill-current" : ""} />
+                <ThumbsDown size={16} className={voteData?.userVote === -1 ? "fill-current" : ""} />
             </button>
         </div>
     );
