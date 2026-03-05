@@ -406,8 +406,6 @@ function SimilarCard({
   onToggleBookmark,
   previewTitle,
   onVisible,
-  voteData,
-  onAuthRequired,
 }: {
   artist: SimilarArtistResult;
   index: number;
@@ -432,8 +430,6 @@ function SimilarCard({
   onToggleBookmark: (id: string, name: string, img?: string | null, genres?: string[]) => void;
   previewTitle?: string;
   onVisible?: () => void;
-  voteData?: { up: number; down: number; total: number; approval: number; userVote: number } | null;
-  onAuthRequired?: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const accordionRef = useRef<HTMLDivElement>(null);
@@ -579,7 +575,6 @@ function SimilarCard({
           >
             {discographyOpen ? "[ LESS_INF ]" : "[ MORE_INF ]"}
           </button>
-          <ApprovalMeter artistName={artist.name} inline initialData={voteData} onAuthRequired={onAuthRequired} />
         </div>
       </div>
 
@@ -1292,7 +1287,6 @@ export default function ArtistPage({
                       if (id) handlePreviewFetch(a.mbid || a.name, a.name);
                     }}
                     onVisible={() => handlePreviewFetch(a.mbid || a.name, a.name)}
-                    voteData={similarVotes[a.name.toLowerCase()] || null}
                     isHighlighted={highlightedId === (a.mbid || a.name)}
                     previewUrl={previewMap[a.mbid || a.name]?.url}
                     previewTitle={previewMap[a.mbid || a.name]?.title}
@@ -1311,7 +1305,6 @@ export default function ArtistPage({
                     bookmarkedArtists={bookmarkedArtists}
                     bookmarkingIds={bookmarkingIds}
                     onToggleBookmark={handleToggleBookmark}
-                    onAuthRequired={() => setToastMessage("Sign in to vote on artists")}
                   />
                 ))}
               </div>
