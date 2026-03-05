@@ -1,5 +1,15 @@
 const TICKETMASTER_BASE = "https://app.ticketmaster.com/discovery/v2";
 
+interface TicketmasterAttraction {
+    id: string;
+    name: string;
+    type: string;
+    classifications?: Array<{
+        segment?: { name: string };
+        genre?: { name: string };
+    }>;
+}
+
 interface TicketmasterEvent {
     name: string;
     dates: {
@@ -32,8 +42,22 @@ export interface TourStatus {
 }
 
 /**
+ * Normalize artist name for comparison.
+ * Strips accents, lowercases, removes "the " prefix, trims whitespace.
+ */
+function normalizeName(name: string): string {
+    return name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/^the\s+/, "")
+        .replace(/[^a-z0-9\s]/g, "")
+        .trim();
+}
+
+/**
  * Search for an artist's upcoming events via Ticketmaster Discovery API.
- * Returns tour status with event count and next event details.
+ * Uses EXACT name matching to avoid cover bands and tribute acts.
  */
 export async function getArtistTourStatus(artistName: string): Promise<TourStatus> {
     const apiKey = process.env.TICKETMASTER_API_KEY;
@@ -42,21 +66,29 @@ export async function getArtistTourStatus(artistName: string): Promise<TourStatu
     }
 
     try {
-        // Search for the attraction (artist) by keyword
-        const searchUrl = `${TICKETMASTER_BASE}/attractions.json?apikey=${apiKey}&keyword=${encodeURIComponent(artistName)}&size=1`;
+        // Search for attractions by keyword — request multiple results to find exact match
+        const searchUrl = `${TICKETMASTER_BASE}/attractions.json?apikey=${apiKey}&keyword=${encodeURIComponent(artistName)}&size=10&classificationName=music`;
         const searchRes = await fetch(searchUrl);
         if (!searchRes.ok) return { hasEvents: false, eventCount: 0 };
 
         const searchData = await searchRes.json();
-        const attractions = searchData._embedded?.attractions;
-        if (!attractions || attractions.length === 0) {
+        const attractions: TicketmasterAttraction[] = searchData._embedded?.attractions || [];
+        if (attractions.length === 0) {
             return { hasEvents: false, eventCount: 0 };
         }
 
-        const attractionId = attractions[0].id;
+        // EXACT name matching — find the attraction whose name matches our artist
+        const normalizedSearch = normalizeName(artistName);
+        const exactMatch = attractions.find(a => normalizeName(a.name) === normalizedSearch);
 
-        // Get upcoming events for this attraction
-        const eventsUrl = `${TICKETMASTER_BASE}/events.json?apikey=${apiKey}&attractionId=${attractionId}&size=5&sort=date,asc`;
+        if (!exactMatch) {
+            // No exact match found — don't show tour data for a different artist
+            console.log(`Ticketmaster: No exact match for "${artistName}". Candidates: ${attractions.map(a => a.name).join(", ")}`);
+            return { hasEvents: false, eventCount: 0 };
+        }
+
+        // Get upcoming events for the EXACT matched attraction
+        const eventsUrl = `${TICKETMASTER_BASE}/events.json?apikey=${apiKey}&attractionId=${exactMatch.id}&size=5&sort=date,asc`;
         const eventsRes = await fetch(eventsUrl);
         if (!eventsRes.ok) return { hasEvents: false, eventCount: 0 };
 
