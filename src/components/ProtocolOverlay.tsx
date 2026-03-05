@@ -40,11 +40,15 @@ export default function ProtocolOverlay({ isOpen, onClose }: ProtocolOverlayProp
         return 30;
     });
 
-    // Persist controls
+    // Persist controls and notify other components
     useEffect(() => {
         if (typeof window !== "undefined") {
             localStorage.setItem("sonic_nicheDepth", nicheDepth.toString());
             localStorage.setItem("sonic_resultCount", resultCount.toString());
+            // Dispatch event so artist page can auto-refresh
+            window.dispatchEvent(new CustomEvent("sonic_protocol_change", {
+                detail: { nicheDepth, resultCount }
+            }));
         }
     }, [nicheDepth, resultCount]);
 

@@ -842,6 +842,30 @@ export default function ArtistPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artistName]);
 
+  // ─── Auto-refresh when Protocol Menu settings change ──────────
+  useEffect(() => {
+    const handleProtocolChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || !artistName) return;
+      const { nicheDepth, resultCount } = detail;
+
+      // Refetch similar artists with new settings (raw data is cached server-side, scoring is fresh)
+      setLoading(true);
+      getSimilarArtists(artistName, resultCount, nicheDepth)
+        .then(simData => {
+          setSimilar(simData);
+          setPreviewMap({});
+          setSimilarVotes({});
+        })
+        .catch(() => { })
+        .finally(() => setLoading(false));
+    };
+
+    window.addEventListener("sonic_protocol_change", handleProtocolChange);
+    return () => window.removeEventListener("sonic_protocol_change", handleProtocolChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [artistName]);
+
   // On-demand preview fetching (lazy) — replaces batch pre-load
   const fetchingRef = useRef<Set<string>>(new Set());
   const handlePreviewFetch = useCallback(async (artistKey: string, artistNameToFetch: string) => {
