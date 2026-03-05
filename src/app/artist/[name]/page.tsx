@@ -1023,14 +1023,6 @@ export default function ArtistPage({
                   ))}
                 </div>
 
-                {/* Community Approval Meter */}
-                <div className="mb-8">
-                  <ApprovalMeter
-                    artistName={artistName}
-                    onAuthRequired={() => setToastMessage("Sign in to vote on artists")}
-                  />
-                </div>
-
                 {/* Metadata Scans Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 p-4 bg-shift5-dark/5 border border-shift5-dark/10 font-mono text-[10px] uppercase tracking-widest text-shift5-dark w-fit">
                   <div className="space-y-1">
@@ -1199,6 +1191,14 @@ export default function ArtistPage({
                   <Heart size={16} className={bookmarkedArtists.has(artistName) ? 'fill-current' : ''} />
                   {bookmarkedArtists.has(artistName) ? 'SAVED_NODE' : 'SAVE_NODE'}
                 </button>
+
+                {/* Community Approval Meter */}
+                <div className="flex justify-center md:justify-start">
+                  <ApprovalMeter
+                    artistName={artistName}
+                    onAuthRequired={() => setToastMessage("Sign in to vote on artists")}
+                  />
+                </div>
               </div>
 
               <div className="hidden sm:flex flex-col items-end gap-1 opacity-60">
