@@ -407,6 +407,7 @@ function SimilarCard({
   previewTitle,
   onVisible,
   voteData,
+  onAuthRequired,
 }: {
   artist: SimilarArtistResult;
   index: number;
@@ -432,6 +433,7 @@ function SimilarCard({
   previewTitle?: string;
   onVisible?: () => void;
   voteData?: { up: number; down: number; total: number; approval: number; userVote: number } | null;
+  onAuthRequired?: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const accordionRef = useRef<HTMLDivElement>(null);
@@ -507,7 +509,6 @@ function SimilarCard({
                 <span className="text-[9px] font-mono text-white/30 uppercase tracking-[0.2em] hidden sm:inline font-bold">Confidence_Level:</span>
                 <SimilarityBar value={artist.match} />
                 <span className="text-[9px] font-mono text-shift5-orange font-bold">{(artist.match * 100).toFixed(0)}%</span>
-                {voteData && <ApprovalMeter artistName={artist.name} compact />}
               </div>
             </div>
             {artist.genres.length > 0 && (
@@ -578,6 +579,7 @@ function SimilarCard({
           >
             {discographyOpen ? "[ LESS_INF ]" : "[ MORE_INF ]"}
           </button>
+          <ApprovalMeter artistName={artist.name} inline initialData={voteData} onAuthRequired={onAuthRequired} />
         </div>
       </div>
 
@@ -1309,6 +1311,7 @@ export default function ArtistPage({
                     bookmarkedArtists={bookmarkedArtists}
                     bookmarkingIds={bookmarkingIds}
                     onToggleBookmark={handleToggleBookmark}
+                    onAuthRequired={() => setToastMessage("Sign in to vote on artists")}
                   />
                 ))}
               </div>
