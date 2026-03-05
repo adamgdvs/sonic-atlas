@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Activity, Radio, TrendingUp, Users, Zap } from "lucide-react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 interface ScanEvent {
     id: string;
@@ -87,9 +89,16 @@ export default function FrequencyPage() {
     }, [isLive, fetchData]);
 
     return (
-        <div className="min-h-screen bg-shift5-dark text-white">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-16">
-                {/* Header */}
+        <div className="min-h-screen bg-shift5-dark text-white selection:bg-shift5-orange/30">
+            <Header />
+
+            {/* Background Decorative Grid */}
+            <div className="fixed inset-0 pointer-events-none opacity-[0.02] overflow-hidden z-0">
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#888_1px,transparent_1px),linear-gradient(to_bottom,#888_1px,transparent_1px)] bg-[size:40px_40px]" />
+            </div>
+
+            <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-16">
+                {/* Header Section */}
                 <div className="mb-12">
                     <div className="flex items-center gap-3 mb-4">
                         <Radio size={14} className="text-shift5-orange" />
@@ -167,9 +176,9 @@ export default function FrequencyPage() {
                             </button>
                         </div>
 
-                        <div className="border border-white/10 bg-white/[0.02] divide-y divide-white/5 max-h-[600px] overflow-y-auto">
+                        <div className="border border-white/10 bg-white/[0.02] divide-y divide-white/5 max-h-[600px] overflow-y-auto font-mono">
                             {scans.length === 0 ? (
-                                <div className="p-12 text-center">
+                                <div className="p-12 text-center text-mono">
                                     <div className="text-[10px] font-mono text-white/20 uppercase tracking-wider animate-pulse">
                                         AWAITING_SIGNALS...
                                     </div>
@@ -178,7 +187,7 @@ export default function FrequencyPage() {
                                     </div>
                                 </div>
                             ) : (
-                                scans.map((scan) => (
+                                scans.map((scan: ScanEvent) => (
                                     <Link
                                         key={scan.id}
                                         href={`/artist/${encodeURIComponent(scan.artistName)}`}
@@ -189,7 +198,7 @@ export default function FrequencyPage() {
                                             SIGNAL_DETECTED
                                         </span>
                                         <span className="text-[9px] font-mono text-white/20">
-                      //
+                                            //
                                         </span>
                                         <span className="text-[11px] font-mono text-white/80 font-bold uppercase tracking-wider group-hover:text-shift5-orange transition-colors truncate">
                                             {scan.artistName}
@@ -212,7 +221,7 @@ export default function FrequencyPage() {
                             </h2>
                         </div>
 
-                        <div className="border border-white/10 bg-white/[0.02] divide-y divide-white/5">
+                        <div className="border border-white/10 bg-white/[0.02] divide-y divide-white/5 font-mono">
                             {trending.length === 0 ? (
                                 <div className="p-8 text-center">
                                     <div className="text-[10px] font-mono text-white/20 uppercase tracking-wider">
@@ -220,7 +229,7 @@ export default function FrequencyPage() {
                                     </div>
                                 </div>
                             ) : (
-                                trending.map((t, i) => (
+                                trending.map((t: TrendingArtist, i: number) => (
                                     <Link
                                         key={t.artistName}
                                         href={`/artist/${encodeURIComponent(t.artistName)}`}
@@ -228,7 +237,7 @@ export default function FrequencyPage() {
                                     >
                                         <span className={`text-[14px] font-black font-mono w-6 text-right ${i === 0 ? "text-shift5-orange" : i < 3 ? "text-white/50" : "text-white/20"
                                             }`}>
-                                            {i + 1}
+                                            {(i + 1).toString().padStart(2, '0')}
                                         </span>
                                         <div className="flex-1 min-w-0">
                                             <div className="text-[11px] font-mono text-white/80 font-bold uppercase tracking-wider group-hover:text-shift5-orange transition-colors truncate">
@@ -247,7 +256,9 @@ export default function FrequencyPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
+            <Footer />
         </div>
     );
 }
+
