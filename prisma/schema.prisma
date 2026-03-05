@@ -44,6 +44,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   bookmarks     BookmarkedArtist[]
+  votes         ArtistVote[]
 }
 
 model VerificationToken {
@@ -78,4 +79,19 @@ model ApiCache {
   createdAt DateTime @default(now())
 
   @@index([expiresAt])
+}
+
+// Global artist voting (thumbs up / thumbs down)
+model ArtistVote {
+  id        String   @id @default(cuid())
+  userId    String
+  artistId  String   // normalized lowercase artist name
+  vote      Int      // +1 (thumbs up) or -1 (thumbs down)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, artistId])
+  @@index([artistId])
 }

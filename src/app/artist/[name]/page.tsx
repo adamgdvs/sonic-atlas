@@ -37,6 +37,7 @@ import StreamingLinks from "@/components/StreamingLinks";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { useJourney } from "@/contexts/JourneyContext";
 import CollapsibleBio from "@/components/CollapsibleBio";
+import ApprovalMeter from "@/components/ApprovalMeter";
 
 // ─── Sub-components ──────────────────────────────────────────────
 
@@ -405,6 +406,7 @@ function SimilarCard({
   onToggleBookmark,
   previewTitle,
   onVisible,
+  voteData,
 }: {
   artist: SimilarArtistResult;
   index: number;
@@ -429,6 +431,7 @@ function SimilarCard({
   onToggleBookmark: (id: string, name: string, img?: string | null, genres?: string[]) => void;
   previewTitle?: string;
   onVisible?: () => void;
+  voteData?: { up: number; down: number; total: number; approval: number; userVote: number } | null;
 }) {
   const [hovered, setHovered] = useState(false);
   const accordionRef = useRef<HTMLDivElement>(null);
@@ -504,6 +507,7 @@ function SimilarCard({
                 <span className="text-[9px] font-mono text-white/30 uppercase tracking-[0.2em] hidden sm:inline font-bold">Confidence_Level:</span>
                 <SimilarityBar value={artist.match} />
                 <span className="text-[9px] font-mono text-shift5-orange font-bold">{(artist.match * 100).toFixed(0)}%</span>
+                {voteData && <ApprovalMeter artistName={artist.name} compact />}
               </div>
             </div>
             {artist.genres.length > 0 && (
@@ -638,6 +642,7 @@ const FILTERS = [
   { key: "sound", label: "Sound (Sonic)" },
   { key: "genre", label: "Genre Overlap" },
   { key: "audience", label: "Audience" },
+  { key: "community", label: "Community" },
 ] as const;
 
 export default function ArtistPage({
@@ -781,6 +786,7 @@ export default function ArtistPage({
   >(null);
   const [isDiscoFocused, setIsDiscoFocused] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [similarVotes, setSimilarVotes] = useState<Record<string, { up: number; down: number; total: number; approval: number; userVote: number }>>({});
   const primaryAccordionRef = useRef<HTMLDivElement>(null);
 
   // Fetch data
@@ -847,21 +853,43 @@ export default function ArtistPage({
     }
   }, [previewMap]);
 
+  // Batch fetch votes for similar artists
+  useEffect(() => {
+    if (similar.length === 0) return;
+    const names = similar.map(a => a.name).join(",");
+    fetch(`/api/votes?artistIds=${encodeURIComponent(names)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.votes) setSimilarVotes(data.votes);
+      })
+      .catch(() => { });
+  }, [similar]);
+
   // Filter
   const filteredSimilar = similar.filter((a) => {
     if (genreFilter) return a.genres.includes(genreFilter);
     if (activeFilter === "all") return true;
-
     if (activeFilter === "sound") return a.match > 0.4;
-
     if (activeFilter === "genre") {
       const centerGenres = artistInfo?.genres || [];
       return a.genres.some(g => centerGenres.includes(g));
     }
-
     if (activeFilter === "audience") return a.match <= 0.4;
-
+    if (activeFilter === "community") {
+      const v = similarVotes[a.name.toLowerCase()];
+      return v && v.total > 0;
+    }
     return true;
+  }).sort((a, b) => {
+    if (activeFilter === "community") {
+      const va = similarVotes[a.name.toLowerCase()];
+      const vb = similarVotes[b.name.toLowerCase()];
+      const approvalA = va?.approval ?? -1;
+      const approvalB = vb?.approval ?? -1;
+      if (approvalA !== approvalB) return approvalB - approvalA;
+      return (vb?.total ?? 0) - (va?.total ?? 0);
+    }
+    return 0; // default: keep existing confidence sort
   });
 
   const constellationData = similar.map((a) => ({
@@ -992,10 +1020,18 @@ export default function ArtistPage({
                 <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold uppercase tracking-tighter leading-none mb-4 selection:bg-shift5-dark selection:text-white break-words">
                   {artistName}
                 </h1>
-                <div className="flex flex-wrap gap-2 mt-4 mb-8">
+                <div className="flex flex-wrap items-center gap-2 mt-4 mb-4">
                   {artistInfo?.genres.map(g => (
                     <GenreTag key={g} genre={g} onClick={handleGenreClick} active={genreFilter === g} />
                   ))}
+                </div>
+
+                {/* Community Approval Meter */}
+                <div className="mb-8">
+                  <ApprovalMeter
+                    artistName={artistName}
+                    onAuthRequired={() => setToastMessage("Sign in to vote on artists")}
+                  />
                 </div>
 
                 {/* Metadata Scans Grid */}
@@ -1254,6 +1290,7 @@ export default function ArtistPage({
                       if (id) handlePreviewFetch(a.mbid || a.name, a.name);
                     }}
                     onVisible={() => handlePreviewFetch(a.mbid || a.name, a.name)}
+                    voteData={similarVotes[a.name.toLowerCase()] || null}
                     isHighlighted={highlightedId === (a.mbid || a.name)}
                     previewUrl={previewMap[a.mbid || a.name]?.url}
                     previewTitle={previewMap[a.mbid || a.name]?.title}
