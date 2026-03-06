@@ -23,9 +23,9 @@ interface TieredNode extends ConstellationNode {
 }
 
 const TIERS = [
-    { label: "AUTHORITATIVE_ORBIT", min: 0.9, color: "#ffffff" },
-    { label: "RESONANCE_BAND", min: 0.7, color: "#dedede" },
-    { label: "SPECTRAL_SIGNAL", min: 0.5, color: "#888888" },
+    { label: "AUTHORITATIVE_ORBIT", min: 0.8, color: "#ffffff" },
+    { label: "RESONANCE_BAND", min: 0.6, color: "#dedede" },
+    { label: "SPECTRAL_SIGNAL", min: 0.4, color: "#888888" },
     { label: "OUTER_HORIZON", min: 0, color: "#444444" },
 ];
 
@@ -103,6 +103,25 @@ export default function ResonanceGraph({
                 viewBox={`0 0 ${width} ${height}`}
                 className="block"
             >
+                {/* Shaded Band Fills (Screenshot style) */}
+                {tierRadii.map((r, i) => {
+                    const hoveredNode = tieredNodes.find(n => n.id === highlightedId);
+                    const activeTierIndex = hoveredNode ? hoveredNode.tierIndex : -1;
+
+                    // Fill all tiers up to the active one (or just the outermost background)
+                    const isFilled = activeTierIndex !== -1 && i >= activeTierIndex;
+
+                    return (
+                        <path
+                            key={`fill-${i}`}
+                            d={`M ${width / 2 - r} ${height - 20} A ${r} ${r} 0 0 1 ${width / 2 + r} ${height - 20} L ${width / 2} ${height - 20} Z`}
+                            fill="white"
+                            fillOpacity={isFilled ? 0.08 : 0}
+                            style={{ transition: "fill-opacity 0.4s ease" }}
+                        />
+                    );
+                }).reverse()}
+
                 {/* Background Arcs */}
                 {tierRadii.map((r, i) => (
                     <g key={`tier-${i}`}>
