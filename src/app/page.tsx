@@ -51,7 +51,7 @@ export default function Home() {
         genres: [genreName],
       });
     } catch (e) {
-      console.error(e);
+      void e;
     }
   };
 

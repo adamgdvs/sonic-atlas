@@ -76,7 +76,7 @@ export default function GenreDrawer({
             fetch("/api/bookmarks")
                 .then((res) => res.json())
                 .then((data) => {
-                    if (Array.isArray(data)) setBookmarkedArtists(new Set(data.map((b: any) => b.name)));
+                    if (Array.isArray(data)) setBookmarkedArtists(new Set(data.map((b: { name: string }) => b.name)));
                 });
         }
     }, [session]);

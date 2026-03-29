@@ -62,7 +62,7 @@ export default function GenresPage() {
         genres: [genreName],
       });
     } catch (e) {
-      console.error(e);
+      void e;
     }
   };
 
@@ -96,6 +96,7 @@ export default function GenresPage() {
             type="text"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
+            aria-label="Filter genres"
             placeholder="Search sector signature..."
             className="w-full max-w-[400px] text-[11px] font-mono border border-white/10 bg-white/[0.02] text-white px-4 py-3 outline-none focus:border-shift5-orange/50 transition-all uppercase placeholder:text-white/10"
           />

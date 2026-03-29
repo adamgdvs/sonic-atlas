@@ -736,11 +736,11 @@ export default function ArtistPage({
         .then((data) => {
           if (Array.isArray(data)) {
             setBookmarkedArtists(
-              new Set(data.map((b: any) => b.name))
+              new Set(data.map((b: { name: string }) => b.name))
             );
           }
         })
-        .catch((err) => console.error("Failed to load bookmarks", err));
+        .catch(() => {});
     }
   }, [session]);
 

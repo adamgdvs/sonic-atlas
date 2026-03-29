@@ -61,7 +61,7 @@ export default function Header() {
         </div>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-4 sm:gap-6 text-[10px] text-white/50 font-mono uppercase tracking-[0.05em] shrink-0">
+        <nav aria-label="Main navigation" className="hidden md:flex items-center gap-4 sm:gap-6 text-[10px] text-white/50 font-mono uppercase tracking-[0.05em] shrink-0">
           <button
             onClick={() => setIsProtocolOpen(!isProtocolOpen)}
             className="flex items-center gap-3 mr-4 border-r border-shift5-accent pr-6 group hover:text-white transition-colors cursor-pointer"
@@ -116,6 +116,7 @@ export default function Header() {
               </div>
               <button
                 onClick={() => signOut()}
+                aria-label="Sign out"
                 className="text-[10px] font-bold text-white/30 hover:text-shift5-orange transition-colors cursor-pointer uppercase tracking-widest font-mono"
               >
                 [ Terminate ]
@@ -129,7 +130,7 @@ export default function Header() {
               LOGIN
             </button>
           )}
-        </div>
+        </nav>
 
         {/* Mobile: Quick actions + Hamburger */}
         <div className="flex md:hidden items-center gap-3 shrink-0">

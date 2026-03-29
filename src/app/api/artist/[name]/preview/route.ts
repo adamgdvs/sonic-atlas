@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { searchArtist, getTopTracks } from "@/lib/deezer";
 import { getArtistInfo } from "@/lib/lastfm";
 import { getItunesTopTracks } from "@/lib/itunes";
+import type { PreviewTrack } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +17,7 @@ export async function GET(
   try {
     let artistId: number | null = null;
     let artistPicture: string | null = null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let tracks: any[] = [];
+    let tracks: PreviewTrack[] = [];
 
     // --- 1. ATTEMPT DEEZER ---
     try {

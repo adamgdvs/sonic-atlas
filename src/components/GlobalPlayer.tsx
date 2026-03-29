@@ -113,8 +113,7 @@ export default function GlobalPlayer() {
             if (!found) {
                 setError("SIGNAL_LOST");
             }
-        } catch (e) {
-            console.error(e);
+        } catch {
             setError("SURGE_FAILURE");
         } finally {
             setIsSurging(false);
@@ -173,8 +172,7 @@ export default function GlobalPlayer() {
                     genres: nextGenres
                 });
 
-            } catch (err) {
-                console.error("Radio mode error:", err);
+            } catch {
                 if (!cancelled) setError("Radio fetch failed.");
             } finally {
                 if (!cancelled) setLoadingNext(false);
@@ -254,6 +252,7 @@ export default function GlobalPlayer() {
                             {/* Close Button — always visible on mobile, hover on desktop */}
                             <button
                                 onClick={closePlayer}
+                                aria-label="Close player"
                                 className="absolute top-1.5 right-1.5 sm:-top-2 sm:-right-2 p-2 sm:p-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10"
                             >
                                 <div className="w-6 h-6 sm:w-5 sm:h-5 rounded-full bg-black/10 flex items-center justify-center text-[#1D1D1F] backdrop-blur-md">
@@ -325,6 +324,7 @@ export default function GlobalPlayer() {
                                         onClick={handleSurge}
                                         disabled={isSurging}
                                         className={`w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-full transition-all duration-300 ${isSurging ? 'bg-shift5-orange text-white animate-pulse' : 'text-[#C4C4C4] hover:text-shift5-orange hover:bg-shift5-orange/10 active:bg-shift5-orange/20'}`}
+                                        aria-label="Surge Relay - play new artist in same genre"
                                         title="Surge Relay (New artist in same genre)"
                                     >
                                         <Zap size={15} fill={isSurging ? "currentColor" : "none"} className={isSurging ? "animate-bounce" : ""} />
@@ -333,6 +333,7 @@ export default function GlobalPlayer() {
                                     <button
                                         onClick={() => setRadioMode(!radioMode)}
                                         className={`w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-full transition-colors ${radioMode ? 'bg-[#1D1D1F] text-white' : 'text-[#C4C4C4] hover:text-[#1D1D1F] hover:bg-[#F0F0F0] active:bg-[#E5E5E5]'}`}
+                                        aria-label={radioMode ? "Disable radio mode" : "Enable radio mode"}
                                         title="Radio Mode"
                                     >
                                         <Radio size={15} />
@@ -340,6 +341,7 @@ export default function GlobalPlayer() {
 
                                     <button
                                         onClick={togglePlayPause}
+                                        aria-label={isPlaying ? "Pause" : "Play"}
                                         className="w-10 h-10 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md"
                                     >
                                         {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}

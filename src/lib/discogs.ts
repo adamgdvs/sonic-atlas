@@ -129,7 +129,7 @@ export async function getDiscogsGenres(name: string, limit = 1): Promise<{ genre
         const allGenres = new Set<string>();
         const allStyles = new Set<string>();
 
-        results.forEach((r: any) => {
+        results.forEach((r: { genre?: string[]; style?: string[] }) => {
             (r.genre || []).forEach((g: string) => allGenres.add(g));
             (r.style || []).forEach((s: string) => allStyles.add(s));
         });
@@ -167,7 +167,7 @@ export async function getDiscogsGenreArtists(genre: string, limit = 100): Promis
         // Extract unique artists from release titles (e.g. "Artist - Title")
         const artistMap = new Map<string, string>();
 
-        results.forEach((r: any) => {
+        results.forEach((r: { title: string }) => {
             const titleParts = r.title.split(" - ");
             if (titleParts.length > 1) {
                 const name = titleParts[0].trim();

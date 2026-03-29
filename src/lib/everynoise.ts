@@ -145,8 +145,8 @@ async function getLastFmTagsForMicroSearch(artistName: string): Promise<string[]
         ]);
 
         return tags
-            .filter((t: any) => t.count >= 30 && !NOISE_FILTER.has(t.name.toLowerCase()))
-            .map((t: any) => t.name.toLowerCase())
+            .filter((t: { name: string; count: number }) => t.count >= 30 && !NOISE_FILTER.has(t.name.toLowerCase()))
+            .map((t: { name: string; count: number }) => t.name.toLowerCase())
             .slice(0, 12);
     } catch {
         return [];

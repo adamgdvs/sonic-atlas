@@ -95,8 +95,9 @@ function LoginContent() {
 
                     <form onSubmit={handleSubmit} className="space-y-6 text-left">
                         <div className="space-y-2">
-                            <label className="block text-[10px] font-mono font-bold text-white/30 uppercase tracking-[0.2em] ml-1">Identity_Email</label>
+                            <label htmlFor="login-email" className="block text-[10px] font-mono font-bold text-white/30 uppercase tracking-[0.2em] ml-1">Identity_Email</label>
                             <input
+                                id="login-email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -107,8 +108,9 @@ function LoginContent() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="block text-[10px] font-mono font-bold text-white/30 uppercase tracking-[0.2em] ml-1">Access_Hash</label>
+                            <label htmlFor="login-password" className="block text-[10px] font-mono font-bold text-white/30 uppercase tracking-[0.2em] ml-1">Access_Hash</label>
                             <input
+                                id="login-password"
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}

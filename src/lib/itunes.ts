@@ -24,8 +24,7 @@ export async function getItunesTopTracks(
         }
 
         // Map iTunes results to our PreviewTrack format
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return data.results.map((track: any) => ({
+        return data.results.map((track: { trackId: number; trackName: string; previewUrl?: string; trackTimeMillis?: number }) => ({
             id: track.trackId,
             title: track.trackName,
             preview: track.previewUrl || "",

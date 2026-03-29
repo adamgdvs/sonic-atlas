@@ -24,7 +24,7 @@ export async function GET(request: Request) {
         let artistResults: { type: 'artist'; name: string }[] = [];
         if (artistData.results?.artistmatches?.artist) {
             if (Array.isArray(artistData.results.artistmatches.artist)) {
-                artistResults = artistData.results.artistmatches.artist.map((a: any) => ({
+                artistResults = artistData.results.artistmatches.artist.map((a: { name: string }) => ({
                     type: 'artist' as const,
                     name: a.name,
                 }));

@@ -43,7 +43,7 @@ export async function GET(
                 : [lastFmData.topartists.artist];
 
             // Map standard properties first
-            artists = artistsArray.map((artist: any) => ({
+            artists = artistsArray.map((artist: { name: string; mbid?: string; url?: string }) => ({
                 name: artist.name,
                 mbid: artist.mbid || '',
                 url: artist.url,

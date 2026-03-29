@@ -83,8 +83,7 @@ export async function getTopTracks(
 
   const data = await res.json();
   return (data.data || []).map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (t: any) => ({
+    (t: { id: number; title: string; preview: string; duration: number; artist: { id: number; name: string; picture_medium?: string } }) => ({
       id: t.id,
       title: t.title,
       preview: t.preview,
@@ -127,10 +126,9 @@ export async function getAlbums(
 
   const data = await res.json();
   // Use list data directly — no need for individual album detail calls
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data.data || [])
-    .filter((a: any) => a.record_type === "album")
-    .map((a: any) => ({
+    .filter((a: { record_type: string }) => a.record_type === "album")
+    .map((a: { id: number; title: string; cover_medium?: string; cover_big?: string; release_date?: string; nb_tracks?: number; record_type?: string }) => ({
       id: a.id,
       title: a.title,
       cover_medium: a.cover_medium || "",
@@ -151,8 +149,7 @@ export async function getAlbumTracks(
 
   const data = await res.json();
   return (data.data || []).map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (t: any) => ({
+    (t: { id: number; title: string; preview?: string; duration: number; artist?: { id: number; name: string; picture_medium?: string } }) => ({
       id: t.id,
       title: t.title,
       preview: t.preview || "",

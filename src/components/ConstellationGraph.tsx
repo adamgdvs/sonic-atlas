@@ -16,6 +16,12 @@ interface LayoutNode extends ConstellationNode {
   y: number;
 }
 
+interface SimLink {
+  source: LayoutNode;
+  target: LayoutNode;
+  distance: number;
+}
+
 export default function ConstellationGraph({
   center,
   centerGenres,
@@ -50,7 +56,7 @@ export default function ConstellationGraph({
 
   const { nodes: layoutNodes, links: layoutLinks } = useMemo(() => {
     // Center node
-    const _nodes: any[] = [{
+    const _nodes: (ConstellationNode & { fx?: number; fy?: number; x?: number; y?: number; isCenter: boolean })[] = [{
       id: "CENTER_NODE",
       name: center,
       genres: centerGenres || [],
@@ -77,7 +83,7 @@ export default function ConstellationGraph({
     // NO secondary links between similar nodes to reduce visual noise
 
     const simulation = d3.forceSimulation(_nodes)
-      .force("link", d3.forceLink(_links).id((d: any) => d.id).distance((d: any) => d.distance).strength(1))
+      .force("link", d3.forceLink(_links).id((d: d3.SimulationNodeDatum & { id?: string }) => d.id || "").distance((d: { distance: number }) => d.distance).strength(1))
       .force("charge", d3.forceManyBody().strength(-500)) // INCREASED repulsion for cleaner layout
       .force("collide", d3.forceCollide().radius(25)) // Optimized collision radius
       .force("center", d3.forceCenter(cx, cy).strength(0.05)) // Gentle centering force
@@ -87,8 +93,8 @@ export default function ConstellationGraph({
     simulation.tick(300);
 
     return {
-      nodes: _nodes,
-      links: _links
+      nodes: _nodes as (LayoutNode & { isCenter: boolean })[],
+      links: _links as unknown as SimLink[]
     };
   }, [center, centerGenres, sorted, cx, cy, width, height]);
 
@@ -209,6 +215,8 @@ export default function ConstellationGraph({
   return (
     <div className="w-full h-full relative">
       <svg
+        role="img"
+        aria-label={`Constellation graph showing artists similar to ${center}`}
         width="100%" height="100%"
         viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
         className="block bg-neutral-900/50 rounded-lg"
@@ -220,7 +228,7 @@ export default function ConstellationGraph({
         onMouseLeave={handleMouseUp}
       >
         {/* Draw Links (Dashed Technical Style) */}
-        {layoutLinks.map((link: any, i: number) => {
+        {layoutLinks.map((link, i) => {
           const isHighlighted = highlightedId === link.target.id || highlightedId === link.source.id;
 
           return (

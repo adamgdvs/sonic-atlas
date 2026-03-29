@@ -109,8 +109,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         setHasEverPlayed(true);
 
         audioRef.current.src = track.url;
-        audioRef.current.play().catch((err) => {
-            console.error("Audio playback failed:", err);
+        audioRef.current.play().catch(() => {
             setIsPlaying(false);
         });
     };

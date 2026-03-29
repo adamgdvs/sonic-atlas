@@ -17,6 +17,13 @@ interface LayoutNode extends BookmarkNode {
     y: number;
 }
 
+interface SimLink {
+    source: LayoutNode;
+    target: LayoutNode;
+    distance: number;
+    value: number;
+}
+
 export default function HomeConstellationGraph({
     bookmarks,
     size = 600, // Make it larger for the dashboard
@@ -44,8 +51,8 @@ export default function HomeConstellationGraph({
     const { nodes: layoutNodes, links: layoutLinks } = useMemo(() => {
         if (bookmarks.length === 0) return { nodes: [], links: [] };
 
-        const _nodes: any[] = bookmarks.map((b) => ({ ...b }));
-        const _links: any[] = [];
+        const _nodes: (BookmarkNode & { x?: number; y?: number })[] = bookmarks.map((b) => ({ ...b }));
+        const _links: { source: string; target: string; distance: number; value: number }[] = [];
 
         // Links between bookmarked nodes if they share genres
         for (let i = 0; i < bookmarks.length; i++) {
@@ -72,8 +79,8 @@ export default function HomeConstellationGraph({
                 "link",
                 d3
                     .forceLink(_links)
-                    .id((d: any) => d.id)
-                    .distance((d: any) => d.distance)
+                    .id((d: d3.SimulationNodeDatum & { id?: string }) => d.id || "")
+                    .distance((d: { distance: number }) => d.distance)
                     .strength(0.5) // Adjust strength so they pull together nicely
             )
             .force("charge", d3.forceManyBody().strength(-300)) // Repel each other to spread out
@@ -85,8 +92,8 @@ export default function HomeConstellationGraph({
         simulation.tick(300);
 
         return {
-            nodes: _nodes,
-            links: _links,
+            nodes: _nodes as LayoutNode[],
+            links: _links as unknown as SimLink[],
         };
     }, [bookmarks, cx, cy, size]);
 
@@ -241,7 +248,7 @@ export default function HomeConstellationGraph({
                 border: "1px solid black"
             }}
         >
-            <svg width="100%" height="100%" viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}>
+            <svg role="img" aria-label="Constellation graph of bookmarked artists" width="100%" height="100%" viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}>
                 <defs>
                     <filter id="glow-atlas">
                         <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
@@ -254,7 +261,7 @@ export default function HomeConstellationGraph({
 
                 {/* Links */}
                 <g opacity={0.6}>
-                    {layoutLinks.map((link: any, i: number) => {
+                    {layoutLinks.map((link, i) => {
                         const opacity = 0.15 + (link.value * 0.05); // slightly thicker/brighter for more shared genres
                         return (
                             <line

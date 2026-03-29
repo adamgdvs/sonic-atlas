@@ -9,7 +9,7 @@ import { dbCache, CacheTTL } from "@/lib/dbCache";
 // ─── In-Memory L1 Cache (30-minute TTL) ─────────────────────────────
 // Caches the RAW enriched data (tags, images, genres) but NOT the niche scoring
 const CACHE_TTL = 30 * 60 * 1000;
-const cache = new Map<string, { data: any; timestamp: number }>();
+const cache = new Map<string, { data: { source: SourceProfile; candidates: EnrichedCandidate[] }; timestamp: number }>();
 
 function getCached(key: string) {
   const entry = cache.get(key);
@@ -18,7 +18,7 @@ function getCached(key: string) {
   return null;
 }
 
-function setCache(key: string, data: any) {
+function setCache(key: string, data: { source: SourceProfile; candidates: EnrichedCandidate[] }) {
   cache.set(key, { data, timestamp: Date.now() });
   if (cache.size > 200) {
     const now = Date.now();
@@ -96,8 +96,8 @@ async function getEnrichedData(artistName: string, limit: number): Promise<{
           getDiscogsArtistDetails(discogsArtistId)
         );
         if (details) {
-          const members = details.members?.map((m: any) => m.name) || [];
-          const groups = details.groups?.map((g: any) => g.name) || [];
+          const members = details.members?.map((m: { name: string }) => m.name) || [];
+          const groups = details.groups?.map((g: { name: string }) => g.name) || [];
           memberNames = [...members, ...groups];
         }
       } catch { /* non-critical */ }

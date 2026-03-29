@@ -60,10 +60,10 @@ export default function GenreDetailPage({
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
-            setBookmarkedArtists(new Set(data.map((b: any) => b.name)));
+            setBookmarkedArtists(new Set(data.map((b: { name: string }) => b.name)));
           }
         })
-        .catch((err) => console.error("Failed to load bookmarks", err));
+        .catch(() => {});
     }
   }, [session]);
 
@@ -171,7 +171,7 @@ export default function GenreDetailPage({
         setArtists(artistsData);
         setSimilarGenres(similarData.slice(0, 10));
       } catch (err) {
-        console.error("Error fetching genre data:", err);
+        void err;
       } finally {
         setLoading(false);
       }

@@ -9,6 +9,7 @@ import GenreDrawer from "@/components/GenreDrawer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { useJourney } from "@/contexts/JourneyContext";
 import { ArrowUpDown, X } from "lucide-react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export type ViewState =
     | { type: 'artist'; id: string }
@@ -19,7 +20,7 @@ type SortMode = "date" | "name" | "genre";
 export default function MyAtlasClient({
     bookmarks: initialBookmarks,
 }: {
-    bookmarks: any[];
+    bookmarks: { id: string; name: string; genres?: string; imageUrl?: string | null; createdAt?: string | Date }[];
 }) {
     const [bookmarks, setBookmarks] = useState(initialBookmarks);
     const [viewStack, setViewStack] = useState<ViewState[]>(
@@ -35,7 +36,7 @@ export default function MyAtlasClient({
     // ─── Taste DNA: genre breakdown from bookmarks ───────────────
     const tasteDNA = useMemo(() => {
         const genreCounts = new Map<string, number>();
-        bookmarks.forEach((b: any) => {
+        bookmarks.forEach((b) => {
             try {
                 const genres: string[] = JSON.parse(b.genres || "[]");
                 genres.forEach(g => {
@@ -64,7 +65,7 @@ export default function MyAtlasClient({
 
         // Genre filter
         if (genreFilter) {
-            filtered = filtered.filter((b: any) => {
+            filtered = filtered.filter((b) => {
                 try {
                     const genres: string[] = JSON.parse(b.genres || "[]");
                     return genres.some(g => g.toLowerCase() === genreFilter);
@@ -74,9 +75,9 @@ export default function MyAtlasClient({
 
         // Sort
         if (sortMode === "name") {
-            filtered.sort((a: any, b: any) => a.name.localeCompare(b.name));
+            filtered.sort((a, b) => a.name.localeCompare(b.name));
         } else if (sortMode === "genre") {
-            filtered.sort((a: any, b: any) => {
+            filtered.sort((a, b) => {
                 const aGenres = JSON.parse(a.genres || "[]");
                 const bGenres = JSON.parse(b.genres || "[]");
                 return (aGenres[0] || "zzz").localeCompare(bGenres[0] || "zzz");
@@ -94,8 +95,8 @@ export default function MyAtlasClient({
                 const data = await res.json();
                 setBookmarks(data);
             }
-        } catch (err) {
-            console.error("Failed to refresh bookmarks:", err);
+        } catch {
+            // silently fail — bookmarks will refresh on next navigation
         }
     };
 
@@ -123,7 +124,7 @@ export default function MyAtlasClient({
         if (viewStack.length > 1) setViewStack(viewStack.slice(0, -1));
     };
 
-    const handleBreadcrumbClick = (_node: any, index: number) => {
+    const handleBreadcrumbClick = (_node: unknown, index: number) => {
         if (index < viewStack.length) setViewStack(viewStack.slice(0, index + 1));
     };
 
@@ -229,7 +230,7 @@ export default function MyAtlasClient({
                             {genreFilter ? "No_Artists_Match_Filter" : "Zero_Identifiers_Saved"}
                         </div>
                     ) : (
-                        displayedBookmarks.map((b: any) => {
+                        displayedBookmarks.map((b) => {
                             const genres = b.genres ? JSON.parse(b.genres) : [];
                             const isActive = selectedArtist === b.name;
                             return (
@@ -275,6 +276,7 @@ export default function MyAtlasClient({
 
                 {currentView ? (
                     <div className="flex-1 flex flex-col bg-shift5-dark z-10 relative">
+                        <ErrorBoundary>
                         {currentView.type === 'artist' ? (
                             <ArtistDrawer
                                 artistName={currentView.id}
@@ -295,6 +297,7 @@ export default function MyAtlasClient({
                                 className="flex-1 w-full bg-shift5-dark flex flex-col z-10 relative overflow-hidden"
                             />
                         )}
+                        </ErrorBoundary>
                     </div>
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center bg-transparent z-10">
