@@ -161,7 +161,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
                 isStreamAttemptRef.current = false;
                 audio.src = track.url;
                 audio.load();
-                audio.play().catch(() => {});
+                audio.play().then(() => {
+                    setIsPlaying(true);
+                }).catch(() => {
+                    setIsPlaying(false);
+                });
             }
         };
 
