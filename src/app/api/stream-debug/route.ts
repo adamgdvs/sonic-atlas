@@ -51,40 +51,51 @@ export async function GET() {
       return NextResponse.json({ steps, error: "No videoId found" });
     }
 
-    steps.push("5. Getting basic info with IOS client...");
-    const info = await yt.getBasicInfo(videoId, { client: "IOS" });
-    steps.push(`5. OK - Has streaming_data: ${!!info.streaming_data}`);
+    const clients = ["IOS", "ANDROID", "TV_EMBEDDED", "WEB", "YTMUSIC", "YTMUSIC_ANDROID", "MWEB", "WEB_CREATOR"] as const;
 
-    if (!info.streaming_data) {
-      steps.push("5. FAIL - No streaming data");
-      return NextResponse.json({ steps });
-    }
-
-    const adaptive = info.streaming_data.adaptive_formats || [];
-    const audioFormats = adaptive.filter((f) => f.has_audio && !f.has_video);
-    steps.push(`6. Audio formats found: ${audioFormats.length}`);
-
-    if (audioFormats.length === 0) {
-      return NextResponse.json({ steps, error: "No audio formats" });
-    }
-
-    const best = audioFormats.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0];
-    steps.push(`6. Best format: bitrate=${best.bitrate}, mime=${best.mime_type}, has_url=${!!best.url}`);
-
-    let url = best.url;
-    if (!url) {
-      steps.push("7. Deciphering URL...");
+    for (const client of clients) {
       try {
-        url = await best.decipher(yt.session.player);
-        steps.push(`7. OK - Deciphered URL starts with: ${url?.substring(0, 60)}`);
+        steps.push(`5. Trying client=${client}...`);
+        const info = await yt.getBasicInfo(videoId, { client: client as "IOS" | "ANDROID" | "TV_EMBEDDED" | "WEB" | "YTMUSIC" | "YTMUSIC_ANDROID" | "MWEB" | "WEB_CREATOR" });
+        const hasData = !!info.streaming_data;
+        const formatCount = hasData ? (info.streaming_data?.adaptive_formats?.length || 0) : 0;
+        const audioCount = hasData ? (info.streaming_data?.adaptive_formats?.filter((f) => f.has_audio && !f.has_video)?.length || 0) : 0;
+        steps.push(`   ${client}: streaming_data=${hasData}, adaptive=${formatCount}, audio_only=${audioCount}`);
+
+        if (hasData && audioCount > 0) {
+          const best = info.streaming_data!.adaptive_formats
+            .filter((f) => f.has_audio && !f.has_video)
+            .sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0];
+          steps.push(`   Best: bitrate=${best.bitrate}, mime=${best.mime_type}, has_url=${!!best.url}, has_cipher=${!!best.signature_cipher || !!best.cipher}`);
+
+          let url = best.url;
+          if (!url) {
+            try {
+              url = await best.decipher(yt.session.player);
+              steps.push(`   Deciphered: ${url?.substring(0, 80)}`);
+            } catch (e) {
+              steps.push(`   Decipher FAILED: ${(e as Error).message}`);
+            }
+          } else {
+            steps.push(`   Direct URL: ${url.substring(0, 80)}`);
+          }
+
+          if (url) {
+            return NextResponse.json({ steps, success: true, client, urlPreview: url.substring(0, 100) });
+          }
+        }
+
+        // Also check playability_status
+        const ps = (info as unknown as { playability_status?: { status?: string; reason?: string } }).playability_status;
+        if (ps) {
+          steps.push(`   playability: status=${ps.status}, reason=${ps.reason || 'none'}`);
+        }
       } catch (e) {
-        steps.push(`7. FAIL - Decipher error: ${(e as Error).message}`);
+        steps.push(`   ${client} ERROR: ${(e as Error).message?.substring(0, 100)}`);
       }
-    } else {
-      steps.push(`7. Direct URL starts with: ${url.substring(0, 60)}`);
     }
 
-    return NextResponse.json({ steps, success: !!url, urlPreview: url?.substring(0, 100) });
+    return NextResponse.json({ steps, success: false });
   } catch (error) {
     steps.push(`FATAL: ${(error as Error).message}`);
     return NextResponse.json({ steps, error: (error as Error).message });
