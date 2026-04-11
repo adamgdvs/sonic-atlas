@@ -122,73 +122,110 @@ export async function findYouTubeVideoId(
 }
 
 /**
- * Client types to try for streaming, in order of preference.
- * TV_EMBEDDED and WEB_EMBEDDED typically don't require PO tokens.
+ * Hardcoded Piped API instances as fallback.
+ * The app also fetches the live instance list on startup.
  */
-const STREAM_CLIENTS = ["IOS", "ANDROID", "TV_EMBEDDED", "WEB"] as const;
+const FALLBACK_PIPED_INSTANCES = [
+  "https://api.piped.private.coffee",
+  "https://pipedapi.kavin.rocks",
+  "https://pipedapi.adminforge.de",
+];
+
+/** Cached list of working Piped API URLs, refreshed periodically. */
+let cachedPipedInstances: string[] | null = null;
+let instancesFetchedAt = 0;
+const INSTANCES_TTL = 10 * 60 * 1000; // 10 minutes
 
 /**
- * Get an authenticated stream URL for a videoId using youtubei.js.
- * Tries multiple client types to find one that returns valid audio streams.
+ * Fetch the live list of Piped instances from the official registry,
+ * test each one briefly, and cache the working ones.
+ */
+async function getPipedInstances(): Promise<string[]> {
+  if (cachedPipedInstances && Date.now() - instancesFetchedAt < INSTANCES_TTL) {
+    return cachedPipedInstances;
+  }
+
+  try {
+    const resp = await fetch("https://piped-instances.kavin.rocks/", {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    const instances: Array<{ api_url?: string; name?: string }> = await resp.json();
+    const apis = instances
+      .map((i) => i.api_url)
+      .filter((u): u is string => !!u && u.startsWith("https://"));
+
+    if (apis.length > 0) {
+      cachedPipedInstances = apis;
+      instancesFetchedAt = Date.now();
+      console.log(`[Stream] Loaded ${apis.length} Piped instances from registry`);
+      return apis;
+    }
+  } catch (e) {
+    console.log(`[Stream] Failed to fetch Piped registry: ${(e as Error).message}`);
+  }
+
+  return FALLBACK_PIPED_INSTANCES;
+}
+
+interface PipedAudioStream {
+  url: string;
+  mimeType: string;
+  bitrate: number;
+  quality: string;
+  contentLength: number;
+}
+
+interface PipedResponse {
+  audioStreams?: PipedAudioStream[];
+  title?: string;
+  error?: string;
+}
+
+/**
+ * Get an audio stream URL for a videoId using Piped API.
+ * Piped handles YouTube's anti-bot measures from their infrastructure,
+ * so this works from datacenter IPs (Vercel) where direct
+ * youtubei.js streaming is blocked with LOGIN_REQUIRED.
  */
 async function getStreamUrl(videoId: string): Promise<string | null> {
-  const yt = await getInnertube();
+  const instances = await getPipedInstances();
 
-  for (const client of STREAM_CLIENTS) {
+  for (const instance of instances) {
     try {
-      console.log(`[Stream] Trying client=${client} for videoId=${videoId}`);
-      const info = await yt.getBasicInfo(videoId, { client: client as "TV_EMBEDDED" | "IOS" | "ANDROID" | "WEB" });
+      const resp = await fetch(`${instance}/streams/${videoId}`, {
+        headers: { "Accept": "application/json" },
+        signal: AbortSignal.timeout(8000),
+      });
 
-      if (!info.streaming_data) {
-        console.log(`[Stream] No streaming_data from client=${client}`);
+      if (!resp.ok) continue;
+
+      const data: PipedResponse = await resp.json();
+
+      if (data.error || !data.audioStreams || data.audioStreams.length === 0) {
         continue;
       }
 
-      // Prefer adaptive formats (audio-only), fall back to combined formats
-      const formats = [
-        ...(info.streaming_data.adaptive_formats || []),
-        ...(info.streaming_data.formats || []),
-      ];
+      // Pick the best audio stream — prefer mp4 for browser compatibility, then highest bitrate
+      const sorted = [...data.audioStreams].sort((a, b) => {
+        const aIsMp4 = a.mimeType?.includes("mp4") ? 1 : 0;
+        const bIsMp4 = b.mimeType?.includes("mp4") ? 1 : 0;
+        if (aIsMp4 !== bIsMp4) return bIsMp4 - aIsMp4;
+        return (b.bitrate || 0) - (a.bitrate || 0);
+      });
 
-      // Find best audio-only format
-      const audioFormats = formats
-        .filter((f) => f.has_audio && !f.has_video)
-        .sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
-
-      // If no audio-only, try any format with audio
-      const candidates = audioFormats.length > 0
-        ? audioFormats
-        : formats.filter((f) => f.has_audio).sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
-
-      if (candidates.length === 0) {
-        console.log(`[Stream] No audio formats from client=${client}`);
-        continue;
+      const chosen = sorted[0];
+      if (chosen?.url) {
+        console.log(`[Stream] Got URL via ${instance} for videoId=${videoId} (bitrate=${chosen.bitrate}, mime=${chosen.mimeType})`);
+        return chosen.url;
       }
-
-      const chosen = candidates[0];
-
-      // Get the URL — may need deciphering
-      let url = chosen.url;
-      if (!url) {
-        try {
-          url = await chosen.decipher(yt.session.player);
-        } catch (e) {
-          console.log(`[Stream] Decipher failed for client=${client}:`, e);
-          continue;
-        }
-      }
-
-      if (url && url.startsWith("http")) {
-        console.log(`[Stream] Got URL via client=${client} for videoId=${videoId} (bitrate=${chosen.bitrate}, mime=${chosen.mime_type})`);
-        return url;
-      }
-    } catch (error) {
-      console.log(`[Stream] Client ${client} failed for videoId=${videoId}:`, error);
+    } catch {
       continue;
     }
   }
 
-  console.error(`[Stream] All clients failed for videoId=${videoId}`);
+  console.error(`[Stream] All Piped instances failed for videoId=${videoId}`);
   return null;
 }
 
