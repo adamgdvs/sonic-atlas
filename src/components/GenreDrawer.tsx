@@ -62,7 +62,7 @@ export default function GenreDrawer({
     // Data State
     const [artists, setArtists] = useState<TagArtistResult[]>([]);
     const [loading, setLoading] = useState(true);
-    const [previewMap, setPreviewMap] = useState<Record<string, string>>({});
+    const [previewMap, setPreviewMap] = useState<Record<string, { url: string; videoId?: string | null }>>({});
 
     // Bookmarking
     const [bookmarkedArtists, setBookmarkedArtists] = useState<Set<string>>(new Set());
@@ -104,13 +104,14 @@ export default function GenreDrawer({
                 const batch = artists.slice(i, i + 3);
                 const results = await Promise.allSettled(batch.map(async (a) => {
                     const data = await getArtistPreviewData(a.name);
-                    return { key: a.mbid || a.name, url: data.tracks[0]?.preview || null };
+                    const firstTrack = data.tracks[0];
+                    return { key: a.mbid || a.name, url: firstTrack?.preview || null, videoId: firstTrack?.videoId || null };
                 }));
                 if (cancelled) return;
                 setPreviewMap((prev) => {
                     const next = { ...prev };
                     for (const r of results) {
-                        if (r.status === "fulfilled" && r.value.url) next[r.value.key] = r.value.url;
+                        if (r.status === "fulfilled" && (r.value.url || r.value.videoId)) next[r.value.key] = { url: r.value.url || "", videoId: r.value.videoId };
                     }
                     return next;
                 });
@@ -147,9 +148,10 @@ export default function GenreDrawer({
         }
     };
 
-    const handlePlay = (url: string, title?: string, artist?: string, coverUrl?: string | null) => {
-        if (currentTrack?.url === url) { togglePlayPause(); return; }
-        playTrack({ url, title: title || "Top Track", artist: artist || "Unknown", coverUrl: coverUrl || null });
+    const handlePlay = (url: string, title?: string, artist?: string, coverUrl?: string | null, videoId?: string | null) => {
+        const isSame = videoId ? currentTrack?.videoId === videoId : currentTrack?.url === url;
+        if (isSame) { togglePlayPause(); return; }
+        playTrack({ url, title: title || "Top Track", artist: artist || "Unknown", coverUrl: coverUrl || null, videoId: videoId || undefined });
     };
 
     return (
@@ -188,7 +190,8 @@ export default function GenreDrawer({
                             const cardId = artist.mbid || artist.name;
                             const isBookmarked = bookmarkedArtists.has(artist.name);
                             const isBookmarking = bookmarkingIds.has(cardId);
-                            const previewUrl = previewMap[cardId];
+                            const previewData = previewMap[cardId];
+                            const previewUrl = previewData?.url;
                             const isPlayingHere = playingUrl === previewUrl && playingUrl !== null;
 
                             return (
@@ -208,7 +211,7 @@ export default function GenreDrawer({
                                         </div>
                                         <div className="flex gap-2 items-center shrink-0">
                                             {previewUrl && (
-                                                <button onClick={() => isPlayingHere ? togglePlayPause() : handlePlay(previewUrl, "Preview", artist.name, artist.image)} className={`flex items-center justify-center border transition-all duration-300 shrink-0 ${isPlayingHere ? "bg-shift5-orange border-shift5-orange text-white" : "bg-white/[0.05] border-white/10 text-white hover:bg-white/10 hover:border-white/30"}`} style={{ width: 34, height: 34 }} title={isPlayingHere ? "Stop" : "Play"}>
+                                                <button onClick={() => isPlayingHere ? togglePlayPause() : handlePlay(previewUrl, "Preview", artist.name, artist.image, previewData?.videoId)} className={`flex items-center justify-center border transition-all duration-300 shrink-0 ${isPlayingHere ? "bg-shift5-orange border-shift5-orange text-white" : "bg-white/[0.05] border-white/10 text-white hover:bg-white/10 hover:border-white/30"}`} style={{ width: 34, height: 34 }} title={isPlayingHere ? "Stop" : "Play"}>
                                                     {isPlayingHere ? <svg width={12} height={12} viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="2" width="3" height="8" /><rect x="7" y="2" width="3" height="8" /></svg> : <svg width={12} height={12} viewBox="0 0 12 12" fill="currentColor"><polygon points="3,1 11,6 3,11" /></svg>}
                                                 </button>
                                             )}

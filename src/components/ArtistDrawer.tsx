@@ -47,11 +47,12 @@ function DiscographyPanel({
     bio,
     isFocused = false,
     onResetFocus,
+    onPlayAlbumQueue,
 }: {
     albums: Album[];
     topTracks: PreviewTrack[];
     playingUrl: string | null;
-    onPlay: (url: string, title?: string) => void;
+    onPlay: (url: string, title?: string, artist?: string, image?: string | null, videoId?: string | null) => void;
     onStop: () => void;
     albumTracksCache: Record<number, AlbumTrack[]>;
     onAlbumClick: (albumId: number) => void;
@@ -59,6 +60,7 @@ function DiscographyPanel({
     bio?: string;
     isFocused?: boolean;
     onResetFocus?: () => void;
+    onPlayAlbumQueue?: (tracks: AlbumTrack[], index: number, albumCover?: string) => void;
 }) {
     const focusedAlbum = isFocused ? albums.find(a => a.id === expandedAlbum) : null;
 
@@ -81,7 +83,7 @@ function DiscographyPanel({
                             const mins = Math.floor(t.duration / 60);
                             const secs = t.duration % 60;
                             return (
-                                <div key={t.id} className="flex items-center gap-3 py-2 px-3 border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer group" onClick={() => isPlaying ? onStop() : onPlay(t.preview, t.title)}>
+                                <div key={t.id} className="flex items-center gap-3 py-2 px-3 border border-transparent hover:border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer group" onClick={() => isPlaying ? onStop() : onPlay(t.preview, t.title, undefined, undefined, t.videoId)}>
                                     <span className={`w-8 text-[10px] font-mono ${isPlaying ? "text-shift5-orange" : "text-white/20"}`}>{isPlaying ? ">>" : (i + 1).toString().padStart(2, '0')}</span>
                                     <span className={`text-[11px] font-mono uppercase tracking-tight flex-1 truncate ${isPlaying ? "text-white font-bold" : "text-white/60 group-hover:text-white"}`}>{t.title}</span>
                                     <span className="text-[10px] text-white/20 font-mono tracking-tighter">{mins}:{secs.toString().padStart(2, "0")}</span>
@@ -136,7 +138,7 @@ function DiscographyPanel({
                                                     const mins = Math.floor(t.duration / 60);
                                                     const secs = t.duration % 60;
                                                     return (
-                                                        <div key={t.id} className="flex items-center gap-3 py-2 border-b border-white/[0.02] last:border-0 hover:bg-white/[0.04] transition-colors cursor-pointer group" onClick={() => { if (t.preview) { isPlaying ? onStop() : onPlay(t.preview, t.title); } }}>
+                                                        <div key={t.id} className="flex items-center gap-3 py-2 border-b border-white/[0.02] last:border-0 hover:bg-white/[0.04] transition-colors cursor-pointer group" onClick={() => { if (t.preview || t.videoId) { if (isPlaying) { onStop(); } else if (onPlayAlbumQueue && tracks) { onPlayAlbumQueue(tracks, i, a.cover_big || a.cover_medium); } else { onPlay(t.preview, t.title, undefined, undefined, t.videoId); } } }}>
                                                             <span className={`w-6 text-[9px] font-mono ${isPlaying ? "text-shift5-orange" : "text-white/10"}`}>{isPlaying ? ">>" : (i + 1).toString().padStart(2, '0')}</span>
                                                             <span className={`text-[10px] font-mono uppercase tracking-tighter flex-1 truncate ${isPlaying ? "text-white font-bold" : "text-white/40 group-hover:text-white"}`}>{t.title}</span>
                                                             {t.preview && <span className={`text-[8px] font-mono ${isPlaying ? "text-shift5-orange" : "text-white/10"}`}>{isPlaying ? "ACTIVE" : "PLAY"}</span>}
@@ -162,6 +164,7 @@ function SimilarCard({
     index,
     onExplore,
     previewUrl,
+    previewVideoId,
     isPlaying,
     onPlay,
     onStop,
@@ -176,13 +179,15 @@ function SimilarCard({
     bookmarkedArtists,
     bookmarkingIds,
     onToggleBookmark,
+    onPlayAlbumQueue,
 }: {
     artist: SimilarArtistResult;
     index: number;
     onExplore: (name: string) => void;
     previewUrl?: string;
+    previewVideoId?: string | null;
     isPlaying: boolean;
-    onPlay: (url: string, title?: string, artist?: string, image?: string | null) => void;
+    onPlay: (url: string, title?: string, artist?: string, image?: string | null, videoId?: string | null) => void;
     onStop: () => void;
     discography: Discography | null;
     discographyOpen: boolean;
@@ -195,6 +200,7 @@ function SimilarCard({
     bookmarkedArtists: Set<string>;
     bookmarkingIds: Set<string>;
     onToggleBookmark: (id: string, name: string, img?: string | null, genres?: string[]) => void;
+    onPlayAlbumQueue?: (tracks: AlbumTrack[], index: number, albumCover?: string) => void;
 }) {
     const cardId = artist.mbid || artist.name;
     const isBookmarked = bookmarkedArtists.has(artist.name);
@@ -223,7 +229,7 @@ function SimilarCard({
                 </div>
                 <div className="flex gap-2 items-center sm:items-start shrink-0">
                     {previewUrl && (
-                        <button onClick={() => isPlaying ? onStop() : onPlay(previewUrl, "Preview", artist.name, artist.image)} className={`flex items-center justify-center border transition-all duration-300 shrink-0 ${isPlaying ? "bg-shift5-orange border-shift5-orange text-white" : "bg-white/[0.05] border-white/10 text-white hover:bg-white/10 hover:border-white/30"}`} style={{ width: 34, height: 34 }} title={isPlaying ? "Stop" : "Play"}>
+                        <button onClick={() => isPlaying ? onStop() : onPlay(previewUrl, "Preview", artist.name, artist.image, previewVideoId)} className={`flex items-center justify-center border transition-all duration-300 shrink-0 ${isPlaying ? "bg-shift5-orange border-shift5-orange text-white" : "bg-white/[0.05] border-white/10 text-white hover:bg-white/10 hover:border-white/30"}`} style={{ width: 34, height: 34 }} title={isPlaying ? "Stop" : "Play"}>
                             {isPlaying ? <svg width={10} height={10} viewBox="0 0 12 12" fill="currentColor"><rect x="1" y="1" width="4" height="10" /><rect x="7" y="1" width="4" height="10" /></svg> : <svg width={10} height={10} viewBox="0 0 12 12" fill="currentColor"><polygon points="2,0 12,6 2,12" /></svg>}
                         </button>
                     )}
@@ -238,7 +244,7 @@ function SimilarCard({
             <div className="transition-all duration-300 ease-in-out" style={{ display: "grid", gridTemplateRows: discographyOpen ? "1fr" : "0fr", opacity: discographyOpen ? 1 : 0 }}>
                 <div className="overflow-hidden">
                     <div className="p-6 bg-white/[0.02] border-b border-white/5">
-                        {discography ? <DiscographyPanel albums={discography.albums} topTracks={discography.topTracks} playingUrl={playingUrl} onPlay={onPlay} onStop={onStop} albumTracksCache={albumTracksCache} onAlbumClick={onAlbumClick} expandedAlbum={expandedAlbum} bio={bio} /> : <div className="text-[9px] font-mono text-white/20 uppercase animate-pulse">Retrieving_Data_Stream...</div>}
+                        {discography ? <DiscographyPanel albums={discography.albums} topTracks={discography.topTracks} playingUrl={playingUrl} onPlay={onPlay} onStop={onStop} albumTracksCache={albumTracksCache} onAlbumClick={onAlbumClick} expandedAlbum={expandedAlbum} bio={bio} onPlayAlbumQueue={onPlayAlbumQueue} /> : <div className="text-[9px] font-mono text-white/20 uppercase animate-pulse">Retrieving_Data_Stream...</div>}
                     </div>
                 </div>
             </div>
@@ -272,7 +278,7 @@ export default function ArtistDrawer({
     const [artistInfo, setArtistInfo] = useState<ArtistInfo | null>(null);
     const [primaryDisco, setPrimaryDisco] = useState<Discography | null>(null);
     const [loading, setLoading] = useState(true);
-    const [previewMap, setPreviewMap] = useState<Record<string, string>>({});
+    const [previewMap, setPreviewMap] = useState<Record<string, { url: string; videoId?: string | null }>>({});
 
     // UI State
     const [primaryDiscoOpen, setPrimaryDiscoOpen] = useState(false);
@@ -289,7 +295,7 @@ export default function ArtistDrawer({
     const [bookmarkedArtists, setBookmarkedArtists] = useState<Set<string>>(new Set());
     const [bookmarkingIds, setBookmarkingIds] = useState<Set<string>>(new Set());
 
-    const { playTrack, currentTrack, isPlaying, togglePlayPause } = useAudio();
+    const { playTrack, playQueue, currentTrack, isPlaying, togglePlayPause } = useAudio();
     const playingUrl = isPlaying ? (currentTrack?.url ?? null) : null;
 
     useEffect(() => {
@@ -335,13 +341,14 @@ export default function ArtistDrawer({
                 const batch = similar.slice(i, i + 3);
                 const results = await Promise.allSettled(batch.map(async (a) => {
                     const data = await getArtistPreviewData(a.name);
-                    return { key: a.mbid || a.name, url: data.tracks[0]?.preview || null };
+                    const firstTrack = data.tracks[0];
+                    return { key: a.mbid || a.name, url: firstTrack?.preview || null, videoId: firstTrack?.videoId || null };
                 }));
                 if (cancelled) return;
                 setPreviewMap((prev) => {
                     const next = { ...prev };
                     for (const r of results) {
-                        if (r.status === "fulfilled" && r.value.url) next[r.value.key] = r.value.url;
+                        if (r.status === "fulfilled" && (r.value.url || r.value.videoId)) next[r.value.key] = { url: r.value.url || "", videoId: r.value.videoId };
                     }
                     return next;
                 });
@@ -378,15 +385,32 @@ export default function ArtistDrawer({
         }
     };
 
-    const handlePlay = (url: string, title?: string, artist?: string, coverUrl?: string | null) => {
-        if (currentTrack?.url === url) { togglePlayPause(); return; }
+    const handlePlay = (url: string, title?: string, artist?: string, coverUrl?: string | null, videoId?: string | null) => {
+        const isSame = videoId ? currentTrack?.videoId === videoId : currentTrack?.url === url;
+        if (isSame) { togglePlayPause(); return; }
         playTrack({
             url,
             title: title || "Top Track",
             artist: artist || artistName,
             coverUrl: coverUrl || artistInfo?.image || null,
-            genres: artistInfo?.genres || []
+            genres: artistInfo?.genres || [],
+            videoId: videoId || undefined
         });
+    };
+
+    const handlePlayAlbumQueue = (targetArtist: string, targetImage?: string | null) => {
+        return (tracks: AlbumTrack[], index: number, albumCover?: string) => {
+            const info = infoCache[targetArtist] || artistInfo;
+            const queueTracks = tracks.map((t) => ({
+                url: t.preview,
+                title: t.title,
+                artist: targetArtist,
+                coverUrl: albumCover || targetImage || null,
+                genres: info?.genres || artistInfo?.genres || [],
+                videoId: t.videoId || undefined,
+            }));
+            playQueue(queueTracks, index);
+        };
     };
 
     const handleToggleDisco = async (name: string) => {
@@ -595,6 +619,7 @@ export default function ArtistDrawer({
                                             expandedAlbum={expandedAlbumPrimary}
                                             isFocused={isDiscoFocused}
                                             onResetFocus={() => setIsDiscoFocused(false)}
+                                            onPlayAlbumQueue={handlePlayAlbumQueue(artistName, artistInfo?.image)}
                                         />
                                     </div>
                                 </div>
@@ -606,7 +631,7 @@ export default function ArtistDrawer({
                         </div>
                         <div className="pb-12">
                             {similar.map((a, i) => (
-                                <SimilarCard key={a.mbid || a.name} artist={a} index={i} onExplore={onSelectArtist} previewUrl={previewMap[a.mbid || a.name]} isPlaying={playingUrl === previewMap[a.mbid || a.name] && playingUrl !== null} onPlay={handlePlay} onStop={togglePlayPause} discography={discoCache[a.name] || null} discographyOpen={openDisco === a.name} onToggleDiscography={handleToggleDisco} playingUrl={playingUrl} bio={infoCache[a.name]?.bio} albumTracksCache={albumTracksCache} onAlbumClick={handleAlbumClick} expandedAlbum={expandedAlbum} bookmarkedArtists={bookmarkedArtists} bookmarkingIds={bookmarkingIds} onToggleBookmark={handleToggleBookmark} />
+                                <SimilarCard key={a.mbid || a.name} artist={a} index={i} onExplore={onSelectArtist} previewUrl={previewMap[a.mbid || a.name]?.url} previewVideoId={previewMap[a.mbid || a.name]?.videoId} isPlaying={playingUrl === previewMap[a.mbid || a.name]?.url && playingUrl !== null} onPlay={handlePlay} onStop={togglePlayPause} discography={discoCache[a.name] || null} discographyOpen={openDisco === a.name} onToggleDiscography={handleToggleDisco} playingUrl={playingUrl} bio={infoCache[a.name]?.bio} albumTracksCache={albumTracksCache} onAlbumClick={handleAlbumClick} expandedAlbum={expandedAlbum} bookmarkedArtists={bookmarkedArtists} bookmarkingIds={bookmarkingIds} onToggleBookmark={handleToggleBookmark} onPlayAlbumQueue={handlePlayAlbumQueue(a.name, a.image)} />
                             ))}
                         </div>
                     </>

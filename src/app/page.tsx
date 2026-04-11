@@ -38,17 +38,18 @@ export default function Home() {
 
       const randomArtist = artists[Math.floor(Math.random() * artists.length)];
       const previewData = await getArtistPreviewData(randomArtist.name);
-      const trackWithPreview = previewData.tracks.find(t => t.preview);
+      const trackWithPreview = previewData.tracks.find(t => t.videoId || t.preview);
 
       if (!trackWithPreview) return;
 
       playTrack({
         id: genreName,
-        url: trackWithPreview.preview,
+        url: trackWithPreview.preview || "",
         title: trackWithPreview.title,
         artist: randomArtist.name,
         coverUrl: previewData.image || undefined,
         genres: [genreName],
+        videoId: trackWithPreview.videoId || undefined,
       });
     } catch (e) {
       void e;

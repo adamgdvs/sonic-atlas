@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { searchArtist, getTopTracks } from "@/lib/deezer";
 import { getArtistInfo } from "@/lib/lastfm";
 import { getItunesTopTracks } from "@/lib/itunes";
+import { searchYouTubeMusic } from "@/lib/youtube";
 import type { PreviewTrack } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(
   _request: NextRequest,
@@ -83,13 +85,48 @@ export async function GET(
       }
     }
 
+    // --- 5. ENRICH WITH YOUTUBE VIDEO IDs FOR FULL PLAYBACK ---
+    let ytTracks: { videoId: string; title: string }[] = [];
+    try {
+      console.log(`[Preview] Starting YouTube enrichment for "${artistName}"...`);
+      const ytResults = await searchYouTubeMusic(artistName, 10);
+      ytTracks = ytResults.map((t) => ({ videoId: t.videoId, title: t.title }));
+      console.log(`[Preview] YouTube returned ${ytTracks.length} tracks for "${artistName}":`, ytTracks.map(t => `${t.title} (${t.videoId})`).join(", "));
+    } catch (e) {
+      console.warn("[Preview] YouTube Music enrichment failed:", e);
+    }
+
+    // Match YouTube videoIds to tracks by title similarity
+    const enrichedTracks = tracks.map((track) => {
+      const normalizedTitle = track.title.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const match = ytTracks.find((yt) => {
+        const ytNormalized = yt.title.toLowerCase().replace(/[^a-z0-9]/g, "");
+        return ytNormalized === normalizedTitle || ytNormalized.includes(normalizedTitle) || normalizedTitle.includes(ytNormalized);
+      });
+      return {
+        ...track,
+        videoId: match?.videoId || null,
+      };
+    });
+
+    // If no tracks from Deezer/iTunes but YouTube has results, create tracks from YouTube
+    const finalTracks = enrichedTracks.length > 0
+      ? enrichedTracks
+      : ytTracks.slice(0, 5).map((yt) => ({
+          id: 0,
+          title: yt.title,
+          preview: "",
+          duration: 0,
+          videoId: yt.videoId,
+        }));
+
     return NextResponse.json({
       artist: {
-        id: artistId || originalName, // Use raw string as ID if external IDs fail
+        id: artistId || originalName,
         name: artistName,
         picture: artistPicture || null,
       },
-      tracks,
+      tracks: finalTracks,
     });
   } catch (error) {
     console.error("Preview error:", error);

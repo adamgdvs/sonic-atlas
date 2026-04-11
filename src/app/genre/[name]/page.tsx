@@ -203,10 +203,10 @@ export default function GenreDetailPage({
       if (track) {
         playTrack({
           id: name,
-          url: track.preview,
+          url: track.preview || "",
           title: track.title,
           artist: name,
-          coverUrl: data.image || undefined
+          coverUrl: data.image || undefined,
         });
       }
     }

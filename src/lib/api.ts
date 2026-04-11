@@ -22,6 +22,7 @@ export interface PreviewTrack {
   title: string;
   preview: string;
   duration: number;
+  videoId?: string | null; // YouTube Music videoId for full song playback
 }
 
 export interface ArtistInfo {
@@ -158,6 +159,7 @@ export interface AlbumTrack {
   preview: string;
   duration: number;
   track_position: number;
+  videoId?: string | null;
 }
 
 export async function getTopGenres(

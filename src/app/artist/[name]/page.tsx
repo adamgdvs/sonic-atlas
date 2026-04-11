@@ -181,11 +181,12 @@ function DiscographyPanel({
   genres = [],
   isFocused = false,
   onResetFocus,
+  onPlayAlbumQueue,
 }: {
   albums: Album[];
   topTracks: PreviewTrack[];
   playingUrl: string | null;
-  onPlay: (url: string, title?: string, artist?: string, coverUrl?: string | null, genres?: string[]) => void;
+  onPlay: (url: string, title?: string, artist?: string, coverUrl?: string | null, videoId?: string | null) => void;
   onStop: () => void;
   albumTracksCache: Record<number, AlbumTrack[]>;
   onAlbumClick: (albumId: number) => void;
@@ -194,6 +195,7 @@ function DiscographyPanel({
   genres?: string[];
   isFocused?: boolean;
   onResetFocus?: () => void;
+  onPlayAlbumQueue?: (tracks: AlbumTrack[], index: number, albumCover?: string) => void;
 }) {
   const focusedAlbum = isFocused ? albums.find(a => a.id === expandedAlbum) : null;
 
@@ -224,7 +226,7 @@ function DiscographyPanel({
                   key={t.id}
                   className="flex items-center gap-4 py-3 px-3 hover:bg-white/5 transition-colors cursor-pointer group"
                   onClick={() =>
-                    isPlaying ? onStop() : onPlay(t.preview, t.title, undefined, undefined, genres)
+                    isPlaying ? onStop() : onPlay(t.preview, t.title, undefined, undefined, t.videoId)
                   }
                 >
                   <span
@@ -343,13 +345,19 @@ function DiscographyPanel({
                                 key={t.id}
                                 className="flex items-center gap-4 py-2 hover:bg-white/5 transition-colors cursor-pointer group/track"
                                 onClick={() => {
-                                  if (t.preview) {
-                                    isPlaying ? onStop() : onPlay(t.preview, t.title, undefined, undefined, genres);
+                                  if (t.preview || t.videoId) {
+                                    if (isPlaying) {
+                                      onStop();
+                                    } else if (onPlayAlbumQueue && tracks) {
+                                      onPlayAlbumQueue(tracks, i, a.cover_big || a.cover_medium);
+                                    } else {
+                                      onPlay(t.preview, t.title, undefined, undefined, t.videoId);
+                                    }
                                   }
                                 }}
                               >
                                 <span
-                                  className={`w-5 text-center text-[10px] font-mono ${isPlaying ? "text-neutral-800 font-bold animate-pulse" : "text-white/10"}`}
+                                  className={`w-5 text-center text-[10px] font-mono ${isPlaying ? "text-neutral-800 font-bold animate-pulse" : "text-white/40"}`}
                                 >
                                   {isPlaying ? ">>" : (i + 1).toString().padStart(2, '0')}
                                 </span>
@@ -359,11 +367,11 @@ function DiscographyPanel({
                                   {t.title}
                                 </span>
                                 {t.preview && (
-                                  <span className={`text-[10px] transition-colors ${isPlaying ? 'text-neutral-800' : 'text-white/10 group-hover/track:text-shift5-orange/50'}`}>
+                                  <span className={`text-[10px] transition-colors ${isPlaying ? 'text-neutral-800' : 'text-white/30 group-hover/track:text-shift5-orange/50'}`}>
                                     {isPlaying ? "■" : "▶"}
                                   </span>
                                 )}
-                                <span className="text-[10px] text-white/10 font-mono">
+                                <span className="text-[10px] text-white/40 font-mono">
                                   {mins}:{secs.toString().padStart(2, "0")}
                                 </span>
                               </div>
@@ -390,6 +398,7 @@ function SimilarCard({
   isHighlighted,
   onHover,
   previewUrl,
+  previewVideoId,
   isPlaying,
   onPlay,
   onStop,
@@ -408,6 +417,7 @@ function SimilarCard({
   previewTitle,
   onVisible,
   voteData,
+  onPlayAlbumQueue,
 }: {
   artist: SimilarArtistResult;
   index: number;
@@ -415,8 +425,9 @@ function SimilarCard({
   isHighlighted: boolean;
   onHover: (id: string | null) => void;
   previewUrl?: string;
+  previewVideoId?: string | null;
   isPlaying: boolean;
-  onPlay: (url: string, title?: string, artist?: string, image?: string | null, genres?: string[]) => void;
+  onPlay: (url: string, title?: string, artist?: string, image?: string | null, videoId?: string | null) => void;
   onStop: () => void;
   onGenreClick: (genre: string) => void;
   discography: Discography | null;
@@ -433,6 +444,7 @@ function SimilarCard({
   previewTitle?: string;
   onVisible?: () => void;
   voteData?: { up: number; down: number; total: number; approval: number; userVote: number } | null;
+  onPlayAlbumQueue?: (tracks: AlbumTrack[], index: number, albumCover?: string) => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const accordionRef = useRef<HTMLDivElement>(null);
@@ -535,7 +547,7 @@ function SimilarCard({
         <div className="flex gap-2 items-center sm:items-start sm:pt-1 ml-[68px] sm:ml-0 touch-manipulation">
           {previewUrl && (
             <button
-              onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, previewTitle || "Track Preview", artist.name, artist.image, artist.genres))}
+              onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, previewTitle || "Track Preview", artist.name, artist.image, previewVideoId))}
               className={`flex items-center justify-center border cursor-pointer transition-all duration-300 shrink-0 ${isPlaying
                 ? "border-shift5-orange bg-shift5-orange text-white"
                 : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white hover:border-white/30"
@@ -636,6 +648,7 @@ function SimilarCard({
               onAlbumClick={onAlbumClick}
               expandedAlbum={expandedAlbum}
               bio={info?.bio}
+              onPlayAlbumQueue={onPlayAlbumQueue}
             />
           ) : (
             <div className="text-[10px] font-mono text-shift5-orange/40 py-8 text-center animate-pulse uppercase">
@@ -689,9 +702,9 @@ export default function ArtistPage({
   const [genreFilter, setGenreFilter] = useState<string | null>(null);
   const [constellationExpanded, setConstellationExpanded] = useState(false);
   const [graphMode, setGraphMode] = useState<GraphMode>("cloud");
-  const { playTrack, currentTrack, isPlaying, togglePlayPause } = useAudio();
+  const { playTrack, playQueue, currentTrack, isPlaying, togglePlayPause } = useAudio();
   const playingUrl = isPlaying ? (currentTrack?.url ?? null) : null;
-  const [previewMap, setPreviewMap] = useState<Record<string, { url: string; title: string }>>({});
+  const [previewMap, setPreviewMap] = useState<Record<string, { url: string; title: string; videoId?: string | null }>>({});
   const [primaryDiscoOpen, setPrimaryDiscoOpen] = useState(false);
   const [openDisco, setOpenDisco] = useState<string | null>(null);
 
@@ -821,7 +834,6 @@ export default function ArtistPage({
     setExpandedAlbum(null);
     setExpandedAlbumPrimary(null);
     setIsDiscoFocused(false);
-    handleStop();
 
     // Read Discovery controls from Protocol Menu
     const storedLimit = typeof window !== "undefined" ? parseInt(localStorage.getItem("sonic_resultCount") || "30") : 30;
@@ -893,10 +905,10 @@ export default function ArtistPage({
     try {
       const data = await getArtistPreviewData(artistNameToFetch);
       const track = data.tracks[0];
-      if (track?.preview) {
+      if (track?.preview || track?.videoId) {
         setPreviewMap((prev) => ({
           ...prev,
-          [artistKey]: { url: track.preview, title: track.title || "Track Preview" }
+          [artistKey]: { url: track.preview || "", title: track.title || "Track Preview", videoId: track.videoId }
         }));
       }
     } catch {
@@ -971,8 +983,9 @@ export default function ArtistPage({
     }
   };
 
-  const handlePlay = (url: string, title?: string, artist?: string, coverUrl?: string | null, genres?: string[]) => {
-    if (currentTrack?.url === url) {
+  const handlePlay = (url: string, title?: string, artist?: string, coverUrl?: string | null, videoId?: string | null) => {
+    const isSame = videoId ? currentTrack?.videoId === videoId : currentTrack?.url === url;
+    if (isSame) {
       togglePlayPause();
       return;
     }
@@ -982,13 +995,41 @@ export default function ArtistPage({
       title: title || "Top Track",
       artist: targetArtist,
       coverUrl: coverUrl || artistInfo?.image || null,
-      genres: genres && genres.length > 0 ? genres : (targetArtist === artistName ? artistInfo?.genres : [])
+      genres: targetArtist === artistName ? artistInfo?.genres : [],
+      videoId: videoId || undefined
     });
   };
 
   const handleStop = () => {
     togglePlayPause();
   };
+
+  const handlePlayAlbumQueue = (tracks: AlbumTrack[], index: number, albumCover?: string) => {
+    const queueTracks = tracks.map((t) => ({
+      url: t.preview,
+      title: t.title,
+      artist: artistName,
+      coverUrl: albumCover || artistInfo?.image || null,
+      genres: artistInfo?.genres || [],
+      videoId: t.videoId || undefined,
+    }));
+    playQueue(queueTracks, index);
+  };
+
+  const handlePlaySimilarAlbumQueue = useCallback((artistNameForQueue: string, artistImage?: string | null) => {
+    return (tracks: AlbumTrack[], index: number, albumCover?: string) => {
+      const info = infoCache[artistNameForQueue];
+      const queueTracks = tracks.map((t) => ({
+        url: t.preview,
+        title: t.title,
+        artist: artistNameForQueue,
+        coverUrl: albumCover || artistImage || null,
+        genres: info?.genres || [],
+        videoId: t.videoId || undefined,
+      }));
+      playQueue(queueTracks, index);
+    };
+  }, [infoCache, playQueue]);
 
   const handleToggleDisco = async (name: string) => {
     if (openDisco === name) {
@@ -1204,6 +1245,7 @@ export default function ArtistPage({
                                   setExpandedAlbumPrimary(null);
                                   setPrimaryDiscoOpen(false);
                                 }}
+                                onPlayAlbumQueue={handlePlayAlbumQueue}
                               />
                             </div>
                           ) : (
@@ -1223,7 +1265,7 @@ export default function ArtistPage({
                   onClick={() => {
                     if (primaryDisco && primaryDisco.topTracks.length > 0) {
                       const top = primaryDisco.topTracks[0];
-                      playingUrl === top.preview ? handleStop() : handlePlay(top.preview, top.title);
+                      playingUrl === top.preview ? handleStop() : handlePlay(top.preview, top.title, undefined, undefined, top.videoId);
                     }
                   }}
                   className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'bg-white/10 border-shift5-dark/40 hover:border-shift5-dark hover:bg-white/20 text-shift5-dark'}`}
@@ -1349,6 +1391,7 @@ export default function ArtistPage({
                     isHighlighted={highlightedId === (a.mbid || a.name)}
                     previewUrl={previewMap[a.mbid || a.name]?.url}
                     previewTitle={previewMap[a.mbid || a.name]?.title}
+                    previewVideoId={previewMap[a.mbid || a.name]?.videoId}
                     isPlaying={isPlaying && currentTrack?.artist === a.name}
                     onPlay={handlePlay}
                     onStop={handleStop}
@@ -1364,6 +1407,7 @@ export default function ArtistPage({
                     bookmarkedArtists={bookmarkedArtists}
                     bookmarkingIds={bookmarkingIds}
                     onToggleBookmark={handleToggleBookmark}
+                    onPlayAlbumQueue={handlePlaySimilarAlbumQueue(a.name, a.image)}
                   />
                 ))}
               </div>
