@@ -1,7 +1,5 @@
 import { Innertube, Platform } from "youtubei.js";
 import vm from "node:vm";
-import https from "node:https";
-import { Readable } from "node:stream";
 
 // Provide a JavaScript evaluator for signature deciphering
 Platform.shim.eval = (
@@ -195,64 +193,11 @@ async function getStreamUrl(videoId: string): Promise<string | null> {
 }
 
 /**
- * Get audio stream for a given videoId.
- * Uses youtubei.js to get a CDN URL, then proxies via node:https
- * with proper headers (Content-Length, Content-Type, Range support).
+ * Get a redirect URL for a given videoId.
+ * Returns a direct YouTube CDN URL that the browser can play from.
  */
-export async function getAudioStream(
-  videoId: string,
-  rangeHeader?: string | null
-): Promise<{
-  stream: Readable;
-  statusCode: number;
-  headers: Record<string, string>;
-} | null> {
-  const streamUrl = await getStreamUrl(videoId);
-  if (!streamUrl) return null;
-
-  console.log(`[Stream] Got authenticated URL for videoId=${videoId}, proxying...`);
-
-  return new Promise((resolve, reject) => {
-    const url = new URL(streamUrl);
-    const reqHeaders: Record<string, string> = {};
-    if (rangeHeader) {
-      reqHeaders["Range"] = rangeHeader;
-    }
-
-    const req = https.get(url, { headers: reqHeaders }, (res) => {
-      const statusCode = res.statusCode || 500;
-
-      if (statusCode !== 200 && statusCode !== 206) {
-        res.destroy();
-        console.error(`[Stream] CDN returned ${statusCode} for videoId=${videoId}`);
-        resolve(null);
-        return;
-      }
-
-      const headers: Record<string, string> = {};
-      if (res.headers["content-type"]) {
-        headers["Content-Type"] = res.headers["content-type"] as string;
-      }
-      if (res.headers["content-length"]) {
-        headers["Content-Length"] = res.headers["content-length"] as string;
-      }
-      if (res.headers["content-range"]) {
-        headers["Content-Range"] = res.headers["content-range"] as string;
-      }
-      if (res.headers["accept-ranges"]) {
-        headers["Accept-Ranges"] = res.headers["accept-ranges"] as string;
-      }
-
-      console.log(
-        `[Stream] CDN success for videoId=${videoId}: status=${statusCode} content-length=${headers["Content-Length"] || "unknown"} content-type=${headers["Content-Type"] || "unknown"}`
-      );
-
-      resolve({
-        stream: res,
-        statusCode,
-        headers,
-      });
-    });
-    req.on("error", reject);
-  });
+export async function getStreamRedirectUrl(
+  videoId: string
+): Promise<string | null> {
+  return getStreamUrl(videoId);
 }

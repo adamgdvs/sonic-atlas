@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAudioStream } from "@/lib/youtube";
+import { getStreamRedirectUrl } from "@/lib/youtube";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
- * Streams full YouTube Music audio to the browser.
- * Uses yt-dlp for authenticated URL extraction + node:https proxy with
- * proper Content-Length and Range support for browser audio playback.
+ * Returns a redirect to the YouTube CDN audio URL.
+ * The browser's <audio> element follows the redirect and plays directly
+ * from the CDN, avoiding Vercel's serverless function timeout limits.
  */
 export async function GET(
   request: NextRequest,
@@ -20,49 +20,19 @@ export async function GET(
   }
 
   try {
-    const rangeHeader = request.headers.get("range");
-    const result = await getAudioStream(videoId, rangeHeader);
+    const cdnUrl = await getStreamRedirectUrl(videoId);
 
-    if (!result) {
-      console.error(`[Stream] No stream available for videoId=${videoId}`);
+    if (!cdnUrl) {
+      console.error(`[Stream] No URL available for videoId=${videoId}`);
       return NextResponse.json(
         { error: "Stream not available" },
         { status: 404 }
       );
     }
 
-    // Convert Node.js Readable to Web ReadableStream
-    const webStream = new ReadableStream({
-      start(controller) {
-        result.stream.on("data", (chunk: Buffer) => {
-          controller.enqueue(new Uint8Array(chunk));
-        });
-        result.stream.on("end", () => {
-          controller.close();
-        });
-        result.stream.on("error", (err) => {
-          controller.error(err);
-        });
-      },
-      cancel() {
-        result.stream.destroy();
-      },
-    });
+    console.log(`[Stream] Redirecting videoId=${videoId} to CDN`);
 
-    const responseHeaders = new Headers();
-    responseHeaders.set("Cache-Control", "private, max-age=3600");
-
-    // Forward CDN headers for proper browser audio playback
-    for (const [key, value] of Object.entries(result.headers)) {
-      responseHeaders.set(key, value);
-    }
-
-    console.log(`[Stream] Serving videoId=${videoId} status=${result.statusCode}`);
-
-    return new NextResponse(webStream, {
-      status: result.statusCode,
-      headers: responseHeaders,
-    });
+    return NextResponse.redirect(cdnUrl, 302);
   } catch (error) {
     console.error("[Stream] Error for videoId=" + videoId + ":", error);
     return NextResponse.json(
