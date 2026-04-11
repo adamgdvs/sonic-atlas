@@ -1,11 +1,7 @@
 import { Innertube, Platform } from "youtubei.js";
 import vm from "node:vm";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 import https from "node:https";
 import { Readable } from "node:stream";
-
-const execFileAsync = promisify(execFile);
 
 // Provide a JavaScript evaluator for signature deciphering
 Platform.shim.eval = (
@@ -128,34 +124,79 @@ export async function findYouTubeVideoId(
 }
 
 /**
- * Get an authenticated stream URL for a videoId using yt-dlp.
- * yt-dlp handles all YouTube anti-bot measures (PO tokens, signatures, etc).
+ * Client types to try for streaming, in order of preference.
+ * TV_EMBEDDED and WEB_EMBEDDED typically don't require PO tokens.
+ */
+const STREAM_CLIENTS = ["IOS", "ANDROID", "TV_EMBEDDED", "WEB"] as const;
+
+/**
+ * Get an authenticated stream URL for a videoId using youtubei.js.
+ * Tries multiple client types to find one that returns valid audio streams.
  */
 async function getStreamUrl(videoId: string): Promise<string | null> {
-  try {
-    const { stdout } = await execFileAsync("yt-dlp", [
-      "-f", "bestaudio",
-      "--print", "urls",
-      "--no-warnings",
-      "--no-playlist",
-      `https://music.youtube.com/watch?v=${videoId}`,
-    ], { timeout: 15000 });
+  const yt = await getInnertube();
 
-    const url = stdout.trim();
-    if (!url || !url.startsWith("http")) {
-      console.error(`[Stream] yt-dlp returned invalid URL for videoId=${videoId}`);
-      return null;
+  for (const client of STREAM_CLIENTS) {
+    try {
+      console.log(`[Stream] Trying client=${client} for videoId=${videoId}`);
+      const info = await yt.getBasicInfo(videoId, { client: client as "TV_EMBEDDED" | "IOS" | "ANDROID" | "WEB" });
+
+      if (!info.streaming_data) {
+        console.log(`[Stream] No streaming_data from client=${client}`);
+        continue;
+      }
+
+      // Prefer adaptive formats (audio-only), fall back to combined formats
+      const formats = [
+        ...(info.streaming_data.adaptive_formats || []),
+        ...(info.streaming_data.formats || []),
+      ];
+
+      // Find best audio-only format
+      const audioFormats = formats
+        .filter((f) => f.has_audio && !f.has_video)
+        .sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
+
+      // If no audio-only, try any format with audio
+      const candidates = audioFormats.length > 0
+        ? audioFormats
+        : formats.filter((f) => f.has_audio).sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
+
+      if (candidates.length === 0) {
+        console.log(`[Stream] No audio formats from client=${client}`);
+        continue;
+      }
+
+      const chosen = candidates[0];
+
+      // Get the URL — may need deciphering
+      let url = chosen.url;
+      if (!url) {
+        try {
+          url = await chosen.decipher(yt.session.player);
+        } catch (e) {
+          console.log(`[Stream] Decipher failed for client=${client}:`, e);
+          continue;
+        }
+      }
+
+      if (url && url.startsWith("http")) {
+        console.log(`[Stream] Got URL via client=${client} for videoId=${videoId} (bitrate=${chosen.bitrate}, mime=${chosen.mime_type})`);
+        return url;
+      }
+    } catch (error) {
+      console.log(`[Stream] Client ${client} failed for videoId=${videoId}:`, error);
+      continue;
     }
-    return url;
-  } catch (error) {
-    console.error(`[Stream] yt-dlp failed for videoId=${videoId}:`, error);
-    return null;
   }
+
+  console.error(`[Stream] All clients failed for videoId=${videoId}`);
+  return null;
 }
 
 /**
  * Get audio stream for a given videoId.
- * Uses yt-dlp to get an authenticated CDN URL, then proxies via node:https
+ * Uses youtubei.js to get a CDN URL, then proxies via node:https
  * with proper headers (Content-Length, Content-Type, Range support).
  */
 export async function getAudioStream(
@@ -173,13 +214,7 @@ export async function getAudioStream(
 
   return new Promise((resolve, reject) => {
     const url = new URL(streamUrl);
-    const reqHeaders: Record<string, string> = {
-      "accept": "*/*",
-      "origin": "https://www.youtube.com",
-      "referer": "https://www.youtube.com",
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-    };
+    const reqHeaders: Record<string, string> = {};
     if (rangeHeader) {
       reqHeaders["Range"] = rangeHeader;
     }
