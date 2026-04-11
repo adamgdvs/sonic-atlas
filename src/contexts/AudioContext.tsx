@@ -65,6 +65,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const [repeatMode, setRepeatMode] = useState<RepeatMode>("none");
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const pendingTrackRef = useRef<TrackParams | null>(null);
+    const isStreamAttemptRef = useRef(false);
 
     const hasQueue = queue.length > 1;
 
@@ -72,13 +74,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const startPlayback = useCallback((track: TrackParams) => {
         if (!audioRef.current) return;
         setCurrentTrack(track);
+        pendingTrackRef.current = track;
         setProgress(0);
         setCurrentTime(0);
         setWasManuallyStopped(false);
         setIsPlaying(true);
         setHasEverPlayed(true);
 
-        const audioSrc = track.videoId
+        // Try YouTube stream first, fall back to preview URL on error
+        const useStream = !!track.videoId;
+        isStreamAttemptRef.current = useStream;
+        const audioSrc = useStream
             ? `/api/stream/${track.videoId}`
             : track.url;
 
@@ -147,12 +153,26 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             }
         };
 
+        // Fallback: if stream fails (e.g. yt-dlp not available on Vercel), retry with preview URL
+        const handleError = () => {
+            const track = pendingTrackRef.current;
+            if (isStreamAttemptRef.current && track?.url) {
+                console.log("[Audio] Stream failed, falling back to preview URL");
+                isStreamAttemptRef.current = false;
+                audio.src = track.url;
+                audio.load();
+                audio.play().catch(() => {});
+            }
+        };
+
         audio.addEventListener("timeupdate", handleTimeUpdate);
         audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+        audio.addEventListener("error", handleError);
 
         return () => {
             audio.removeEventListener("timeupdate", handleTimeUpdate);
             audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+            audio.removeEventListener("error", handleError);
             audio.pause();
             audio.src = "";
         };
