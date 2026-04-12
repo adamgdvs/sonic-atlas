@@ -78,7 +78,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         setProgress(0);
         setCurrentTime(0);
         setWasManuallyStopped(false);
-        setIsPlaying(true);
         setHasEverPlayed(true);
 
         // Try YouTube stream first, fall back to preview URL on error
@@ -90,9 +89,29 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
         audioRef.current.src = audioSrc;
         audioRef.current.load();
-        audioRef.current.play().catch(() => {
+
+        // For streamed audio, wait until enough data is buffered before playing.
+        // Playing immediately causes an error because the stream endpoint takes
+        // a few seconds to start returning bytes (Piped API lookup + fetch).
+        if (useStream) {
+            const audio = audioRef.current;
+            const onCanPlay = () => {
+                audio.removeEventListener("canplay", onCanPlay);
+                audio.play().then(() => {
+                    setIsPlaying(true);
+                }).catch(() => {
+                    setIsPlaying(false);
+                });
+            };
+            audio.addEventListener("canplay", onCanPlay);
+            // Show loading state while we wait
             setIsPlaying(false);
-        });
+        } else {
+            setIsPlaying(true);
+            audioRef.current.play().catch(() => {
+                setIsPlaying(false);
+            });
+        }
     }, []);
 
     // Handle track ended — auto-advance queue or repeat
