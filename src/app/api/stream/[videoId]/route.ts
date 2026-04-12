@@ -3,11 +3,13 @@ import { getStreamRedirectUrl } from "@/lib/youtube";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 /**
- * Returns a redirect to the YouTube CDN audio URL.
- * The browser's <audio> element follows the redirect and plays directly
- * from the CDN, avoiding Vercel's serverless function timeout limits.
+ * Proxies YouTube audio from a Piped instance to the browser.
+ * Fetches the audio from Piped and streams it through, forwarding
+ * Content-Type, Content-Length, and Range headers so the browser's
+ * <audio> element can play and seek properly.
  */
 export async function GET(
   request: NextRequest,
@@ -30,9 +32,44 @@ export async function GET(
       );
     }
 
-    console.log(`[Stream] Redirecting videoId=${videoId} to CDN`);
+    // Forward the browser's Range header for seeking support
+    const headers: Record<string, string> = {};
+    const rangeHeader = request.headers.get("range");
+    if (rangeHeader) {
+      headers["Range"] = rangeHeader;
+    }
 
-    return NextResponse.redirect(cdnUrl, 302);
+    const audioResp = await fetch(cdnUrl, {
+      headers,
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!audioResp.ok && audioResp.status !== 206) {
+      console.error(`[Stream] Piped proxy returned ${audioResp.status} for videoId=${videoId}`);
+      return NextResponse.json(
+        { error: "Stream not available" },
+        { status: 404 }
+      );
+    }
+
+    // Forward relevant headers from the Piped response
+    const responseHeaders = new Headers();
+    const contentType = audioResp.headers.get("content-type");
+    if (contentType) responseHeaders.set("Content-Type", contentType);
+    const contentLength = audioResp.headers.get("content-length");
+    if (contentLength) responseHeaders.set("Content-Length", contentLength);
+    const contentRange = audioResp.headers.get("content-range");
+    if (contentRange) responseHeaders.set("Content-Range", contentRange);
+    const acceptRanges = audioResp.headers.get("accept-ranges");
+    if (acceptRanges) responseHeaders.set("Accept-Ranges", acceptRanges);
+    responseHeaders.set("Cache-Control", "private, max-age=3600");
+
+    console.log(`[Stream] Proxying videoId=${videoId} status=${audioResp.status} size=${contentLength || "unknown"}`);
+
+    return new NextResponse(audioResp.body, {
+      status: audioResp.status,
+      headers: responseHeaders,
+    });
   } catch (error) {
     console.error("[Stream] Error for videoId=" + videoId + ":", error);
     return NextResponse.json(
