@@ -222,7 +222,7 @@ export default function GenreDetailPage({
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#888_1px,transparent_1px),linear-gradient(to_bottom,#888_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
-      <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1400px] mx-auto pb-32 sm:pb-10">
+      <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1400px] mx-auto pb-24 sm:pb-10">
         <div className="mb-12 border-b border-white/5 pb-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mt-6">
             <div>

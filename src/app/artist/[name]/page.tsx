@@ -511,7 +511,7 @@ function SimilarCard({
             <div className="flex items-center gap-3 mb-2 flex-wrap">
               <span
                 onClick={() => onExplore(artist.name)}
-                className="text-[16px] font-bold text-white cursor-pointer hover:text-shift5-orange font-mono uppercase tracking-tighter transition-colors"
+                className="text-[14px] sm:text-[16px] font-bold text-white cursor-pointer hover:text-shift5-orange font-mono uppercase tracking-tighter transition-colors"
               >
                 {artist.name}
               </span>
@@ -544,7 +544,7 @@ function SimilarCard({
             )}
           </div>
         </div>
-        <div className="flex gap-2 items-center sm:items-start sm:pt-1 ml-[76px] sm:ml-0 touch-manipulation flex-wrap">
+        <div className="flex gap-2 items-center sm:items-start sm:pt-1 ml-[72px] sm:ml-0 touch-manipulation flex-wrap">
           {previewUrl && (
             <button
               onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, previewTitle || "Track Preview", artist.name, artist.image, previewVideoId))}
@@ -1091,57 +1091,72 @@ export default function ArtistPage({
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#888_1px,transparent_1px),linear-gradient(to_bottom,#888_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
-      <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1400px] mx-auto pb-32 sm:pb-10">
+      <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1400px] mx-auto pb-24 sm:pb-10">
         {/* Hero Header section with high-contrast Shift5 Orange */}
-        <div className="mb-8 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-3 py-4 sm:px-5 sm:py-10 md:p-12 relative overflow-x-hidden overflow-y-visible group">
-          {/* Decorative Background Text (Shift5 vibe) */}
-          <div className="absolute top-0 right-0 text-[50px] sm:text-[80px] md:text-[120px] font-bold text-shift5-dark/5 select-none leading-none pointer-events-none uppercase mr-[-5px] sm:mr-[-10px] md:mr-[-20px] mt-[-5px] sm:mt-[-10px] md:mt-[-20px]">
+        <div className="mb-6 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-3 py-4 sm:px-5 sm:py-10 md:p-12 relative overflow-x-hidden overflow-y-visible group">
+          {/* Decorative Background Text (Shift5 vibe) — hidden on mobile */}
+          <div className="hidden sm:block absolute top-0 right-0 sm:text-[80px] md:text-[120px] font-bold text-shift5-dark/5 select-none leading-none pointer-events-none uppercase sm:mr-[-10px] md:mr-[-20px] sm:mt-[-10px] md:mt-[-20px]">
             {artistName.slice(0, 3)}
           </div>
 
-          <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-8">
-            <div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-8">
-              <div className="relative overflow-hidden border-2 border-shift5-dark p-1 bg-shift5-dark/10 backdrop-blur-sm mt-0 md:-mt-6 shrink-0 w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] md:w-[150px] md:h-[150px]">
-                <ArtistAvatar name={artistName} image={artistInfo?.image} size={150} className="w-full h-full" />
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-8">
+            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-8">
+              {/* Avatar + Name row on mobile */}
+              <div className="flex items-center gap-3 sm:block">
+                <div className="relative overflow-hidden border-2 border-shift5-dark p-1 bg-shift5-dark/10 backdrop-blur-sm shrink-0 w-[64px] h-[64px] sm:w-[100px] sm:h-[100px] md:w-[150px] md:h-[150px] md:-mt-6">
+                  <ArtistAvatar name={artistName} image={artistInfo?.image} size={150} className="w-full h-full" />
+                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                {/* Mobile-only: name next to avatar */}
+                <div className="sm:hidden min-w-0 flex-1">
+                  <h1 className="text-2xl font-bold uppercase tracking-tighter leading-none break-words selection:bg-shift5-dark selection:text-white">
+                    {artistName}
+                  </h1>
+                  <div className="flex items-center gap-2 mt-2">
+                    <StreamingLinks artistName={artistName} size={18} isHero={true} />
+                    <TourBadge artistName={artistName} />
+                  </div>
+                </div>
               </div>
 
               <div>
-                <div className="flex items-center gap-2 sm:gap-3 mb-4 flex-wrap">
-                  <span className="text-[9px] sm:text-[10px] font-mono text-shift5-dark uppercase tracking-[0.2em] sm:tracking-[0.3em] font-bold bg-white/20 px-2 py-0.5 truncate max-w-full">Active_Node // {artistInfo?.deezerId || 'IDENT_PENDING'}</span>
+                {/* Desktop-only: identifier badge */}
+                <div className="hidden sm:flex items-center gap-3 mb-4 flex-wrap">
+                  <span className="text-[10px] font-mono text-shift5-dark uppercase tracking-[0.3em] font-bold bg-white/20 px-2 py-0.5 truncate max-w-full">Active_Node // {artistInfo?.deezerId || 'IDENT_PENDING'}</span>
                   <StreamingLinks artistName={artistName} size={20} isHero={true} />
                   <TourBadge artistName={artistName} />
                 </div>
-                <h1 className="text-3xl sm:text-6xl md:text-7xl font-bold uppercase tracking-tighter leading-none mb-3 sm:mb-4 selection:bg-shift5-dark selection:text-white break-words">
+                {/* Desktop-only: large name */}
+                <h1 className="hidden sm:block text-6xl md:text-7xl font-bold uppercase tracking-tighter leading-none mb-4 selection:bg-shift5-dark selection:text-white break-words">
                   {artistName}
                 </h1>
-                <div className="flex flex-wrap items-center gap-2 mt-4 mb-4">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-3 sm:mt-4 mb-3 sm:mb-4">
                   {artistInfo?.genres.map(g => (
                     <GenreTag key={g} genre={g} onClick={handleGenreClick} active={genreFilter === g} />
                   ))}
                 </div>
 
-                {/* Metadata Scans Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8 p-2.5 sm:p-4 bg-shift5-dark/5 border border-shift5-dark/10 font-mono text-[9px] sm:text-[10px] uppercase tracking-wider sm:tracking-widest text-shift5-dark">
+                {/* Metadata Scans Grid — hidden on mobile, shown on sm+ */}
+                <div className="hidden sm:grid grid-cols-4 gap-4 mb-8 p-4 bg-shift5-dark/5 border border-shift5-dark/10 font-mono text-[10px] uppercase tracking-widest text-shift5-dark w-fit">
                   <div className="space-y-1 min-w-0">
                     <div className="text-shift5-dark/40">Signal_Origin</div>
                     <div className="font-bold truncate">{artistInfo?.location || "NULL_SECTOR"}</div>
                   </div>
-                  <div className="space-y-1 border-l border-shift5-dark/10 pl-2 sm:pl-4 min-w-0">
+                  <div className="space-y-1 border-l border-shift5-dark/10 pl-4 min-w-0">
                     <div className="text-shift5-dark/40">Established</div>
                     <div className="font-bold">{artistInfo?.yearStarted || "NULL_TIME"}</div>
                   </div>
-                  <div className="space-y-1 sm:border-l border-t sm:border-t-0 border-shift5-dark/10 pt-2 sm:pt-0 pl-0 sm:pl-4 min-w-0">
+                  <div className="space-y-1 border-l border-shift5-dark/10 pl-4 min-w-0">
                     <div className="text-shift5-dark/40">Artifacts</div>
                     <div className="font-bold">{artistInfo?.nbAlbums || 0} Records</div>
                   </div>
-                  <div className="space-y-1 border-l border-t sm:border-t-0 border-shift5-dark/10 pt-2 sm:pt-0 pl-2 sm:pl-4 min-w-0">
+                  <div className="space-y-1 border-l border-shift5-dark/10 pl-4 min-w-0">
                     <div className="text-shift5-dark/40">Confidence</div>
                     <div className="font-bold">100%</div>
                   </div>
                 </div>
 
-                <div className="mt-8 space-y-4 max-w-full sm:max-w-2xl border-l-2 border-shift5-dark/10 pl-3 sm:pl-6">
+                <div className="mt-4 sm:mt-8 space-y-3 sm:space-y-4 max-w-full sm:max-w-2xl sm:border-l-2 sm:border-shift5-dark/10 sm:pl-6">
                   <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold">Operational_Bio</div>
                   <CollapsibleBio
                     bio={artistInfo?.bio || ""}
@@ -1259,8 +1274,8 @@ export default function ArtistPage({
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-end gap-2 sm:gap-6 h-full justify-between pb-2 sm:pb-4 w-full md:w-auto">
-              <div className="flex flex-col gap-2 sm:gap-3">
+            <div className="flex flex-row sm:flex-col md:flex-col items-center md:items-end gap-2 sm:gap-4 pb-2 sm:pb-4 w-full md:w-auto">
+              <div className="flex flex-row sm:flex-col gap-2 sm:gap-3">
                 <button
                   onClick={() => {
                     if (primaryDisco && primaryDisco.topTracks.length > 0) {
@@ -1268,7 +1283,7 @@ export default function ArtistPage({
                       playingUrl === top.preview ? handleStop() : handlePlay(top.preview, top.title, undefined, undefined, top.videoId);
                     }
                   }}
-                  className={`w-full sm:w-auto flex items-center justify-center gap-3 px-6 sm:px-8 py-3.5 sm:py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'bg-white/10 border-shift5-dark/40 hover:border-shift5-dark hover:bg-white/20 text-shift5-dark'}`}
+                  className={`flex-1 sm:flex-none sm:w-auto flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-3 sm:py-4 border-2 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all ${playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'bg-white/10 border-shift5-dark/40 hover:border-shift5-dark hover:bg-white/20 text-shift5-dark'}`}
                 >
                   {playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? (
                     <>
@@ -1285,7 +1300,7 @@ export default function ArtistPage({
 
                 <button
                   onClick={() => handleToggleBookmark(artistInfo?.deezerId?.toString() || artistName, artistName, artistInfo?.image, artistInfo?.genres)}
-                  className={`w-full sm:w-auto flex items-center justify-center gap-3 px-6 sm:px-8 py-3.5 sm:py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${bookmarkedArtists.has(artistName) ? 'bg-shift5-dark border-shift5-dark text-white' : 'border-shift5-dark/30 hover:border-shift5-dark text-shift5-dark/70 hover:text-shift5-dark'}`}
+                  className={`flex-1 sm:flex-none sm:w-auto flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-3 sm:py-4 border-2 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all ${bookmarkedArtists.has(artistName) ? 'bg-shift5-dark border-shift5-dark text-white' : 'border-shift5-dark/30 hover:border-shift5-dark text-shift5-dark/70 hover:text-shift5-dark'}`}
                 >
                   <Heart size={16} className={bookmarkedArtists.has(artistName) ? 'fill-current' : ''} />
                   {bookmarkedArtists.has(artistName) ? 'SAVED_NODE' : 'SAVE_NODE'}

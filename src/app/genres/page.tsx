@@ -75,7 +75,7 @@ export default function GenresPage() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#888_1px,transparent_1px),linear-gradient(to_bottom,#888_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
-      <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1000px] mx-auto pb-32 sm:pb-10">
+      <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1000px] mx-auto pb-24 sm:pb-10">
         <div className="mb-12 border-b border-white/5 pb-8">
           <div className="flex items-center gap-3 mb-4">
             <span className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em] bg-shift5-orange/10 px-2 py-0.5 border border-shift5-orange/20">Sector_Catalog</span>
