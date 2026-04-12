@@ -300,9 +300,9 @@ export default function GlobalPlayer() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
                         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                        className="fixed bottom-0 left-0 right-0 sm:left-auto sm:bottom-6 sm:right-6 lg:bottom-10 lg:right-10 z-50 pointer-events-auto pb-[env(safe-area-inset-bottom,0px)]"
+                        className="fixed bottom-0 left-0 right-0 sm:left-auto sm:bottom-6 sm:right-6 lg:bottom-10 lg:right-10 z-50 pointer-events-auto"
                     >
-                        <div className="bg-white/95 backdrop-blur-xl border-t sm:border border-[#E8E8E8] shadow-[0_-4px_32px_rgba(0,0,0,0.1)] sm:shadow-[0_16px_64px_rgba(0,0,0,0.15)] rounded-t-2xl sm:rounded-3xl w-full sm:w-[420px] relative overflow-hidden group touch-manipulation">
+                        <div className="bg-white/95 backdrop-blur-xl border-t sm:border border-[#E8E8E8] shadow-[0_-4px_32px_rgba(0,0,0,0.1)] sm:shadow-[0_16px_64px_rgba(0,0,0,0.15)] rounded-t-2xl sm:rounded-3xl w-full sm:w-[420px] relative group touch-manipulation">
 
                             {/* Close Button */}
                             <button
@@ -316,10 +316,10 @@ export default function GlobalPlayer() {
                             </button>
 
                             {/* Top section: Art + Info */}
-                            <div className="flex items-center gap-3 p-3 pb-0">
+                            <div className="flex items-center gap-3 px-3 pt-3 pb-0 sm:p-3 sm:pb-0">
                                 {/* Album Art - Vinyl */}
                                 <div className="relative shrink-0">
-                                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-[#E5E5E5] shadow-lg relative bg-[#F0F0F0]" style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}>
+                                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-[#E5E5E5] shadow-lg relative bg-[#F0F0F0]" style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}>
                                         <motion.div
                                             animate={isPlaying ? { rotate: 360 } : { rotate: 0 }}
                                             transition={isPlaying ? { duration: 8, repeat: Infinity, ease: "linear" } : { duration: 0.5 }}
@@ -338,11 +338,11 @@ export default function GlobalPlayer() {
                                             )}
                                             <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.05)_41%,transparent_42%,rgba(0,0,0,0.05)_43%,transparent_44%)] pointer-events-none opacity-50 rounded-full" />
                                             <div
-                                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-white/90 rounded-full z-10 shadow-sm flex items-center justify-center"
+                                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 bg-white/90 rounded-full z-10 shadow-sm flex items-center justify-center"
                                                 style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
                                             >
                                                 <div
-                                                    className="w-1.5 h-1.5 bg-gray-200 rounded-full shadow-inner border border-black/5"
+                                                    className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-gray-200 rounded-full shadow-inner border border-black/5"
                                                     style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
                                                 />
                                             </div>
@@ -353,12 +353,12 @@ export default function GlobalPlayer() {
                                 {/* Track Info */}
                                 <div className="flex-1 min-w-0 pr-6">
                                     <div className="flex items-center gap-1.5">
-                                        <h3 className="text-sm sm:text-[15px] font-semibold text-[#1D1D1F] truncate" style={{ letterSpacing: "-0.01em" }}>
+                                        <h3 className="text-[13px] sm:text-[15px] font-semibold text-[#1D1D1F] truncate" style={{ letterSpacing: "-0.01em" }}>
                                             {currentTrack.title}
                                         </h3>
                                         {loadingNext && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0" />}
                                     </div>
-                                    <p className="text-xs truncate mt-0.5">
+                                    <p className="text-[11px] sm:text-xs truncate mt-0.5">
                                         <a
                                             href={`/artist/${encodeURIComponent(currentTrack.artist)}`}
                                             className="text-[#6B7280] hover:text-[#1D1D1F] active:text-[#1D1D1F] hover:underline transition-colors"
@@ -367,19 +367,19 @@ export default function GlobalPlayer() {
                                         </a>
                                     </p>
                                     {hasQueue && (
-                                        <p className="text-[10px] font-mono text-[#6B7280] mt-0.5 uppercase tracking-wider">
+                                        <p className="text-[9px] sm:text-[10px] font-mono text-[#6B7280] mt-0.5 uppercase tracking-wider">
                                             Track {queueIndex + 1} of {queue.length}
                                         </p>
                                     )}
-                                    {error && <p className="text-[10px] text-red-500 mt-0.5 truncate">{error}</p>}
+                                    {error && <p className="text-[9px] sm:text-[10px] text-red-500 mt-0.5 truncate">{error}</p>}
                                 </div>
                             </div>
 
                             {/* Seekbar */}
-                            <div className="px-4 sm:px-3 pt-2.5 pb-1">
+                            <div className="px-3 sm:px-3 pt-2 pb-0.5 sm:pt-2.5 sm:pb-1">
                                 <div
                                     ref={seekbarRef}
-                                    className="w-full h-[8px] sm:h-[6px] bg-[#F0F0F0] rounded-full cursor-pointer group/seek relative"
+                                    className="w-full h-[10px] sm:h-[6px] bg-[#F0F0F0] rounded-full cursor-pointer group/seek relative"
                                     onMouseDown={handleSeekMouseDown}
                                     onTouchStart={handleSeekTouch}
                                     onTouchMove={handleSeekTouch}
@@ -393,95 +393,98 @@ export default function GlobalPlayer() {
                                 </div>
 
                                 {/* Time display */}
-                                <div className="flex items-center justify-between mt-1">
-                                    <span className="text-[10px] font-mono text-[#4B5563] tabular-nums">
+                                <div className="flex items-center justify-between mt-0.5 sm:mt-1">
+                                    <span className="text-[9px] sm:text-[10px] font-mono text-[#4B5563] tabular-nums">
                                         {formatTime(currentTime)}
                                     </span>
-                                    <span className="text-[10px] font-mono text-[#4B5563] tabular-nums">
+                                    <span className="text-[9px] sm:text-[10px] font-mono text-[#4B5563] tabular-nums">
                                         {duration > 60 ? `-${formatTime(timeRemaining)}` : formatTime(duration)}
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Transport Controls */}
-                            <div className="flex items-center justify-center gap-2 sm:gap-4 px-3 sm:px-3 pb-1">
+                            {/* Transport Controls — Spotify-style: evenly spaced across full width */}
+                            <div className="flex items-center justify-between px-6 sm:px-8 pb-1 sm:pb-1 max-w-[320px] mx-auto">
                                 {/* Shuffle */}
                                 <button
                                     onClick={() => setShuffleMode(!shuffleMode)}
-                                    className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${shuffleMode ? 'text-shift5-orange' : 'text-[#C4C4C4] hover:text-[#1D1D1F]'}`}
+                                    className={`w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-full transition-colors active:scale-90 ${shuffleMode ? 'text-shift5-orange' : 'text-[#C4C4C4] hover:text-[#1D1D1F]'}`}
                                     aria-label={shuffleMode ? "Disable shuffle" : "Enable shuffle"}
                                     title="Shuffle"
                                 >
-                                    <Shuffle size={14} />
-                                    {shuffleMode && <div className="absolute mt-5 w-1 h-1 rounded-full bg-shift5-orange" />}
+                                    <Shuffle size={16} className="sm:w-[14px] sm:h-[14px]" />
+                                    {shuffleMode && <div className="absolute mt-6 w-1 h-1 rounded-full bg-shift5-orange" />}
                                 </button>
 
                                 {/* Skip Back */}
                                 <button
                                     onClick={prevTrack}
                                     disabled={!canSkipBack}
-                                    className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${canSkipBack ? 'text-[#6B7280] hover:text-[#1D1D1F] active:scale-95' : 'text-[#E5E5E5] cursor-not-allowed'}`}
+                                    className={`w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center rounded-full transition-colors active:scale-90 ${canSkipBack ? 'text-[#6B7280] hover:text-[#1D1D1F]' : 'text-[#E5E5E5] cursor-not-allowed'}`}
                                     aria-label="Previous track"
                                     title={hasQueue ? "Previous" : "Restart"}
                                 >
-                                    <SkipBack size={18} fill="currentColor" />
+                                    <SkipBack size={20} className="sm:w-[18px] sm:h-[18px]" fill="currentColor" />
                                 </button>
 
-                                {/* Play/Pause */}
+                                {/* Play/Pause — largest target */}
                                 <button
                                     onClick={togglePlayPause}
                                     aria-label={isPlaying ? "Pause" : "Play"}
-                                    className="w-12 h-12 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg"
+                                    className="w-14 h-14 sm:w-12 sm:h-12 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg"
                                 >
-                                    {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
+                                    {isPlaying ? <Pause size={22} className="sm:w-5 sm:h-5" fill="currentColor" /> : <Play size={22} className="sm:w-5 sm:h-5 ml-0.5" fill="currentColor" />}
                                 </button>
 
                                 {/* Skip Forward */}
                                 <button
                                     onClick={canSkipForward ? () => { hasQueue ? nextTrack() : seek(0.9999); } : undefined}
                                     disabled={!canSkipForward}
-                                    className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${canSkipForward ? 'text-[#6B7280] hover:text-[#1D1D1F] active:scale-95' : 'text-[#E5E5E5] cursor-not-allowed'}`}
+                                    className={`w-10 h-10 sm:w-9 sm:h-9 flex items-center justify-center rounded-full transition-colors active:scale-90 ${canSkipForward ? 'text-[#6B7280] hover:text-[#1D1D1F]' : 'text-[#E5E5E5] cursor-not-allowed'}`}
                                     aria-label="Next track"
                                     title={hasQueue ? "Next" : radioMode ? "Skip (Radio)" : "Enable queue or radio to skip"}
                                 >
-                                    <SkipForward size={18} fill="currentColor" />
+                                    <SkipForward size={20} className="sm:w-[18px] sm:h-[18px]" fill="currentColor" />
                                 </button>
 
                                 {/* Repeat */}
                                 <button
                                     onClick={cycleRepeat}
-                                    className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors relative ${repeatMode !== 'none' ? 'text-shift5-orange' : 'text-[#C4C4C4] hover:text-[#1D1D1F]'}`}
+                                    className={`w-9 h-9 sm:w-8 sm:h-8 flex items-center justify-center rounded-full transition-colors relative active:scale-90 ${repeatMode !== 'none' ? 'text-shift5-orange' : 'text-[#C4C4C4] hover:text-[#1D1D1F]'}`}
                                     aria-label={`Repeat: ${repeatMode}`}
                                     title={repeatMode === "none" ? "Repeat off" : repeatMode === "all" ? "Repeat all" : "Repeat one"}
                                 >
-                                    {repeatMode === "one" ? <Repeat1 size={14} /> : <Repeat size={14} />}
-                                    {repeatMode !== "none" && <div className="absolute mt-5 w-1 h-1 rounded-full bg-shift5-orange" />}
+                                    {repeatMode === "one" ? <Repeat1 size={16} className="sm:w-[14px] sm:h-[14px]" /> : <Repeat size={16} className="sm:w-[14px] sm:h-[14px]" />}
+                                    {repeatMode !== "none" && <div className="absolute mt-6 w-1 h-1 rounded-full bg-shift5-orange" />}
                                 </button>
                             </div>
 
                             {/* Secondary Controls */}
-                            <div className="flex items-center justify-center gap-1 px-2 sm:px-3 pb-2.5 pt-0.5">
+                            <div className="flex items-center justify-center gap-2 px-3 pb-3 sm:pb-2.5 pt-0.5">
                                 <button
                                     onClick={() => setRadioMode(!radioMode)}
-                                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-colors ${radioMode ? 'bg-[#1D1D1F] text-white' : 'text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]'}`}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-colors active:scale-95 ${radioMode ? 'bg-[#1D1D1F] text-white' : 'text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]'}`}
                                     aria-label={radioMode ? "Disable radio mode" : "Enable radio mode"}
                                     title="Auto-play similar artists when track ends"
                                 >
-                                    <Radio size={11} />
+                                    <Radio size={12} className="sm:w-[11px] sm:h-[11px]" />
                                     <span>Radio</span>
                                 </button>
 
                                 <button
                                     onClick={handleSurge}
                                     disabled={isSurging}
-                                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-all ${isSurging ? 'bg-shift5-orange text-white animate-pulse' : 'text-[#B0B0B0] hover:text-shift5-orange hover:bg-shift5-orange/10'}`}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-all active:scale-95 ${isSurging ? 'bg-shift5-orange text-white animate-pulse' : 'text-[#B0B0B0] hover:text-shift5-orange hover:bg-shift5-orange/10'}`}
                                     aria-label="Surge Relay"
                                     title="Jump to new artist in same genre"
                                 >
-                                    <Zap size={11} fill={isSurging ? "currentColor" : "none"} />
+                                    <Zap size={12} className="sm:w-[11px] sm:h-[11px]" fill={isSurging ? "currentColor" : "none"} />
                                     <span>Surge</span>
                                 </button>
                             </div>
+
+                            {/* Safe area spacer for iOS home indicator */}
+                            <div className="sm:hidden h-[env(safe-area-inset-bottom,0px)]" />
                         </div>
                     </motion.div>
                 )}

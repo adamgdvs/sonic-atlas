@@ -216,7 +216,7 @@ function DiscographyPanel({
           >
             Popular_Tracks
           </div>
-          <div className="max-w-[500px] border border-white/5 divide-y divide-white/5">
+          <div className="w-full sm:max-w-[500px] border border-white/5 divide-y divide-white/5">
             {topTracks.slice(0, 5).map((t, i) => {
               const isPlaying = playingUrl === t.preview;
               const mins = Math.floor(t.duration / 60);
@@ -544,7 +544,7 @@ function SimilarCard({
             )}
           </div>
         </div>
-        <div className="flex gap-2 items-center sm:items-start sm:pt-1 ml-[68px] sm:ml-0 touch-manipulation">
+        <div className="flex gap-2 items-center sm:items-start sm:pt-1 ml-[76px] sm:ml-0 touch-manipulation flex-wrap">
           {previewUrl && (
             <button
               onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, previewTitle || "Track Preview", artist.name, artist.image, previewVideoId))}
@@ -599,9 +599,9 @@ function SimilarCard({
               ? "border-white bg-white text-shift5-dark"
               : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/30"
               }`}
-            style={{ padding: "8px 16px" }}
+            style={{ padding: "6px 10px" }}
           >
-            {discographyOpen ? "[ LESS_INF ]" : "[ MORE_INF ]"}
+            {discographyOpen ? "[ LESS ]" : "[ MORE ]"}
           </button>
         </div>
       </div>
@@ -618,22 +618,22 @@ function SimilarCard({
       >
         <div className="overflow-hidden">
           {info && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 p-4 bg-white/[0.03] border border-white/5 font-mono text-[10px] uppercase tracking-widest">
-              <div className="space-y-1">
-                <div className="text-white/20">Signal_Origin</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8 p-2.5 sm:p-4 bg-white/[0.03] border border-white/5 font-mono text-[9px] sm:text-[10px] uppercase tracking-wider sm:tracking-widest">
+              <div className="space-y-1 min-w-0">
+                <div className="text-white/20">Origin</div>
                 <div className="text-white truncate">{info.location || "NULL_SECTOR"}</div>
               </div>
-              <div className="space-y-1 border-l border-white/5 pl-4">
-                <div className="text-white/20">Established</div>
+              <div className="space-y-1 border-l border-white/5 pl-2 sm:pl-4 min-w-0">
+                <div className="text-white/20">Est.</div>
                 <div className="text-white">{info.yearStarted || "NULL_TIME"}</div>
               </div>
-              <div className="space-y-1 sm:border-l border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0 pl-0 sm:pl-4">
-                <div className="text-white/20">Artifact_Count</div>
+              <div className="space-y-1 sm:border-l border-t sm:border-t-0 border-white/5 pt-2 sm:pt-0 pl-0 sm:pl-4 min-w-0">
+                <div className="text-white/20">Artifacts</div>
                 <div className="text-white">{info.nbAlbums || 0} Records</div>
               </div>
-              <div className="space-y-1 border-l border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0 pl-4">
-                <div className="text-white/20">Match_Confidence</div>
-                <div className="text-shift5-orange">{(artist.match * 100).toFixed(0)}% (MATCH)</div>
+              <div className="space-y-1 border-l border-t sm:border-t-0 border-white/5 pt-2 sm:pt-0 pl-2 sm:pl-4 min-w-0">
+                <div className="text-white/20">Confidence</div>
+                <div className="text-shift5-orange">{(artist.match * 100).toFixed(0)}%</div>
               </div>
             </div>
           )}
@@ -1093,7 +1093,7 @@ export default function ArtistPage({
 
       <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1400px] mx-auto pb-32 sm:pb-10">
         {/* Hero Header section with high-contrast Shift5 Orange */}
-        <div className="mb-8 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-3 py-5 sm:px-5 sm:py-10 md:p-12 relative overflow-hidden group">
+        <div className="mb-8 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-3 py-4 sm:px-5 sm:py-10 md:p-12 relative overflow-x-hidden overflow-y-visible group">
           {/* Decorative Background Text (Shift5 vibe) */}
           <div className="absolute top-0 right-0 text-[50px] sm:text-[80px] md:text-[120px] font-bold text-shift5-dark/5 select-none leading-none pointer-events-none uppercase mr-[-5px] sm:mr-[-10px] md:mr-[-20px] mt-[-5px] sm:mt-[-10px] md:mt-[-20px]">
             {artistName.slice(0, 3)}
@@ -1101,7 +1101,7 @@ export default function ArtistPage({
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-8">
             <div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-8">
-              <div className="relative overflow-hidden border-2 border-shift5-dark p-1 bg-shift5-dark/10 backdrop-blur-sm mt-0 md:-mt-6 shrink-0 w-[100px] h-[100px] md:w-[150px] md:h-[150px]">
+              <div className="relative overflow-hidden border-2 border-shift5-dark p-1 bg-shift5-dark/10 backdrop-blur-sm mt-0 md:-mt-6 shrink-0 w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] md:w-[150px] md:h-[150px]">
                 <ArtistAvatar name={artistName} image={artistInfo?.image} size={150} className="w-full h-full" />
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
@@ -1122,22 +1122,22 @@ export default function ArtistPage({
                 </div>
 
                 {/* Metadata Scans Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8 p-3 sm:p-4 bg-shift5-dark/5 border border-shift5-dark/10 font-mono text-[10px] uppercase tracking-widest text-shift5-dark w-full sm:w-fit">
-                  <div className="space-y-1">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8 p-2.5 sm:p-4 bg-shift5-dark/5 border border-shift5-dark/10 font-mono text-[9px] sm:text-[10px] uppercase tracking-wider sm:tracking-widest text-shift5-dark">
+                  <div className="space-y-1 min-w-0">
                     <div className="text-shift5-dark/40">Signal_Origin</div>
-                    <div className="font-bold truncate max-w-[120px]">{artistInfo?.location || "NULL_SECTOR"}</div>
+                    <div className="font-bold truncate">{artistInfo?.location || "NULL_SECTOR"}</div>
                   </div>
-                  <div className="space-y-1 border-l border-shift5-dark/10 pl-4">
+                  <div className="space-y-1 border-l border-shift5-dark/10 pl-2 sm:pl-4 min-w-0">
                     <div className="text-shift5-dark/40">Established</div>
                     <div className="font-bold">{artistInfo?.yearStarted || "NULL_TIME"}</div>
                   </div>
-                  <div className="space-y-1 sm:border-l border-t sm:border-t-0 border-shift5-dark/10 pt-3 sm:pt-0 pl-0 sm:pl-4">
-                    <div className="text-shift5-dark/40">Artifact_Count</div>
+                  <div className="space-y-1 sm:border-l border-t sm:border-t-0 border-shift5-dark/10 pt-2 sm:pt-0 pl-0 sm:pl-4 min-w-0">
+                    <div className="text-shift5-dark/40">Artifacts</div>
                     <div className="font-bold">{artistInfo?.nbAlbums || 0} Records</div>
                   </div>
-                  <div className="space-y-1 border-l border-t sm:border-t-0 border-shift5-dark/10 pt-3 sm:pt-0 pl-4">
-                    <div className="text-shift5-dark/40">Match_Confidence</div>
-                    <div className="font-bold">100% (PRIMARY)</div>
+                  <div className="space-y-1 border-l border-t sm:border-t-0 border-shift5-dark/10 pt-2 sm:pt-0 pl-2 sm:pl-4 min-w-0">
+                    <div className="text-shift5-dark/40">Confidence</div>
+                    <div className="font-bold">100%</div>
                   </div>
                 </div>
 
@@ -1219,13 +1219,13 @@ export default function ArtistPage({
                       <div className="overflow-hidden">
                         <div className="pt-8">
                           {primaryDisco ? (
-                            <div className="bg-shift5-dark/5 p-6 border-2 border-shift5-dark/10 relative">
-                              <div className="absolute top-0 right-0 p-3">
+                            <div className="bg-shift5-dark/5 p-3 sm:p-6 border-2 border-shift5-dark/10 relative">
+                              <div className="absolute top-0 right-0 p-2 sm:p-3">
                                 <button
                                   onClick={() => setPrimaryDiscoOpen(false)}
-                                  className="text-[10px] font-mono text-shift5-dark/40 hover:text-shift5-dark font-bold uppercase transition-colors"
+                                  className="text-[9px] sm:text-[10px] font-mono text-shift5-dark/40 hover:text-shift5-dark font-bold uppercase transition-colors"
                                 >
-                                  [ Terminate_Sync ]
+                                  [ Close ]
                                 </button>
                               </div>
                               <DiscographyPanel
@@ -1259,7 +1259,7 @@ export default function ArtistPage({
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-end gap-3 sm:gap-6 h-full justify-between pb-4 w-full md:w-auto">
+            <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-end gap-2 sm:gap-6 h-full justify-between pb-2 sm:pb-4 w-full md:w-auto">
               <div className="flex flex-col gap-2 sm:gap-3">
                 <button
                   onClick={() => {

@@ -25,9 +25,7 @@
 }
 
 html {
-  /* Support iOS safe areas — only pad top/bottom, not sides (avoids horizontal clipping) */
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
+  /* iOS safe areas handled by individual components (player, header) to avoid layout shifts */
 }
 
 body {
@@ -38,6 +36,7 @@ body {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   overscroll-behavior-y: contain;
+  overflow-x: hidden;
 }
 
 ::selection {
