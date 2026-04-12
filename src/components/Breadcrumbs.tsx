@@ -13,7 +13,7 @@ export default function Breadcrumbs({ onNodeClick }: BreadcrumbsProps) {
     if (path.length === 0) return null;
 
     return (
-        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap px-4 sm:px-10 py-4 bg-shift5-dark/50 border-b border-white/5 text-[10px] uppercase font-mono tracking-widest hide-scrollbar w-full z-30 relative">
+        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap px-3 sm:px-10 py-2 sm:py-4 bg-shift5-dark/50 border-b border-white/5 text-[10px] uppercase font-mono tracking-widest hide-scrollbar w-full z-30 relative">
             {path.map((node, i) => {
                 const isLast = i === path.length - 1;
 

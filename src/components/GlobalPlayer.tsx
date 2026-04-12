@@ -298,9 +298,9 @@ export default function GlobalPlayer() {
                 </button>
             </div>
 
-            {/* Album Art — large, centered */}
-            <div className="flex-1 flex items-center justify-center px-10 py-4 min-h-0">
-                <div className="w-full max-w-[320px] aspect-square rounded-2xl overflow-hidden bg-white/5 shadow-2xl relative">
+            {/* Album Art — constrained to not push controls offscreen */}
+            <div className="flex-1 flex items-center justify-center px-8 py-2 min-h-0">
+                <div className="w-full max-w-[280px] max-h-[40vh] aspect-square rounded-xl overflow-hidden bg-white/5 shadow-2xl relative">
                     {currentTrack.coverUrl ? (
                         <img
                             src={currentTrack.coverUrl}
@@ -309,7 +309,7 @@ export default function GlobalPlayer() {
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                            <Music size={64} className="text-white/10" />
+                            <Music size={48} className="text-white/10" />
                         </div>
                     )}
                     {loadingNext && (
@@ -321,12 +321,12 @@ export default function GlobalPlayer() {
             </div>
 
             {/* Track info */}
-            <div className="px-6 pb-2">
-                <h2 className="text-xl font-bold text-white truncate">{currentTrack.title}</h2>
+            <div className="px-6 pb-1">
+                <h2 className="text-lg font-bold text-white truncate">{currentTrack.title}</h2>
                 <a
                     href={`/artist/${encodeURIComponent(currentTrack.artist)}`}
                     onClick={() => setMobileExpanded(false)}
-                    className="text-sm text-white/50 truncate block mt-1"
+                    className="text-[13px] text-white/50 truncate block mt-0.5"
                 >
                     {currentTrack.artist}
                 </a>
@@ -334,75 +334,76 @@ export default function GlobalPlayer() {
             </div>
 
             {/* Seekbar */}
-            <div className="px-6 pt-3 pb-1">
+            <div className="px-6 pt-2 pb-0">
                 <div
                     ref={seekbarRef}
-                    className="w-full h-[6px] bg-white/10 rounded-full cursor-pointer relative"
+                    className="w-full h-[5px] bg-white/10 rounded-full cursor-pointer relative"
                     onMouseDown={handleSeekMouseDown}
                     onTouchStart={handleSeekTouch}
                     onTouchMove={handleSeekTouch}
+                    style={{ touchAction: "none" }}
                 >
                     <div
                         className="h-full bg-shift5-orange rounded-full relative transition-[width] duration-75 ease-linear"
                         style={{ width: `${progress * 100}%` }}
                     >
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white shadow-md border-2 border-shift5-orange" />
+                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-md border-2 border-shift5-orange" />
                     </div>
                 </div>
-                <div className="flex items-center justify-between mt-2">
-                    <span className="text-[11px] font-mono text-white/40 tabular-nums">{formatTime(currentTime)}</span>
-                    <span className="text-[11px] font-mono text-white/40 tabular-nums">
+                <div className="flex items-center justify-between mt-1">
+                    <span className="text-[10px] font-mono text-white/40 tabular-nums">{formatTime(currentTime)}</span>
+                    <span className="text-[10px] font-mono text-white/40 tabular-nums">
                         {duration > 60 ? `-${formatTime(timeRemaining)}` : formatTime(duration)}
                     </span>
                 </div>
             </div>
 
-            {/* Transport controls — big and centered */}
-            <div className="flex items-center justify-between px-10 py-4">
+            {/* Transport controls — compact but with good touch targets */}
+            <div className="flex items-center justify-between px-8 py-2">
                 <button
                     onClick={() => setShuffleMode(!shuffleMode)}
-                    className={`w-11 h-11 flex items-center justify-center rounded-full active:scale-90 ${shuffleMode ? 'text-shift5-orange' : 'text-white/30'}`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full active:scale-90 ${shuffleMode ? 'text-shift5-orange' : 'text-white/30'}`}
                     aria-label="Shuffle"
                 >
-                    <Shuffle size={20} />
+                    <Shuffle size={18} />
                 </button>
 
                 <button
                     onClick={prevTrack}
-                    className="w-12 h-12 flex items-center justify-center text-white active:scale-90"
+                    className="w-11 h-11 flex items-center justify-center text-white active:scale-90"
                     aria-label="Previous"
                 >
-                    <SkipBack size={28} fill="currentColor" />
+                    <SkipBack size={24} fill="currentColor" />
                 </button>
 
                 <button
                     onClick={togglePlayPause}
-                    className="w-16 h-16 rounded-full bg-shift5-orange text-white flex items-center justify-center active:scale-95 shadow-lg shadow-shift5-orange/30"
+                    className="w-14 h-14 rounded-full bg-shift5-orange text-white flex items-center justify-center active:scale-95 shadow-lg shadow-shift5-orange/30"
                     aria-label={isPlaying ? "Pause" : "Play"}
                 >
-                    {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
+                    {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-0.5" />}
                 </button>
 
                 <button
                     onClick={canSkipForward ? () => { hasQueue ? nextTrack() : seek(0.9999); } : undefined}
                     disabled={!canSkipForward}
-                    className={`w-12 h-12 flex items-center justify-center active:scale-90 ${canSkipForward ? 'text-white' : 'text-white/15'}`}
+                    className={`w-11 h-11 flex items-center justify-center active:scale-90 ${canSkipForward ? 'text-white' : 'text-white/15'}`}
                     aria-label="Next"
                 >
-                    <SkipForward size={28} fill="currentColor" />
+                    <SkipForward size={24} fill="currentColor" />
                 </button>
 
                 <button
                     onClick={cycleRepeat}
-                    className={`w-11 h-11 flex items-center justify-center rounded-full active:scale-90 ${repeatMode !== 'none' ? 'text-shift5-orange' : 'text-white/30'}`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full active:scale-90 ${repeatMode !== 'none' ? 'text-shift5-orange' : 'text-white/30'}`}
                     aria-label="Repeat"
                 >
-                    {repeatMode === "one" ? <Repeat1 size={20} /> : <Repeat size={20} />}
+                    {repeatMode === "one" ? <Repeat1 size={18} /> : <Repeat size={18} />}
                 </button>
             </div>
 
             {/* Bottom controls: Radio + Surge */}
-            <div className="flex items-center justify-center gap-4 px-6 pb-[max(16px,env(safe-area-inset-bottom))]">
+            <div className="flex items-center justify-center gap-3 px-6 pb-[max(12px,env(safe-area-inset-bottom))]">
                 <button
                     onClick={() => setRadioMode(!radioMode)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 ${radioMode ? 'bg-white/15 text-white' : 'text-white/30'}`}

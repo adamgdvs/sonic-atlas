@@ -284,7 +284,7 @@ function DiscographyPanel({
               return (
                 <div key={a.id} className={`border border-white/5 transition-all duration-300 ${isExpanded ? 'border-shift5-orange/30 bg-white/[0.02]' : 'hover:border-white/20'}`}>
                   <div
-                    className="flex items-center gap-4 py-3 px-3 cursor-pointer group"
+                    className="flex items-center gap-3 py-3 px-3 cursor-pointer group active:bg-white/5"
                     onClick={() => onAlbumClick(a.id)}
                   >
                     <div className="w-[48px] h-[48px] bg-white/5 shrink-0 overflow-hidden border border-white/5 group-hover:border-white/20 transition-colors">
@@ -312,8 +312,8 @@ function DiscographyPanel({
                         {a.nb_tracks > 0 && ` // ${a.nb_tracks.toString().padStart(2, '0')}_TRACKS`}
                       </p>
                     </div>
-                    <span className={`text-[10px] font-mono transition-colors ${isExpanded ? 'text-shift5-orange' : 'text-white/20'}`}>
-                      {isExpanded ? "[ CLOSE ]" : "[ DEPTH ]"}
+                    <span className={`text-[9px] sm:text-[10px] font-mono transition-colors shrink-0 ${isExpanded ? 'text-shift5-orange' : 'text-white/20'}`}>
+                      {isExpanded ? "▾" : "▸"}
                     </span>
                   </div>
                   {/* Track list */}
@@ -1093,7 +1093,7 @@ export default function ArtistPage({
 
       <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1400px] mx-auto pb-24 sm:pb-10">
         {/* Hero Header section with high-contrast Shift5 Orange */}
-        <div className="mb-6 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-3 py-4 sm:px-5 sm:py-10 md:p-12 relative overflow-x-hidden overflow-y-visible group">
+        <div className="mb-6 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-3 py-4 sm:px-5 sm:py-10 md:p-12 relative overflow-visible sm:overflow-x-hidden sm:overflow-y-visible group">
           {/* Decorative Background Text (Shift5 vibe) — hidden on mobile */}
           <div className="hidden sm:block absolute top-0 right-0 sm:text-[80px] md:text-[120px] font-bold text-shift5-dark/5 select-none leading-none pointer-events-none uppercase sm:mr-[-10px] md:mr-[-20px] sm:mt-[-10px] md:mt-[-20px]">
             {artistName.slice(0, 3)}
@@ -1165,10 +1165,10 @@ export default function ArtistPage({
                   />
 
                   <div className="pt-6">
-                    <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold mb-4">Signal_Discography // Select_To_Expand</div>
+                    <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold mb-4"><span className="hidden sm:inline">Signal_</span>Discography</div>
 
                     {/* Horizontal Scroll Discography */}
-                    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 no-scrollbar snap-x snap-mandatory scroll-smooth">
+                    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 no-scrollbar snap-x snap-mandatory scroll-smooth" style={{ touchAction: "pan-x" }}>
                       {primaryDisco ? (
                         primaryDisco.albums.map((a) => (
                           <div
@@ -1190,7 +1190,7 @@ export default function ArtistPage({
                                 }, 100);
                               }
                             }}
-                            className={`relative min-w-[100px] sm:min-w-[120px] aspect-square bg-shift5-dark/10 border-2 transition-all cursor-pointer group/album snap-start ${expandedAlbumPrimary === a.id ? 'border-shift5-dark scale-105 z-10' : 'border-shift5-dark/20 hover:border-shift5-dark/40'}`}
+                            className={`relative min-w-[80px] sm:min-w-[120px] aspect-square bg-shift5-dark/10 border-2 transition-all cursor-pointer group/album snap-start ${expandedAlbumPrimary === a.id ? 'border-shift5-dark scale-105 z-10' : 'border-shift5-dark/20 hover:border-shift5-dark/40'}`}
                           >
                             {a.cover_medium ? (
                               <Image

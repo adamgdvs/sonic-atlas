@@ -48,7 +48,7 @@ export default function CollapsibleBio({
                         {truncateBio(bio, maxLen)}
                         <span className={`ml-2 text-[9px] font-bold tracking-widest ${theme === "hero" ? "text-shift5-dark/40" : "text-shift5-orange/60"
                             }`}>
-                            [ CLICK_TO_EXPAND ]
+                            [ MORE ]
                         </span>
                     </motion.p>
                 ) : (
@@ -66,7 +66,7 @@ export default function CollapsibleBio({
                         </p>
                         <div className={`mt-2 text-[9px] font-bold tracking-widest ${theme === "hero" ? "text-shift5-dark/40" : "text-shift5-orange/60"
                             }`}>
-                            [ CLICK_TO_COLLAPSE ]
+                            [ LESS ]
                         </div>
                     </motion.div>
                 )}
