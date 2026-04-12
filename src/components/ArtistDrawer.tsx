@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import {
     getSimilarArtists,
     getArtistInfo,
@@ -441,24 +442,41 @@ export default function ArtistDrawer({
     const primaryPreview = primaryDisco?.topTracks?.[0]?.preview || null;
 
     return (
-        <div className={className || "fixed inset-y-0 right-0 w-full sm:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col transform transition-transform duration-300 ease-out"} style={className ? {} : { animation: "slideInRight 0.3s ease-out" }}>
+        <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={{ left: 0, right: 0.3 }}
+            onDragEnd={(_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
+                if (info.offset.x > 100 || info.velocity.x > 500) {
+                    onClose();
+                }
+            }}
+            className={className || "fixed inset-y-0 right-0 w-full sm:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col touch-manipulation"}
+        >
+            {/* Drag handle — mobile only */}
+            <div className="sm:hidden absolute left-2 top-1/2 -translate-y-1/2 w-1 h-12 rounded-full bg-white/10" />
+
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-shift5-dark/95 backdrop-blur-md z-10">
                 <div className="flex items-center gap-3">
                     {showCloseAsBack && (
-                        <button onClick={onClose} className="text-white/40 hover:text-shift5-orange transition-colors p-1 -ml-1">
+                        <button onClick={onClose} className="text-white/40 hover:text-shift5-orange active:scale-90 transition-all p-1 -ml-1">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
                     )}
                     <h3 className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">Artist_Profile // Recon</h3>
                 </div>
                 {!showCloseAsBack && (
-                    <button onClick={onClose} className="text-white/20 hover:text-white transition-colors">
+                    <button onClick={onClose} className="text-white/20 hover:text-white active:scale-90 transition-all">
                         <X size={18} />
                     </button>
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
                 {loading ? (
                     <div className="p-10 space-y-8 animate-pulse">
                         <div className="flex items-start gap-5">
@@ -648,6 +666,6 @@ export default function ArtistDrawer({
                     to { opacity: 1; transform: translateY(0); }
                 }
             `}</style>
-        </div>
+        </motion.div>
     );
 }

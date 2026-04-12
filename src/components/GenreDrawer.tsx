@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
     getTopTagArtists,
     type TagArtistResult,
@@ -155,11 +156,28 @@ export default function GenreDrawer({
     };
 
     return (
-        <div className={className || "fixed inset-y-0 right-0 w-full sm:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col transform transition-transform duration-300 ease-out"} style={className ? {} : { animation: "slideInRight 0.3s ease-out" }}>
+        <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={{ left: 0, right: 0.3 }}
+            onDragEnd={(_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
+                if (info.offset.x > 100 || info.velocity.x > 500) {
+                    onClose();
+                }
+            }}
+            className={className || "fixed inset-y-0 right-0 w-full sm:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col touch-manipulation"}
+        >
+            {/* Drag handle — mobile only */}
+            <div className="sm:hidden absolute left-2 top-1/2 -translate-y-1/2 w-1 h-12 rounded-full bg-white/10" />
+
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-shift5-dark/95 backdrop-blur-md z-10">
                 <div className="flex items-center gap-3">
                     {showCloseAsBack && (
-                        <button onClick={onClose} className="text-white/40 hover:text-shift5-orange transition-colors p-1 -ml-1">
+                        <button onClick={onClose} className="text-white/40 hover:text-shift5-orange active:scale-90 transition-all p-1 -ml-1">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
                     )}
@@ -167,7 +185,7 @@ export default function GenreDrawer({
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
                 <div className="px-4 sm:px-6 py-6 sm:py-8 border-b border-white/5 bg-white/[0.01]">
                     <div className="flex items-center gap-3 mb-4">
                         <span className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em] bg-shift5-orange/10 px-2 py-0.5 border border-shift5-orange/20">Category_Filter</span>
@@ -240,6 +258,6 @@ export default function GenreDrawer({
                     to { opacity: 1; transform: translateY(0); }
                 }
             `}</style>
-        </div>
+        </motion.div>
     );
 }

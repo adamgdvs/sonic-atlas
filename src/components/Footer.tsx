@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Footer() {
     return (
-        <footer className="w-full border-t border-shift5-accent bg-shift5-dark py-12 mt-auto">
+        <footer className="w-full border-t border-shift5-accent bg-shift5-dark py-6 sm:py-12 mt-auto pb-[max(24px,env(safe-area-inset-bottom))]">
             <div className="max-w-[1200px] mx-auto px-4 lg:px-10 flex flex-col md:flex-row items-center justify-between text-[10px] text-white/30 font-mono uppercase tracking-[0.1em]">
                 <div className="mb-4 md:mb-0 flex items-center gap-4">
                     <span className="text-white/10 select-none">SHFT5_OS // V1.0.4</span>

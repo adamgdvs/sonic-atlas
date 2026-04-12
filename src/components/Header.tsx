@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Terminal, Menu, X, Search } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import ProtocolOverlay from "./ProtocolOverlay";
 import SearchBar from "./SearchBar";
 
@@ -161,117 +162,142 @@ export default function Header() {
       </header>
 
       {/* Mobile Menu Overlay */}
-      <div
-        className={`md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-        onClick={() => setIsMobileMenuOpen(false)}
-      />
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Mobile Menu Panel */}
-      <div
-        ref={menuRef}
-        className={`md:hidden fixed top-0 right-0 w-[85vw] max-w-[320px] h-full bg-shift5-dark border-l-2 border-shift5-accent z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
-      >
-        <div className="flex flex-col h-full">
-          {/* Menu Header */}
-          <div className="flex items-center justify-between px-5 h-16 border-b-2 border-shift5-accent shrink-0">
-            <span className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em] font-bold">Navigation</span>
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          {/* Search */}
-          <div className="px-5 py-4 border-b border-white/5">
-            <div className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-2">Search</div>
-            <SearchBar
-              compact
-              onSelectArtist={(name) => {
+      {/* Mobile Menu Panel — swipe right to dismiss */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            ref={menuRef}
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={{ left: 0, right: 0.3 }}
+            onDragEnd={(_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
+              if (info.offset.x > 80 || info.velocity.x > 400) {
                 setIsMobileMenuOpen(false);
-                router.push(`/artist/${encodeURIComponent(name)}`);
-              }}
-              onSelectGenre={(name) => {
-                setIsMobileMenuOpen(false);
-                router.push(`/genre/${encodeURIComponent(name)}`);
-              }}
-            />
-          </div>
+              }
+            }}
+            className="md:hidden fixed top-0 right-0 w-[85vw] max-w-[320px] h-full bg-shift5-dark border-l-2 border-shift5-accent z-50 flex flex-col touch-manipulation"
+          >
+            {/* Drag handle */}
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1 h-12 rounded-full bg-white/10" />
 
-          {/* Nav Links */}
-          <div className="px-5 py-4 space-y-1 border-b border-white/5">
-            <div className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-3">Navigate</div>
-            {[
-              { href: "/", label: "HOME" },
-              ...(session ? [{ href: "/my-atlas", label: "MY ATLAS" }] : []),
-              { href: "/genres", label: "GENRES" },
-              { href: "/about", label: "ABOUT" },
-              { href: "/frequency", label: "FREQUENCY" },
-              { href: "/help", label: "HELP" },
-            ].map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 text-[11px] font-mono uppercase tracking-widest no-underline transition-all ${pathname === link.href
-                  ? 'text-shift5-orange bg-shift5-orange/10 border-l-2 border-shift5-orange'
-                  : 'text-white/60 hover:text-white hover:bg-white/5 border-l-2 border-transparent'
-                  }`}
-              >
-                <span className="text-white/20">▸</span>
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* Protocol Menu Toggle */}
-          <div className="px-5 py-4 border-b border-white/5">
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                setIsProtocolOpen(true);
-              }}
-              className="w-full flex items-center gap-3 px-3 py-3 text-[11px] font-mono uppercase tracking-widest text-white/60 hover:text-shift5-orange hover:bg-shift5-orange/5 transition-all border border-white/10 hover:border-shift5-orange/30"
-            >
-              <Terminal size={14} className="text-shift5-orange" />
-              <span>Protocol Menu</span>
-              <span className="ml-auto w-1.5 h-1.5 rounded-full bg-shift5-orange animate-pulse" />
-            </button>
-          </div>
-
-          {/* User Section */}
-          <div className="mt-auto px-5 py-5 border-t border-white/5">
-            {session ? (
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 border-2 border-white/20 overflow-hidden relative shrink-0">
-                  {session.user?.image ? (
-                    <Image src={session.user.image} alt="User" fill className="object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-white/10" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-mono text-white/80 truncate">{session.user?.name || session.user?.email}</div>
-                  <button
-                    onClick={() => signOut()}
-                    className="text-[9px] font-mono text-white/30 hover:text-shift5-orange transition-colors uppercase tracking-widest"
-                  >
-                    [ Terminate ]
-                  </button>
-                </div>
-              </div>
-            ) : (
+            {/* Menu Header */}
+            <div className="flex items-center justify-between px-5 h-16 border-b-2 border-shift5-accent shrink-0">
+              <span className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em] font-bold">Navigation</span>
               <button
-                onClick={() => signIn(undefined, { callbackUrl: "/my-atlas" })}
-                className="w-full text-white font-bold bg-shift5-accent px-4 py-2.5 hover:bg-shift5-orange transition-all border-2 border-white/10 hover:border-white/30 uppercase tracking-widest font-mono text-[10px]"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-10 h-10 flex items-center justify-center text-white/60 active:scale-90 transition-transform"
               >
-                Sign In / Register
+                <X size={18} />
               </button>
-            )}
-          </div>
-        </div>
-      </div>
+            </div>
+
+            {/* Search */}
+            <div className="px-5 py-4 border-b border-white/5">
+              <div className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-2">Search</div>
+              <SearchBar
+                compact
+                onSelectArtist={(name) => {
+                  setIsMobileMenuOpen(false);
+                  router.push(`/artist/${encodeURIComponent(name)}`);
+                }}
+                onSelectGenre={(name) => {
+                  setIsMobileMenuOpen(false);
+                  router.push(`/genre/${encodeURIComponent(name)}`);
+                }}
+              />
+            </div>
+
+            {/* Nav Links */}
+            <div className="px-5 py-4 space-y-1 border-b border-white/5 flex-1 overflow-y-auto">
+              <div className="text-[9px] font-mono text-white/30 uppercase tracking-widest mb-3">Navigate</div>
+              {[
+                { href: "/", label: "HOME" },
+                ...(session ? [{ href: "/my-atlas", label: "MY ATLAS" }] : []),
+                { href: "/genres", label: "GENRES" },
+                { href: "/about", label: "ABOUT" },
+                { href: "/frequency", label: "FREQUENCY" },
+                { href: "/help", label: "HELP" },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-3 text-[11px] font-mono uppercase tracking-widest no-underline transition-all active:bg-white/10 ${pathname === link.href
+                    ? 'text-shift5-orange bg-shift5-orange/10 border-l-2 border-shift5-orange'
+                    : 'text-white/60 hover:text-white hover:bg-white/5 border-l-2 border-transparent'
+                    }`}
+                >
+                  <span className="text-white/20">▸</span>
+                  {link.label}
+                </Link>
+              ))}
+
+              {/* Protocol Menu Toggle */}
+              <div className="pt-4 mt-2 border-t border-white/5">
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsProtocolOpen(true);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-3 text-[11px] font-mono uppercase tracking-widest text-white/60 active:text-shift5-orange active:bg-shift5-orange/5 transition-all border border-white/10"
+                >
+                  <Terminal size={14} className="text-shift5-orange" />
+                  <span>Protocol Menu</span>
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-shift5-orange animate-pulse" />
+                </button>
+              </div>
+            </div>
+
+            {/* User Section */}
+            <div className="px-5 py-5 border-t border-white/5 pb-[max(20px,env(safe-area-inset-bottom))]">
+              {session ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 border-2 border-white/20 overflow-hidden relative shrink-0">
+                    {session.user?.image ? (
+                      <Image src={session.user.image} alt="User" fill className="object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-white/10" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[11px] font-mono text-white/80 truncate">{session.user?.name || session.user?.email}</div>
+                    <button
+                      onClick={() => signOut()}
+                      className="text-[9px] font-mono text-white/30 active:text-shift5-orange transition-colors uppercase tracking-widest"
+                    >
+                      [ Terminate ]
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => signIn(undefined, { callbackUrl: "/my-atlas" })}
+                  className="w-full text-white font-bold bg-shift5-accent px-4 py-2.5 active:bg-shift5-orange transition-all border-2 border-white/10 uppercase tracking-widest font-mono text-[10px]"
+                >
+                  Sign In / Register
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ProtocolOverlay
         isOpen={isProtocolOpen}

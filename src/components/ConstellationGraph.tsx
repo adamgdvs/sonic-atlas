@@ -143,6 +143,47 @@ export default function ConstellationGraph({
     setIsPanning(false);
   }, []);
 
+  // Touch handlers for mobile pan/zoom
+  const lastTouchRef = useRef<{ x: number; y: number } | null>(null);
+  const lastPinchRef = useRef<number | null>(null);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setIsPanning(true);
+      lastTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[1].clientX - e.touches[0].clientX,
+        e.touches[1].clientY - e.touches[0].clientY
+      );
+      lastPinchRef.current = dist;
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    if (e.touches.length === 1 && lastTouchRef.current) {
+      const dx = e.touches[0].clientX - lastTouchRef.current.x;
+      const dy = e.touches[0].clientY - lastTouchRef.current.y;
+      lastTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      setPan((p) => ({ x: p.x + dx / zoom, y: p.y + dy / zoom }));
+    } else if (e.touches.length === 2 && lastPinchRef.current !== null) {
+      const dist = Math.hypot(
+        e.touches[1].clientX - e.touches[0].clientX,
+        e.touches[1].clientY - e.touches[0].clientY
+      );
+      const delta = (dist - lastPinchRef.current) * 0.005;
+      lastPinchRef.current = dist;
+      setZoom((z) => Math.min(4, Math.max(0.4, z + delta)));
+    }
+  }, [zoom]);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsPanning(false);
+    lastTouchRef.current = null;
+    lastPinchRef.current = null;
+  }, []);
+
   const handleReset = useCallback(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
@@ -164,6 +205,7 @@ export default function ConstellationGraph({
         onMouseEnter={() => onHover(node.id)}
         onMouseLeave={() => onHover(null)}
         onClick={(e) => { e.stopPropagation(); onExplore(node.name); }}
+        onTouchEnd={(e) => { e.stopPropagation(); onExplore(node.name); }}
         style={{ cursor: "pointer" }}
       >
         {/* Radar point style */}
@@ -226,6 +268,9 @@ export default function ConstellationGraph({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Draw Links (Dashed Technical Style) */}
         {layoutLinks.map((link, i) => {

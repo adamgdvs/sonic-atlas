@@ -492,7 +492,7 @@ function SimilarCard({
           setHovered(false);
           onHover(null);
         }}
-        className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 cursor-default p-3 sm:px-6 sm:py-5 group/card transition-all duration-300"
+        className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 cursor-default p-3 sm:px-6 sm:py-5 group/card transition-all duration-300 active:bg-white/5 touch-manipulation"
         style={{
           backgroundColor: bg,
         }}

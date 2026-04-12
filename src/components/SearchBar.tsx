@@ -87,7 +87,7 @@ export default function SearchBar({
         }}
       />
       {focused && (results.length > 0 || loading) && (
-        <div className="absolute top-full left-0 right-0 bg-shift5-gray border border-shift5-orange/30 border-t-0 z-50 shadow-2xl backdrop-blur-md">
+        <div className="absolute top-full left-0 right-0 bg-shift5-gray border border-shift5-orange/30 border-t-0 z-50 shadow-2xl backdrop-blur-md max-h-[60vh] sm:max-h-[400px] overflow-y-auto overscroll-contain">
           {loading && results.length === 0 && (
             <div className="px-4 py-8 text-[11px] text-shift5-orange font-mono animate-pulse flex flex-col items-center gap-2">
               <div className="w-12 h-1 bg-shift5-orange/20 overflow-hidden relative">
@@ -100,7 +100,7 @@ export default function SearchBar({
             <div
               key={`${r.type}-${r.name}-${i}`}
               onClick={() => handleSelect(r)}
-              className="flex items-center gap-4 cursor-pointer hover:bg-white/5 group border-b border-white/5 last:border-b-0 transition-colors"
+              className="flex items-center gap-4 cursor-pointer hover:bg-white/5 active:bg-white/10 group border-b border-white/5 last:border-b-0 transition-colors touch-manipulation"
               style={{ padding: "12px 16px", fontSize: "13px" }}
             >
               {r.type === "artist" ? (
