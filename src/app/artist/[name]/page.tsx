@@ -39,6 +39,7 @@ import { useJourney } from "@/contexts/JourneyContext";
 import CollapsibleBio from "@/components/CollapsibleBio";
 import ApprovalMeter from "@/components/ApprovalMeter";
 import TourBadge from "@/components/TourBadge";
+import MobileDiscography from "@/components/MobileDiscography";
 
 // ─── Sub-components ──────────────────────────────────────────────
 
@@ -1167,8 +1168,41 @@ export default function ArtistPage({
                   <div className="pt-6 min-w-0">
                     <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold mb-4"><span className="hidden sm:inline">Signal_</span>Discography</div>
 
-                    {/* Horizontal Scroll Discography */}
-                    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 no-scrollbar snap-x snap-mandatory scroll-smooth -mx-3 px-3 sm:mx-0 sm:px-0" style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}>
+                    {/* Mobile: Gesture-powered swipeable carousel */}
+                    <div className="sm:hidden">
+                      {primaryDisco ? (
+                        <MobileDiscography
+                          albums={primaryDisco.albums}
+                          expandedAlbum={expandedAlbumPrimary}
+                          onAlbumClick={handleAlbumClickPrimary}
+                          onToggleDisco={(albumId, opening) => {
+                            if (opening) {
+                              setPrimaryDiscoOpen(true);
+                              setIsDiscoFocused(true);
+                              if (expandedAlbumPrimary !== albumId) {
+                                handleAlbumClickPrimary(albumId);
+                              }
+                              setTimeout(() => {
+                                primaryAccordionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                              }, 100);
+                            } else {
+                              setPrimaryDiscoOpen(false);
+                              setIsDiscoFocused(false);
+                              setExpandedAlbumPrimary(null);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="flex gap-3 overflow-hidden">
+                          {[1, 2, 3].map(i => (
+                            <div key={i} className="w-[100px] aspect-square bg-shift5-dark/5 animate-pulse border border-shift5-dark/10 shrink-0" />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Desktop: Original horizontal scroll */}
+                    <div className="hidden sm:flex gap-4 overflow-x-auto pb-4 no-scrollbar snap-x snap-mandatory scroll-smooth">
                       {primaryDisco ? (
                         primaryDisco.albums.map((a) => (
                           <div
@@ -1184,13 +1218,12 @@ export default function ArtistPage({
                                 if (expandedAlbumPrimary !== a.id) {
                                   handleAlbumClickPrimary(a.id);
                                 }
-                                // Smooth scroll to the accordion if it opens below
                                 setTimeout(() => {
                                   primaryAccordionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                                 }, 100);
                               }
                             }}
-                            className={`relative min-w-[80px] sm:min-w-[120px] aspect-square bg-shift5-dark/10 border-2 transition-all cursor-pointer group/album snap-start ${expandedAlbumPrimary === a.id ? 'border-shift5-dark scale-105 z-10' : 'border-shift5-dark/20 hover:border-shift5-dark/40'}`}
+                            className={`relative min-w-[120px] aspect-square bg-shift5-dark/10 border-2 transition-all cursor-pointer group/album snap-start ${expandedAlbumPrimary === a.id ? 'border-shift5-dark scale-105 z-10' : 'border-shift5-dark/20 hover:border-shift5-dark/40'}`}
                           >
                             {a.cover_medium ? (
                               <Image

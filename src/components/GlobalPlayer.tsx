@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useAudio, RepeatMode } from "@/contexts/AudioContext";
 import { getSimilarArtists, getArtistPreviewData } from "@/lib/api";
 import { Play, Pause, X, Radio, Zap, Music, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate as motionAnimate } from "framer-motion";
 import { getGenreArtists } from "@/lib/api";
 import { usePathname } from "next/navigation";
 
@@ -55,6 +55,31 @@ export default function GlobalPlayer() {
 
     // Mobile expanded state
     const [mobileExpanded, setMobileExpanded] = useState(false);
+
+    // Mini bar swipe gesture
+    const miniBarX = useMotionValue(0);
+    const miniBarOpacity = useTransform(miniBarX, [-120, 0, 120], [0.4, 1, 0.4]);
+    const [swipeHint, setSwipeHint] = useState<"prev" | "next" | null>(null);
+
+    const handleMiniBarDragEnd = (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
+        const swipeThreshold = 60;
+        const velocityThreshold = 300;
+        const offsetX = info.offset.x;
+        const velocityX = info.velocity.x;
+
+        if (offsetX < -swipeThreshold || velocityX < -velocityThreshold) {
+            // Swipe left → next track
+            if (canSkipForward) {
+                hasQueue ? nextTrack() : seek(0.9999);
+            }
+        } else if (offsetX > swipeThreshold || velocityX > velocityThreshold) {
+            // Swipe right → previous track
+            prevTrack();
+        }
+
+        setSwipeHint(null);
+        motionAnimate(miniBarX, 0, { type: "spring", stiffness: 400, damping: 30 });
+    };
 
     // Auto-hide: player collapses after 8s of inactivity (paused state)
     const [isHidden, setIsHidden] = useState(false);
@@ -275,8 +300,21 @@ export default function GlobalPlayer() {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.6 }}
+            onDragEnd={(_: unknown, info: { offset: { y: number }; velocity: { y: number } }) => {
+                if (info.offset.y > 120 || info.velocity.y > 500) {
+                    setMobileExpanded(false);
+                }
+            }}
             className="fixed inset-0 z-[60] flex flex-col sm:hidden overflow-hidden"
         >
+            {/* Drag handle indicator */}
+            <div className="relative z-10 flex justify-center pt-2">
+                <div className="w-10 h-1 rounded-full bg-white/20" />
+            </div>
+
             {/* Blurred album art background */}
             {currentTrack.coverUrl && (
                 <div className="absolute inset-0 z-0">
@@ -534,10 +572,34 @@ export default function GlobalPlayer() {
                     transition={{ duration: 0.15, ease: "linear" }}
                 />
             </div>
-            <div
-                className="bg-[#1a1a1a]/95 backdrop-blur-xl border-t border-white/5 flex items-center gap-3 px-3 py-2 touch-manipulation"
-                onClick={() => setMobileExpanded(true)}
+
+            {/* Swipeable content area — drag left/right to skip */}
+            <motion.div
+                className="bg-[#1a1a1a]/95 backdrop-blur-xl border-t border-white/5 flex items-center gap-3 px-3 py-2 touch-manipulation relative overflow-hidden"
+                style={{ x: miniBarX, opacity: miniBarOpacity }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.4}
+                onDrag={(_: unknown, info: { offset: { x: number } }) => {
+                    if (info.offset.x < -30) setSwipeHint("next");
+                    else if (info.offset.x > 30) setSwipeHint("prev");
+                    else setSwipeHint(null);
+                }}
+                onDragEnd={handleMiniBarDragEnd}
+                onTap={() => setMobileExpanded(true)}
             >
+                {/* Swipe direction indicators */}
+                {swipeHint === "prev" && (
+                    <div className="absolute left-2 top-1/2 -translate-y-1/2 text-white/40">
+                        <SkipBack size={14} fill="currentColor" />
+                    </div>
+                )}
+                {swipeHint === "next" && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40">
+                        <SkipForward size={14} fill="currentColor" />
+                    </div>
+                )}
+
                 {/* Mini album art — spinning vinyl */}
                 <div className="w-11 h-11 rounded-full overflow-hidden bg-white/5 shrink-0 relative" style={{ clipPath: "circle(50%)" }}>
                     <motion.div
@@ -604,7 +666,7 @@ export default function GlobalPlayer() {
                 >
                     <SkipForward size={18} fill="currentColor" />
                 </motion.button>
-            </div>
+            </motion.div>
             {/* Safe area spacer */}
             <div className="bg-[#1a1a1a]/95 backdrop-blur-xl h-[env(safe-area-inset-bottom,0px)]" />
         </motion.div>
