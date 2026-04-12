@@ -58,7 +58,7 @@ export default function GlobalPlayer() {
 
     // Auto-hide: player collapses after 8s of inactivity (paused state)
     const [isHidden, setIsHidden] = useState(false);
-    const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Seekbar dragging
     const seekbarRef = useRef<HTMLDivElement | null>(null);
@@ -275,10 +275,23 @@ export default function GlobalPlayer() {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed inset-0 z-[60] bg-shift5-dark flex flex-col sm:hidden"
+            className="fixed inset-0 z-[60] flex flex-col sm:hidden overflow-hidden"
         >
+            {/* Blurred album art background */}
+            {currentTrack.coverUrl && (
+                <div className="absolute inset-0 z-0">
+                    <img
+                        src={currentTrack.coverUrl}
+                        alt=""
+                        className="w-full h-full object-cover scale-110 blur-[80px] opacity-40"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-shift5-dark/80 via-shift5-dark/90 to-shift5-dark" />
+                </div>
+            )}
+            {!currentTrack.coverUrl && <div className="absolute inset-0 z-0 bg-shift5-dark" />}
+
             {/* Top bar: collapse + track info */}
-            <div className="flex items-center justify-between px-5 pt-[max(12px,env(safe-area-inset-top))] pb-2">
+            <div className="relative z-10 flex items-center justify-between px-5 pt-[max(12px,env(safe-area-inset-top))] pb-2">
                 <button
                     onClick={() => setMobileExpanded(false)}
                     className="w-10 h-10 flex items-center justify-center text-white/60 active:scale-90"
@@ -286,8 +299,13 @@ export default function GlobalPlayer() {
                 >
                     <ChevronDown size={24} />
                 </button>
-                <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest">
-                    {hasQueue ? `${queueIndex + 1} / ${queue.length}` : "Now Playing"}
+                <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest">
+                    {radioMode ? (
+                        <span className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-shift5-orange animate-pulse" />
+                            Radio Mode
+                        </span>
+                    ) : hasQueue ? `${queueIndex + 1} / ${queue.length}` : "Now Playing"}
                 </div>
                 <button
                     onClick={() => { setMobileExpanded(false); closePlayer(); }}
@@ -298,43 +316,107 @@ export default function GlobalPlayer() {
                 </button>
             </div>
 
-            {/* Album Art — constrained to not push controls offscreen */}
-            <div className="flex-1 flex items-center justify-center px-8 py-2 min-h-0">
-                <div className="w-full max-w-[280px] max-h-[40vh] aspect-square rounded-xl overflow-hidden bg-white/5 shadow-2xl relative">
-                    {currentTrack.coverUrl ? (
-                        <img
-                            src={currentTrack.coverUrl}
-                            alt={currentTrack.title}
-                            className="object-cover w-full h-full"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <Music size={48} className="text-white/10" />
+            {/* Animated Vinyl Album Art */}
+            <div className="relative z-10 flex-1 flex items-center justify-center px-8 py-2 min-h-0">
+                <div className="relative w-full max-w-[260px] max-h-[38vh] aspect-square">
+                    {/* Vinyl disc behind the art */}
+                    <motion.div
+                        animate={isPlaying ? { rotate: 360 } : { rotate: 0 }}
+                        transition={isPlaying ? { duration: 12, repeat: Infinity, ease: "linear" } : { duration: 0.8, ease: "easeOut" }}
+                        className="absolute inset-[-12%] rounded-full"
+                        style={{
+                            background: "radial-gradient(circle, #1a1a1a 28%, #111 29%, #222 30%, #111 31%, #222 50%, #111 51%, #1a1a1a 52%, #222 70%, #111 71%, #1a1a1a 100%)",
+                            boxShadow: "0 0 60px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.3)",
+                        }}
+                    >
+                        {/* Vinyl center label */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[22%] h-[22%] rounded-full bg-shift5-orange/80 flex items-center justify-center shadow-inner">
+                            <div className="w-[30%] h-[30%] rounded-full bg-shift5-dark/60 shadow-inner" />
                         </div>
-                    )}
+                        {/* Groove lines */}
+                        <div className="absolute inset-[15%] rounded-full border border-white/[0.03]" />
+                        <div className="absolute inset-[25%] rounded-full border border-white/[0.03]" />
+                        <div className="absolute inset-[35%] rounded-full border border-white/[0.03]" />
+                        {/* Light reflection */}
+                        <div
+                            className="absolute inset-0 rounded-full pointer-events-none"
+                            style={{
+                                background: "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%, rgba(255,255,255,0.02) 100%)",
+                            }}
+                        />
+                    </motion.div>
+
+                    {/* Album art - spinning on top */}
+                    <motion.div
+                        animate={isPlaying ? { rotate: 360 } : { rotate: 0 }}
+                        transition={isPlaying ? { duration: 12, repeat: Infinity, ease: "linear" } : { duration: 0.8, ease: "easeOut" }}
+                        className="relative w-full h-full rounded-full overflow-hidden shadow-2xl"
+                        style={{ clipPath: "circle(50%)" }}
+                    >
+                        {currentTrack.coverUrl ? (
+                            <img
+                                src={currentTrack.coverUrl}
+                                alt={currentTrack.title}
+                                className="object-cover w-full h-full rounded-full"
+                                style={{ clipPath: "circle(50%)" }}
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-white/5 rounded-full">
+                                <Music size={48} className="text-white/10" />
+                            </div>
+                        )}
+                        {/* Vinyl groove overlay on art */}
+                        <div className="absolute inset-0 rounded-full pointer-events-none bg-[radial-gradient(circle,transparent_38%,rgba(0,0,0,0.08)_39%,transparent_40%,rgba(0,0,0,0.06)_41%,transparent_42%)] opacity-60" />
+                        {/* Center spindle */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-shift5-dark/70 backdrop-blur-sm shadow-lg border-2 border-white/10 flex items-center justify-center">
+                            <div className="w-2 h-2 rounded-full bg-white/20" />
+                        </div>
+                    </motion.div>
+
+                    {/* Loading overlay */}
                     {loadingNext && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center" style={{ clipPath: "circle(50%)" }}>
                             <div className="w-8 h-8 border-2 border-shift5-orange/30 border-t-shift5-orange rounded-full animate-spin" />
                         </div>
+                    )}
+
+                    {/* Glow ring when playing */}
+                    {isPlaying && (
+                        <motion.div
+                            animate={{ opacity: [0.3, 0.6, 0.3] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                            className="absolute inset-[-16%] rounded-full pointer-events-none"
+                            style={{ boxShadow: "0 0 40px rgba(255,88,65,0.15), 0 0 80px rgba(255,88,65,0.08)" }}
+                        />
                     )}
                 </div>
             </div>
 
             {/* Track info */}
-            <div className="px-6 pb-1">
-                <h2 className="text-lg font-bold text-white truncate">{currentTrack.title}</h2>
-                <a
-                    href={`/artist/${encodeURIComponent(currentTrack.artist)}`}
-                    onClick={() => setMobileExpanded(false)}
-                    className="text-[13px] text-white/50 truncate block mt-0.5"
-                >
-                    {currentTrack.artist}
-                </a>
+            <div className="relative z-10 px-6 pb-1">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentTrack.title}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.25 }}
+                    >
+                        <h2 className="text-lg font-bold text-white truncate">{currentTrack.title}</h2>
+                        <a
+                            href={`/artist/${encodeURIComponent(currentTrack.artist)}`}
+                            onClick={() => setMobileExpanded(false)}
+                            className="text-[13px] text-white/50 truncate block mt-0.5 active:text-white/70"
+                        >
+                            {currentTrack.artist}
+                        </a>
+                    </motion.div>
+                </AnimatePresence>
                 {error && <p className="text-[11px] text-red-400 mt-1 truncate">{error}</p>}
             </div>
 
             {/* Seekbar */}
-            <div className="px-6 pt-2 pb-0">
+            <div className="relative z-10 px-6 pt-3 pb-0">
                 <div
                     ref={seekbarRef}
                     className="w-full h-[5px] bg-white/10 rounded-full cursor-pointer relative"
@@ -358,11 +440,11 @@ export default function GlobalPlayer() {
                 </div>
             </div>
 
-            {/* Transport controls — compact but with good touch targets */}
-            <div className="flex items-center justify-between px-8 py-2">
+            {/* Transport controls */}
+            <div className="relative z-10 flex items-center justify-between px-8 py-3">
                 <button
                     onClick={() => setShuffleMode(!shuffleMode)}
-                    className={`w-10 h-10 flex items-center justify-center rounded-full active:scale-90 ${shuffleMode ? 'text-shift5-orange' : 'text-white/30'}`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full active:scale-90 transition-colors ${shuffleMode ? 'text-shift5-orange' : 'text-white/30'}`}
                     aria-label="Shuffle"
                 >
                     <Shuffle size={18} />
@@ -376,18 +458,30 @@ export default function GlobalPlayer() {
                     <SkipBack size={24} fill="currentColor" />
                 </button>
 
-                <button
+                <motion.button
+                    whileTap={{ scale: 0.92 }}
                     onClick={togglePlayPause}
-                    className="w-14 h-14 rounded-full bg-shift5-orange text-white flex items-center justify-center active:scale-95 shadow-lg shadow-shift5-orange/30"
+                    className="w-16 h-16 rounded-full bg-shift5-orange text-white flex items-center justify-center shadow-lg shadow-shift5-orange/30"
                     aria-label={isPlaying ? "Pause" : "Play"}
                 >
-                    {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-0.5" />}
-                </button>
+                    <AnimatePresence mode="wait">
+                        <motion.span
+                            key={isPlaying ? "pause" : "play"}
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.5, opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="flex items-center justify-center"
+                        >
+                            {isPlaying ? <Pause size={26} fill="currentColor" /> : <Play size={26} fill="currentColor" className="ml-0.5" />}
+                        </motion.span>
+                    </AnimatePresence>
+                </motion.button>
 
                 <button
                     onClick={canSkipForward ? () => { hasQueue ? nextTrack() : seek(0.9999); } : undefined}
                     disabled={!canSkipForward}
-                    className={`w-11 h-11 flex items-center justify-center active:scale-90 ${canSkipForward ? 'text-white' : 'text-white/15'}`}
+                    className={`w-11 h-11 flex items-center justify-center active:scale-90 transition-colors ${canSkipForward ? 'text-white' : 'text-white/15'}`}
                     aria-label="Next"
                 >
                     <SkipForward size={24} fill="currentColor" />
@@ -395,7 +489,7 @@ export default function GlobalPlayer() {
 
                 <button
                     onClick={cycleRepeat}
-                    className={`w-10 h-10 flex items-center justify-center rounded-full active:scale-90 ${repeatMode !== 'none' ? 'text-shift5-orange' : 'text-white/30'}`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full active:scale-90 transition-colors ${repeatMode !== 'none' ? 'text-shift5-orange' : 'text-white/30'}`}
                     aria-label="Repeat"
                 >
                     {repeatMode === "one" ? <Repeat1 size={18} /> : <Repeat size={18} />}
@@ -403,10 +497,10 @@ export default function GlobalPlayer() {
             </div>
 
             {/* Bottom controls: Radio + Surge */}
-            <div className="flex items-center justify-center gap-3 px-6 pb-[max(12px,env(safe-area-inset-bottom))]">
+            <div className="relative z-10 flex items-center justify-center gap-3 px-6 pb-[max(16px,env(safe-area-inset-bottom))]">
                 <button
                     onClick={() => setRadioMode(!radioMode)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 ${radioMode ? 'bg-white/15 text-white' : 'text-white/30'}`}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border ${radioMode ? 'bg-white/15 text-white border-white/20' : 'text-white/30 border-transparent'}`}
                 >
                     <Radio size={14} />
                     Radio
@@ -414,7 +508,7 @@ export default function GlobalPlayer() {
                 <button
                     onClick={handleSurge}
                     disabled={isSurging}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 ${isSurging ? 'bg-shift5-orange text-white animate-pulse' : 'text-white/30'}`}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border ${isSurging ? 'bg-shift5-orange text-white border-shift5-orange animate-pulse' : 'text-white/30 border-transparent'}`}
                 >
                     <Zap size={14} fill={isSurging ? "currentColor" : "none"} />
                     Surge
@@ -434,47 +528,85 @@ export default function GlobalPlayer() {
         >
             {/* Progress bar at the very top of the mini bar */}
             <div className="h-[3px] bg-white/5">
-                <div className="h-full bg-shift5-orange transition-[width] duration-150 ease-linear" style={{ width: `${progress * 100}%` }} />
+                <motion.div
+                    className="h-full bg-shift5-orange"
+                    style={{ width: `${progress * 100}%` }}
+                    transition={{ duration: 0.15, ease: "linear" }}
+                />
             </div>
             <div
-                className="bg-[#1a1a1a] border-t border-white/5 flex items-center gap-3 px-3 py-2 touch-manipulation"
+                className="bg-[#1a1a1a]/95 backdrop-blur-xl border-t border-white/5 flex items-center gap-3 px-3 py-2 touch-manipulation"
                 onClick={() => setMobileExpanded(true)}
             >
-                {/* Mini album art */}
-                <div className="w-11 h-11 rounded-lg overflow-hidden bg-white/5 shrink-0">
-                    {currentTrack.coverUrl ? (
-                        <img src={currentTrack.coverUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center"><Music size={16} className="text-white/20" /></div>
-                    )}
+                {/* Mini album art — spinning vinyl */}
+                <div className="w-11 h-11 rounded-full overflow-hidden bg-white/5 shrink-0 relative" style={{ clipPath: "circle(50%)" }}>
+                    <motion.div
+                        animate={isPlaying ? { rotate: 360 } : { rotate: 0 }}
+                        transition={isPlaying ? { duration: 8, repeat: Infinity, ease: "linear" } : { duration: 0.5 }}
+                        className="w-full h-full rounded-full"
+                        style={{ clipPath: "circle(50%)" }}
+                    >
+                        {currentTrack.coverUrl ? (
+                            <img src={currentTrack.coverUrl} alt="" className="w-full h-full object-cover rounded-full" style={{ clipPath: "circle(50%)" }} />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center rounded-full"><Music size={16} className="text-white/20" /></div>
+                        )}
+                        {/* Vinyl groove overlay */}
+                        <div className="absolute inset-0 rounded-full pointer-events-none bg-[radial-gradient(circle,transparent_38%,rgba(0,0,0,0.1)_39%,transparent_40%,rgba(0,0,0,0.08)_41%,transparent_42%)] opacity-50" />
+                        {/* Center spindle */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-shift5-dark/80 border border-white/10" />
+                    </motion.div>
                 </div>
 
-                {/* Track info */}
+                {/* Track info with animated transitions */}
                 <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-semibold text-white truncate">{currentTrack.title}</div>
-                    <div className="text-[11px] text-white/40 truncate">{currentTrack.artist}</div>
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={currentTrack.title}
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <div className="text-[13px] font-semibold text-white truncate">{currentTrack.title}</div>
+                            <div className="text-[11px] text-white/40 truncate">{currentTrack.artist}</div>
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
 
                 {/* Play/Pause — prevent tap from expanding */}
-                <button
+                <motion.button
+                    whileTap={{ scale: 0.85 }}
                     onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
-                    className="w-10 h-10 flex items-center justify-center text-white active:scale-90 shrink-0"
+                    className="w-10 h-10 flex items-center justify-center text-white shrink-0"
                     aria-label={isPlaying ? "Pause" : "Play"}
                 >
-                    {isPlaying ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
-                </button>
+                    <AnimatePresence mode="wait">
+                        <motion.span
+                            key={isPlaying ? "pause" : "play"}
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.5, opacity: 0 }}
+                            transition={{ duration: 0.12 }}
+                            className="flex items-center justify-center"
+                        >
+                            {isPlaying ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
+                        </motion.span>
+                    </AnimatePresence>
+                </motion.button>
 
                 {/* Skip forward */}
-                <button
+                <motion.button
+                    whileTap={{ scale: 0.85 }}
                     onClick={(e) => { e.stopPropagation(); if (canSkipForward) { hasQueue ? nextTrack() : seek(0.9999); } }}
-                    className={`w-9 h-9 flex items-center justify-center shrink-0 active:scale-90 ${canSkipForward ? 'text-white/60' : 'text-white/15'}`}
+                    className={`w-9 h-9 flex items-center justify-center shrink-0 ${canSkipForward ? 'text-white/60' : 'text-white/15'}`}
                     aria-label="Next"
                 >
                     <SkipForward size={18} fill="currentColor" />
-                </button>
+                </motion.button>
             </div>
             {/* Safe area spacer */}
-            <div className="bg-[#1a1a1a] h-[env(safe-area-inset-bottom,0px)]" />
+            <div className="bg-[#1a1a1a]/95 backdrop-blur-xl h-[env(safe-area-inset-bottom,0px)]" />
         </motion.div>
     );
 

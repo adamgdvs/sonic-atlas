@@ -4,6 +4,7 @@ import { Space_Mono } from "next/font/google";
 import "./globals.css";
 import { GlobalProviders } from "@/providers/GlobalProviders";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import MobilePageTransition from "@/components/MobilePageTransition";
 
 const nonSans = localFont({
   src: "../../public/fonts/NON-Sans-Medium.woff2",
@@ -47,7 +48,9 @@ export default function RootLayout({
       <body className={`${nonSans.variable} ${spaceMono.variable} antialiased`}>
         <GlobalProviders>
           <ErrorBoundary>
-            {children}
+            <MobilePageTransition>
+              {children}
+            </MobilePageTransition>
           </ErrorBoundary>
         </GlobalProviders>
       </body>
