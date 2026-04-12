@@ -255,7 +255,7 @@ export default function GlobalPlayer() {
             <motion.button
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-[#1D1D1F]/80 text-white/40 shadow-lg flex items-center justify-center hover:scale-110 hover:text-white/70 active:scale-95 transition-all border border-white/10"
+                className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-12 h-12 rounded-full bg-[#1D1D1F]/80 text-white/40 shadow-lg flex items-center justify-center hover:scale-110 hover:text-white/70 active:scale-95 transition-all border border-white/10"
                 title="No track loaded"
             >
                 <Music size={18} />
@@ -275,7 +275,7 @@ export default function GlobalPlayer() {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
                         onClick={handleReveal}
-                        className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-[#1D1D1F] text-white shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform border border-white/10"
+                        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-12 h-12 rounded-full bg-[#1D1D1F] text-white shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform border border-white/10"
                         title="Show Player"
                     >
                         <Music size={18} />
@@ -300,9 +300,9 @@ export default function GlobalPlayer() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
                         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                        className="fixed bottom-3 left-3 right-3 sm:left-auto sm:bottom-6 sm:right-6 lg:bottom-10 lg:right-10 z-50 pointer-events-auto"
+                        className="fixed bottom-0 left-0 right-0 sm:left-auto sm:bottom-6 sm:right-6 lg:bottom-10 lg:right-10 z-50 pointer-events-auto pb-[env(safe-area-inset-bottom,0px)]"
                     >
-                        <div className="bg-white/95 backdrop-blur-xl border border-[#E8E8E8] shadow-[0_16px_64px_rgba(0,0,0,0.15)] rounded-2xl sm:rounded-3xl w-full sm:w-[420px] relative overflow-hidden group touch-manipulation">
+                        <div className="bg-white/95 backdrop-blur-xl border-t sm:border border-[#E8E8E8] shadow-[0_-4px_32px_rgba(0,0,0,0.1)] sm:shadow-[0_16px_64px_rgba(0,0,0,0.15)] rounded-t-2xl sm:rounded-3xl w-full sm:w-[420px] relative overflow-hidden group touch-manipulation">
 
                             {/* Close Button */}
                             <button
@@ -376,10 +376,10 @@ export default function GlobalPlayer() {
                             </div>
 
                             {/* Seekbar */}
-                            <div className="px-3 pt-2.5 pb-1">
+                            <div className="px-4 sm:px-3 pt-2.5 pb-1">
                                 <div
                                     ref={seekbarRef}
-                                    className="w-full h-[6px] bg-[#F0F0F0] rounded-full cursor-pointer group/seek relative"
+                                    className="w-full h-[8px] sm:h-[6px] bg-[#F0F0F0] rounded-full cursor-pointer group/seek relative"
                                     onMouseDown={handleSeekMouseDown}
                                     onTouchStart={handleSeekTouch}
                                     onTouchMove={handleSeekTouch}
@@ -404,7 +404,7 @@ export default function GlobalPlayer() {
                             </div>
 
                             {/* Transport Controls */}
-                            <div className="flex items-center justify-center gap-3 sm:gap-4 px-3 pb-1">
+                            <div className="flex items-center justify-center gap-4 sm:gap-4 px-4 sm:px-3 pb-1">
                                 {/* Shuffle */}
                                 <button
                                     onClick={() => setShuffleMode(!shuffleMode)}

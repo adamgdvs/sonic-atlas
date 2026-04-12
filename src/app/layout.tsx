@@ -20,6 +20,17 @@ export const metadata: Metadata = {
   title: "Sonic Atlas — Discover Similar Artists",
   description:
     "An open-source music discovery platform for exploring similar artists, genres, and sonic neighborhoods.",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    viewportFit: "cover",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Sonic Atlas",
+  },
 };
 
 export default function RootLayout({

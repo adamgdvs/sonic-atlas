@@ -224,7 +224,7 @@ function DiscographyPanel({
               return (
                 <div
                   key={t.id}
-                  className="flex items-center gap-4 py-3 px-3 hover:bg-white/5 transition-colors cursor-pointer group"
+                  className="flex items-center gap-3 sm:gap-4 py-3 px-3 hover:bg-white/5 active:bg-white/10 transition-colors cursor-pointer group"
                   onClick={() =>
                     isPlaying ? onStop() : onPlay(t.preview, t.title, undefined, undefined, t.videoId)
                   }
@@ -343,7 +343,7 @@ function DiscographyPanel({
                             return (
                               <div
                                 key={t.id}
-                                className="flex items-center gap-4 py-2 hover:bg-white/5 transition-colors cursor-pointer group/track"
+                                className="flex items-center gap-3 sm:gap-4 py-2.5 sm:py-2 hover:bg-white/5 active:bg-white/10 transition-colors cursor-pointer group/track"
                                 onClick={() => {
                                   if (t.preview || t.videoId) {
                                     if (isPlaying) {
@@ -491,7 +491,7 @@ function SimilarCard({
           setHovered(false);
           onHover(null);
         }}
-        className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 cursor-default p-4 sm:px-6 sm:py-5 group/card transition-all duration-300"
+        className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 cursor-default p-3 sm:px-6 sm:py-5 group/card transition-all duration-300"
         style={{
           backgroundColor: bg,
         }}
@@ -1091,11 +1091,11 @@ export default function ArtistPage({
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#888_1px,transparent_1px),linear-gradient(to_bottom,#888_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
-      <main className="relative z-10 p-4 sm:p-5 md:p-10 max-w-[1400px] mx-auto">
+      <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1400px] mx-auto pb-32 sm:pb-10">
         {/* Hero Header section with high-contrast Shift5 Orange */}
-        <div className="mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-5 py-10 md:p-12 relative overflow-hidden group">
+        <div className="mb-8 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-4 py-6 sm:px-5 sm:py-10 md:p-12 relative overflow-hidden group">
           {/* Decorative Background Text (Shift5 vibe) */}
-          <div className="absolute top-0 right-0 text-[80px] sm:text-[120px] font-bold text-shift5-dark/5 select-none leading-none pointer-events-none uppercase mr-[-10px] sm:mr-[-20px] mt-[-10px] sm:mt-[-20px]">
+          <div className="absolute top-0 right-0 text-[50px] sm:text-[80px] md:text-[120px] font-bold text-shift5-dark/5 select-none leading-none pointer-events-none uppercase mr-[-5px] sm:mr-[-10px] md:mr-[-20px] mt-[-5px] sm:mt-[-10px] md:mt-[-20px]">
             {artistName.slice(0, 3)}
           </div>
 
@@ -1112,7 +1112,7 @@ export default function ArtistPage({
                   <StreamingLinks artistName={artistName} size={20} isHero={true} />
                   <TourBadge artistName={artistName} />
                 </div>
-                <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold uppercase tracking-tighter leading-none mb-4 selection:bg-shift5-dark selection:text-white break-words">
+                <h1 className="text-3xl sm:text-6xl md:text-7xl font-bold uppercase tracking-tighter leading-none mb-3 sm:mb-4 selection:bg-shift5-dark selection:text-white break-words">
                   {artistName}
                 </h1>
                 <div className="flex flex-wrap items-center gap-2 mt-4 mb-4">
@@ -1259,8 +1259,8 @@ export default function ArtistPage({
               </div>
             </div>
 
-            <div className="flex flex-row md:flex-col items-center md:items-end gap-3 sm:gap-6 h-full justify-between pb-4 w-full md:w-auto">
-              <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-end gap-3 sm:gap-6 h-full justify-between pb-4 w-full md:w-auto">
+              <div className="flex flex-col gap-2 sm:gap-3">
                 <button
                   onClick={() => {
                     if (primaryDisco && primaryDisco.topTracks.length > 0) {
@@ -1268,7 +1268,7 @@ export default function ArtistPage({
                       playingUrl === top.preview ? handleStop() : handlePlay(top.preview, top.title, undefined, undefined, top.videoId);
                     }
                   }}
-                  className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'bg-white/10 border-shift5-dark/40 hover:border-shift5-dark hover:bg-white/20 text-shift5-dark'}`}
+                  className={`w-full sm:w-auto flex items-center justify-center gap-3 px-6 sm:px-8 py-3.5 sm:py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'bg-white/10 border-shift5-dark/40 hover:border-shift5-dark hover:bg-white/20 text-shift5-dark'}`}
                 >
                   {playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? (
                     <>
@@ -1285,7 +1285,7 @@ export default function ArtistPage({
 
                 <button
                   onClick={() => handleToggleBookmark(artistInfo?.deezerId?.toString() || artistName, artistName, artistInfo?.image, artistInfo?.genres)}
-                  className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${bookmarkedArtists.has(artistName) ? 'bg-shift5-dark border-shift5-dark text-white' : 'border-shift5-dark/30 hover:border-shift5-dark text-shift5-dark/70 hover:text-shift5-dark'}`}
+                  className={`w-full sm:w-auto flex items-center justify-center gap-3 px-6 sm:px-8 py-3.5 sm:py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${bookmarkedArtists.has(artistName) ? 'bg-shift5-dark border-shift5-dark text-white' : 'border-shift5-dark/30 hover:border-shift5-dark text-shift5-dark/70 hover:text-shift5-dark'}`}
                 >
                   <Heart size={16} className={bookmarkedArtists.has(artistName) ? 'fill-current' : ''} />
                   {bookmarkedArtists.has(artistName) ? 'SAVED_NODE' : 'SAVE_NODE'}
