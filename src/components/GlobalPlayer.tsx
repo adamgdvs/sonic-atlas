@@ -404,7 +404,7 @@ export default function GlobalPlayer() {
                             </div>
 
                             {/* Transport Controls */}
-                            <div className="flex items-center justify-center gap-4 sm:gap-4 px-4 sm:px-3 pb-1">
+                            <div className="flex items-center justify-center gap-2 sm:gap-4 px-3 sm:px-3 pb-1">
                                 {/* Shuffle */}
                                 <button
                                     onClick={() => setShuffleMode(!shuffleMode)}
@@ -460,7 +460,7 @@ export default function GlobalPlayer() {
                             </div>
 
                             {/* Secondary Controls */}
-                            <div className="flex items-center justify-center gap-1 px-3 pb-2.5 pt-0.5">
+                            <div className="flex items-center justify-center gap-1 px-2 sm:px-3 pb-2.5 pt-0.5">
                                 <button
                                     onClick={() => setRadioMode(!radioMode)}
                                     className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-colors ${radioMode ? 'bg-[#1D1D1F] text-white' : 'text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]'}`}

@@ -1093,7 +1093,7 @@ export default function ArtistPage({
 
       <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1400px] mx-auto pb-32 sm:pb-10">
         {/* Hero Header section with high-contrast Shift5 Orange */}
-        <div className="mb-8 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-4 py-6 sm:px-5 sm:py-10 md:p-12 relative overflow-hidden group">
+        <div className="mb-8 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-3 py-5 sm:px-5 sm:py-10 md:p-12 relative overflow-hidden group">
           {/* Decorative Background Text (Shift5 vibe) */}
           <div className="absolute top-0 right-0 text-[50px] sm:text-[80px] md:text-[120px] font-bold text-shift5-dark/5 select-none leading-none pointer-events-none uppercase mr-[-5px] sm:mr-[-10px] md:mr-[-20px] mt-[-5px] sm:mt-[-10px] md:mt-[-20px]">
             {artistName.slice(0, 3)}
@@ -1107,8 +1107,8 @@ export default function ArtistPage({
               </div>
 
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-[10px] font-mono text-shift5-dark uppercase tracking-[0.3em] font-bold bg-white/20 px-2 py-0.5">Active_Node // {artistInfo?.deezerId || 'IDENT_PENDING'}</span>
+                <div className="flex items-center gap-2 sm:gap-3 mb-4 flex-wrap">
+                  <span className="text-[9px] sm:text-[10px] font-mono text-shift5-dark uppercase tracking-[0.2em] sm:tracking-[0.3em] font-bold bg-white/20 px-2 py-0.5 truncate max-w-full">Active_Node // {artistInfo?.deezerId || 'IDENT_PENDING'}</span>
                   <StreamingLinks artistName={artistName} size={20} isHero={true} />
                   <TourBadge artistName={artistName} />
                 </div>
@@ -1122,7 +1122,7 @@ export default function ArtistPage({
                 </div>
 
                 {/* Metadata Scans Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 p-4 bg-shift5-dark/5 border border-shift5-dark/10 font-mono text-[10px] uppercase tracking-widest text-shift5-dark w-fit">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8 p-3 sm:p-4 bg-shift5-dark/5 border border-shift5-dark/10 font-mono text-[10px] uppercase tracking-widest text-shift5-dark w-full sm:w-fit">
                   <div className="space-y-1">
                     <div className="text-shift5-dark/40">Signal_Origin</div>
                     <div className="font-bold truncate max-w-[120px]">{artistInfo?.location || "NULL_SECTOR"}</div>
@@ -1141,7 +1141,7 @@ export default function ArtistPage({
                   </div>
                 </div>
 
-                <div className="mt-8 space-y-4 max-w-2xl border-l-2 border-shift5-dark/10 pl-4 sm:pl-6">
+                <div className="mt-8 space-y-4 max-w-full sm:max-w-2xl border-l-2 border-shift5-dark/10 pl-3 sm:pl-6">
                   <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold">Operational_Bio</div>
                   <CollapsibleBio
                     bio={artistInfo?.bio || ""}
@@ -1153,7 +1153,7 @@ export default function ArtistPage({
                     <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold mb-4">Signal_Discography // Select_To_Expand</div>
 
                     {/* Horizontal Scroll Discography */}
-                    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2 snap-x snap-mandatory scroll-smooth">
+                    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 no-scrollbar snap-x snap-mandatory scroll-smooth">
                       {primaryDisco ? (
                         primaryDisco.albums.map((a) => (
                           <div

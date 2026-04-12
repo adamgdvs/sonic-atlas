@@ -25,8 +25,9 @@
 }
 
 html {
-  /* Support iOS safe areas */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  /* Support iOS safe areas — only pad top/bottom, not sides (avoids horizontal clipping) */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 body {
