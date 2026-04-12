@@ -1093,14 +1093,14 @@ export default function ArtistPage({
 
       <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1400px] mx-auto pb-24 sm:pb-10">
         {/* Hero Header section with high-contrast Shift5 Orange */}
-        <div className="mb-6 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-3 py-4 sm:px-5 sm:py-10 md:p-12 relative overflow-visible sm:overflow-x-hidden sm:overflow-y-visible group">
+        <div className="mb-6 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-3 py-4 sm:px-5 sm:py-10 md:p-12 relative overflow-hidden sm:overflow-x-hidden sm:overflow-y-visible group">
           {/* Decorative Background Text (Shift5 vibe) — hidden on mobile */}
           <div className="hidden sm:block absolute top-0 right-0 sm:text-[80px] md:text-[120px] font-bold text-shift5-dark/5 select-none leading-none pointer-events-none uppercase sm:mr-[-10px] md:mr-[-20px] sm:mt-[-10px] md:mt-[-20px]">
             {artistName.slice(0, 3)}
           </div>
 
-          <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-8">
-            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-8">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-8 min-w-0">
+            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-8 min-w-0 w-full">
               {/* Avatar + Name row on mobile */}
               <div className="flex items-center gap-3 sm:block">
                 <div className="relative overflow-hidden border-2 border-shift5-dark p-1 bg-shift5-dark/10 backdrop-blur-sm shrink-0 w-[64px] h-[64px] sm:w-[100px] sm:h-[100px] md:w-[150px] md:h-[150px] md:-mt-6">
@@ -1119,7 +1119,7 @@ export default function ArtistPage({
                 </div>
               </div>
 
-              <div>
+              <div className="min-w-0 flex-1">
                 {/* Desktop-only: identifier badge */}
                 <div className="hidden sm:flex items-center gap-3 mb-4 flex-wrap">
                   <span className="text-[10px] font-mono text-shift5-dark uppercase tracking-[0.3em] font-bold bg-white/20 px-2 py-0.5 truncate max-w-full">Active_Node // {artistInfo?.deezerId || 'IDENT_PENDING'}</span>
@@ -1156,7 +1156,7 @@ export default function ArtistPage({
                   </div>
                 </div>
 
-                <div className="mt-4 sm:mt-8 space-y-3 sm:space-y-4 max-w-full sm:max-w-2xl sm:border-l-2 sm:border-shift5-dark/10 sm:pl-6">
+                <div className="mt-4 sm:mt-8 space-y-3 sm:space-y-4 max-w-full sm:max-w-2xl sm:border-l-2 sm:border-shift5-dark/10 sm:pl-6 min-w-0">
                   <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold">Operational_Bio</div>
                   <CollapsibleBio
                     bio={artistInfo?.bio || ""}
@@ -1164,11 +1164,11 @@ export default function ArtistPage({
                     theme="hero"
                   />
 
-                  <div className="pt-6">
+                  <div className="pt-6 min-w-0">
                     <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold mb-4"><span className="hidden sm:inline">Signal_</span>Discography</div>
 
                     {/* Horizontal Scroll Discography */}
-                    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 no-scrollbar snap-x snap-mandatory scroll-smooth" style={{ touchAction: "pan-x" }}>
+                    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 no-scrollbar snap-x snap-mandatory scroll-smooth -mx-3 px-3 sm:mx-0 sm:px-0" style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}>
                       {primaryDisco ? (
                         primaryDisco.albums.map((a) => (
                           <div
