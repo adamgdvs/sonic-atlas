@@ -9,7 +9,8 @@ import ArtistDrawer from "@/components/ArtistDrawer";
 import GenreDrawer from "@/components/GenreDrawer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { useJourney } from "@/contexts/JourneyContext";
-import { ArrowUpDown, X, ChevronLeft } from "lucide-react";
+import { useAudio } from "@/contexts/AudioContext";
+import { ArrowUpDown, X, ChevronLeft, ListMusic, Play, Trash2, ChevronDown, ChevronRight, Music } from "lucide-react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 export type ViewState =
@@ -17,16 +18,45 @@ export type ViewState =
     | { type: 'genre'; id: string };
 
 type SortMode = "date" | "name" | "genre";
+type TabMode = "artists" | "playlists";
+
+interface PlaylistTrack {
+    id: string;
+    title: string;
+    artist: string;
+    url: string;
+    videoId: string | null;
+    coverUrl: string | null;
+    genres: string;
+    position: number;
+}
+
+interface PlaylistWithTracks {
+    id: string;
+    name: string;
+    description: string | null;
+    coverUrl: string | null;
+    createdAt: string | Date;
+    updatedAt: string | Date;
+    tracks: PlaylistTrack[];
+    _count: { tracks: number };
+}
 
 export default function MyAtlasClient({
     bookmarks: initialBookmarks,
+    playlists: initialPlaylists,
 }: {
     bookmarks: { id: string; name: string; genres?: string; imageUrl?: string | null; createdAt?: string | Date }[];
+    playlists: PlaylistWithTracks[];
 }) {
     const [bookmarks, setBookmarks] = useState(initialBookmarks);
+    const [playlists, setPlaylists] = useState(initialPlaylists);
     const [viewStack, setViewStack] = useState<ViewState[]>([]);
     const [sortMode, setSortMode] = useState<SortMode>("date");
     const [genreFilter, setGenreFilter] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<TabMode>("artists");
+    const [expandedPlaylist, setExpandedPlaylist] = useState<string | null>(null);
+    const { playTrack, addToQueue } = useAudio();
 
     const currentView = viewStack.length > 0 ? viewStack[viewStack.length - 1] : null;
     const selectedArtist = viewStack.findLast(v => v.type === 'artist')?.id || null;
@@ -137,6 +167,54 @@ export default function MyAtlasClient({
         { key: "genre", label: "Genre" },
     ];
 
+    // ─── Playlist Handlers ──────────────────────────────────────
+    const handlePlayTrack = (track: PlaylistTrack) => {
+        const genres = (() => { try { return JSON.parse(track.genres); } catch { return []; } })();
+        playTrack({
+            url: track.url,
+            title: track.title,
+            artist: track.artist,
+            coverUrl: track.coverUrl || undefined,
+            genres,
+            videoId: track.videoId || undefined,
+        });
+    };
+
+    const handlePlayAll = (playlist: PlaylistWithTracks) => {
+        if (playlist.tracks.length === 0) return;
+        handlePlayTrack(playlist.tracks[0]);
+        playlist.tracks.slice(1).forEach(t => {
+            const genres = (() => { try { return JSON.parse(t.genres); } catch { return []; } })();
+            addToQueue({
+                url: t.url,
+                title: t.title,
+                artist: t.artist,
+                coverUrl: t.coverUrl || undefined,
+                genres,
+                videoId: t.videoId || undefined,
+            });
+        });
+    };
+
+    const handleDeletePlaylist = async (playlistId: string) => {
+        const res = await fetch(`/api/playlists?id=${playlistId}`, { method: "DELETE" });
+        if (res.ok) {
+            setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+            if (expandedPlaylist === playlistId) setExpandedPlaylist(null);
+        }
+    };
+
+    const handleRemoveTrack = async (playlistId: string, trackId: string) => {
+        const res = await fetch(`/api/playlists/${playlistId}/tracks?trackId=${trackId}`, { method: "DELETE" });
+        if (res.ok) {
+            setPlaylists(prev => prev.map(p =>
+                p.id === playlistId
+                    ? { ...p, tracks: p.tracks.filter(t => t.id !== trackId), _count: { tracks: p._count.tracks - 1 } }
+                    : p
+            ));
+        }
+    };
+
     // ─── Shared Sidebar Content ──────────────────────────────────
     const renderSidebarContent = () => (
         <>
@@ -147,8 +225,29 @@ export default function MyAtlasClient({
                     <span className="text-[9px] font-mono text-white/20 uppercase">{bookmarks.length} saved</span>
                 </div>
                 <h1 className="text-lg sm:text-2xl font-bold text-white tracking-tighter uppercase leading-none">My Atlas</h1>
+
+                {/* Tab Toggle */}
+                <div className="flex gap-0 mt-2.5 sm:mt-3 border border-white/10 overflow-hidden">
+                    <button
+                        onClick={() => setActiveTab("artists")}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-widest transition-colors active:scale-[0.98] touch-manipulation ${activeTab === "artists" ? "bg-shift5-orange/20 text-shift5-orange border-r border-white/10" : "text-white/30 hover:text-white/50 border-r border-white/10"}`}
+                    >
+                        <Music size={11} />
+                        Artists
+                        <span className="text-[8px] opacity-60">({bookmarks.length})</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("playlists")}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-widest transition-colors active:scale-[0.98] touch-manipulation ${activeTab === "playlists" ? "bg-shift5-orange/20 text-shift5-orange" : "text-white/30 hover:text-white/50"}`}
+                    >
+                        <ListMusic size={11} />
+                        Playlists
+                        <span className="text-[8px] opacity-60">({playlists.length})</span>
+                    </button>
+                </div>
             </div>
 
+            {activeTab === "artists" && <>
             {/* ─── Taste DNA Card ─── */}
             {bookmarks.length > 0 && (
                 <div className="px-4 sm:px-5 py-2.5 sm:py-4 border-b border-white/5 bg-white/[0.01]">
@@ -262,6 +361,133 @@ export default function MyAtlasClient({
                     })
                 )}
             </div>
+            </>}
+
+            {/* ═══ Playlists Tab ═══ */}
+            {activeTab === "playlists" && (
+                <div className="flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 pb-24 sm:pb-4" style={{ WebkitOverflowScrolling: "touch" }}>
+                    {playlists.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center mt-12 sm:mt-10 p-6 border border-dashed border-white/5">
+                            <ListMusic size={24} className="text-white/10 mb-3" />
+                            <div className="text-[10px] text-white/20 font-mono uppercase tracking-widest text-center">
+                                No playlists yet
+                            </div>
+                            <div className="text-[9px] text-white/10 font-mono uppercase tracking-wider mt-1">
+                                Save tracks from the player to create playlists
+                            </div>
+                        </div>
+                    ) : (
+                        playlists.map(pl => {
+                            const isExpanded = expandedPlaylist === pl.id;
+                            return (
+                                <div key={pl.id} className="border border-white/5 bg-white/[0.01] overflow-hidden">
+                                    {/* Playlist header row */}
+                                    <div className="flex items-center gap-3 p-2.5 sm:p-3">
+                                        <button
+                                            onClick={() => setExpandedPlaylist(isExpanded ? null : pl.id)}
+                                            className="flex-1 flex items-center gap-3 text-left active:scale-[0.98] touch-manipulation min-w-0"
+                                        >
+                                            <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 bg-white/5 border border-white/10 flex items-center justify-center">
+                                                <ListMusic size={16} className="text-white/20" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[12px] sm:text-sm font-bold text-white/80 uppercase tracking-tight truncate">{pl.name}</div>
+                                                <div className="text-[9px] font-mono text-white/25 uppercase tracking-wider">
+                                                    {pl._count.tracks} track{pl._count.tracks !== 1 ? "s" : ""}
+                                                </div>
+                                            </div>
+                                            <div className="text-white/15 shrink-0 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                                                <ChevronRight size={14} />
+                                            </div>
+                                        </button>
+
+                                        {/* Action buttons */}
+                                        {pl.tracks.length > 0 && (
+                                            <button
+                                                onClick={() => handlePlayAll(pl)}
+                                                className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center bg-shift5-orange/80 text-white active:scale-90 transition-all touch-manipulation hover:bg-shift5-orange"
+                                                aria-label="Play all"
+                                                title="Play all"
+                                            >
+                                                <Play size={14} fill="currentColor" className="ml-0.5" />
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => handleDeletePlaylist(pl.id)}
+                                            className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center text-white/15 hover:text-red-400 active:scale-90 transition-colors touch-manipulation"
+                                            aria-label="Delete playlist"
+                                            title="Delete playlist"
+                                        >
+                                            <Trash2 size={13} />
+                                        </button>
+                                    </div>
+
+                                    {/* Expanded track list */}
+                                    <AnimatePresence>
+                                        {isExpanded && pl.tracks.length > 0 && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: "auto", opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="border-t border-white/5">
+                                                    {pl.tracks.map((track, idx) => (
+                                                        <div
+                                                            key={track.id}
+                                                            className="flex items-center gap-2.5 px-3 sm:px-4 py-2 border-b border-white/[0.03] last:border-b-0 group hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors"
+                                                        >
+                                                            <span className="text-[9px] font-mono text-white/15 w-5 text-right shrink-0">{idx + 1}</span>
+
+                                                            {/* Track art */}
+                                                            <button
+                                                                onClick={() => handlePlayTrack(track)}
+                                                                className="w-8 h-8 shrink-0 bg-white/5 border border-white/10 flex items-center justify-center relative overflow-hidden active:scale-90 touch-manipulation"
+                                                            >
+                                                                {track.coverUrl ? (
+                                                                    <img src={track.coverUrl} alt="" className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <Music size={12} className="text-white/15" />
+                                                                )}
+                                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                                    <Play size={10} fill="white" className="text-white ml-0.5" />
+                                                                </div>
+                                                            </button>
+
+                                                            {/* Track info */}
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="text-[11px] font-mono text-white/70 uppercase tracking-tight truncate">{track.title}</div>
+                                                                <div className="text-[9px] font-mono text-white/25 uppercase tracking-wider truncate">{track.artist}</div>
+                                                            </div>
+
+                                                            {/* Remove button */}
+                                                            <button
+                                                                onClick={() => handleRemoveTrack(pl.id, track.id)}
+                                                                className="w-6 h-6 shrink-0 flex items-center justify-center text-white/10 hover:text-red-400 active:scale-90 transition-colors touch-manipulation opacity-0 group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                                                                aria-label="Remove track"
+                                                            >
+                                                                <X size={12} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+
+                                    {/* Empty playlist message */}
+                                    {isExpanded && pl.tracks.length === 0 && (
+                                        <div className="border-t border-white/5 px-4 py-4 text-center">
+                                            <div className="text-[9px] font-mono text-white/15 uppercase tracking-widest">No tracks — save from the player</div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            )}
         </>
     );
 

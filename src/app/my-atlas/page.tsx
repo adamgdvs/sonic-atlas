@@ -17,12 +17,19 @@ export default async function MyAtlasPage() {
         orderBy: { createdAt: "desc" },
     });
 
-
+    const playlists = await prisma.playlist.findMany({
+        where: { userId: session.user.id },
+        include: {
+            tracks: { orderBy: { position: "asc" } },
+            _count: { select: { tracks: true } },
+        },
+        orderBy: { updatedAt: "desc" },
+    });
 
     return (
         <div className="min-h-screen bg-shift5-dark text-white flex flex-col">
             <Header />
-            <MyAtlasClient bookmarks={bookmarks} />
+            <MyAtlasClient bookmarks={bookmarks} playlists={playlists} />
         </div>
     );
 }

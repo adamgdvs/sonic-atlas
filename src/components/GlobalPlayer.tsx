@@ -542,43 +542,46 @@ export default function GlobalPlayer() {
                 </button>
             </div>
 
-            {/* Bottom controls: Queue, History, Radio, Surge */}
-            <div className="relative z-10 flex items-center justify-center gap-2 px-6 pb-[max(16px,env(safe-area-inset-bottom))] flex-wrap">
+            {/* Bottom controls: icon-only row */}
+            <div className="relative z-10 flex items-center justify-center gap-4 px-6 pb-[max(16px,env(safe-area-inset-bottom))]">
                 <button
                     onClick={() => { setQueueOpen(true); setMobileExpanded(false); }}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border ${hasQueue ? 'bg-white/15 text-white border-white/20' : 'text-white/30 border-transparent'}`}
+                    className={`relative w-11 h-11 flex items-center justify-center rounded-full active:scale-90 transition-all ${hasQueue ? 'bg-white/15 text-white' : 'text-white/30'}`}
+                    aria-label="Queue"
                 >
-                    <ListMusic size={13} />
-                    Queue{hasQueue ? ` (${queue.length})` : ""}
+                    <ListMusic size={18} />
+                    {hasQueue && (
+                        <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-shift5-orange text-[8px] font-mono font-bold text-white flex items-center justify-center">{queue.length}</span>
+                    )}
                 </button>
                 <button
                     onClick={() => { setHistoryOpen(true); setMobileExpanded(false); }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border text-white/30 border-transparent"
+                    className="w-11 h-11 flex items-center justify-center rounded-full active:scale-90 transition-colors text-white/30"
+                    aria-label="History"
                 >
-                    <Clock size={13} />
-                    History
+                    <Clock size={18} />
                 </button>
                 <button
                     onClick={() => setRadioMode(!radioMode)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border ${radioMode ? 'bg-white/15 text-white border-white/20' : 'text-white/30 border-transparent'}`}
+                    className={`w-11 h-11 flex items-center justify-center rounded-full active:scale-90 transition-all ${radioMode ? 'bg-white/15 text-white' : 'text-white/30'}`}
+                    aria-label="Radio"
                 >
-                    <Radio size={13} />
-                    Radio
+                    <Radio size={18} />
                 </button>
                 <button
                     onClick={handleSurge}
                     disabled={isSurging}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border ${isSurging ? 'bg-shift5-orange text-white border-shift5-orange animate-pulse' : 'text-white/30 border-transparent'}`}
+                    className={`w-11 h-11 flex items-center justify-center rounded-full active:scale-90 transition-all ${isSurging ? 'bg-shift5-orange text-white animate-pulse' : 'text-white/30'}`}
+                    aria-label="Surge"
                 >
-                    <Zap size={13} fill={isSurging ? "currentColor" : "none"} />
-                    Surge
+                    <Zap size={18} fill={isSurging ? "currentColor" : "none"} />
                 </button>
                 <button
                     onClick={() => { setPlaylistModalOpen(true); setMobileExpanded(false); }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border text-white/30 border-transparent"
+                    className="w-11 h-11 flex items-center justify-center rounded-full active:scale-90 transition-colors text-white/30"
+                    aria-label="Save to playlist"
                 >
-                    <Plus size={13} />
-                    Save
+                    <Plus size={18} />
                 </button>
             </div>
         </motion.div>
@@ -858,52 +861,55 @@ export default function GlobalPlayer() {
                     </button>
                 </div>
 
-                {/* Secondary Controls */}
-                <div className="flex items-center justify-center gap-1 px-3 pb-2.5 pt-0.5 flex-wrap">
+                {/* Secondary Controls — icon-only row */}
+                <div className="flex items-center justify-center gap-1.5 px-3 pb-2.5 pt-0.5">
                     <button
                         onClick={() => setQueueOpen(true)}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-colors ${hasQueue ? 'bg-[#1D1D1F] text-white' : 'text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]'}`}
+                        className={`relative w-8 h-8 flex items-center justify-center rounded-full transition-colors ${hasQueue ? 'bg-[#1D1D1F] text-white' : 'text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]'}`}
                         aria-label="Queue"
+                        title="Queue"
                     >
-                        <ListMusic size={11} />
-                        <span>Queue{hasQueue ? ` (${queue.length})` : ""}</span>
+                        <ListMusic size={14} />
+                        {hasQueue && (
+                            <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-shift5-orange text-[8px] font-mono font-bold text-white flex items-center justify-center">{queue.length}</span>
+                        )}
                     </button>
 
                     <button
                         onClick={() => setHistoryOpen(true)}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-colors text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]"
+                        className="w-8 h-8 flex items-center justify-center rounded-full transition-colors text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]"
                         aria-label="History"
+                        title="History"
                     >
-                        <Clock size={11} />
-                        <span>History</span>
+                        <Clock size={14} />
                     </button>
 
                     <button
                         onClick={() => setRadioMode(!radioMode)}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-colors ${radioMode ? 'bg-[#1D1D1F] text-white' : 'text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]'}`}
+                        className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${radioMode ? 'bg-[#1D1D1F] text-white' : 'text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]'}`}
                         aria-label="Radio"
+                        title="Radio"
                     >
-                        <Radio size={11} />
-                        <span>Radio</span>
+                        <Radio size={14} />
                     </button>
 
                     <button
                         onClick={handleSurge}
                         disabled={isSurging}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-all ${isSurging ? 'bg-shift5-orange text-white animate-pulse' : 'text-[#B0B0B0] hover:text-shift5-orange hover:bg-shift5-orange/10'}`}
+                        className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${isSurging ? 'bg-shift5-orange text-white animate-pulse' : 'text-[#B0B0B0] hover:text-shift5-orange hover:bg-shift5-orange/10'}`}
                         aria-label="Surge"
+                        title="Surge"
                     >
-                        <Zap size={11} fill={isSurging ? "currentColor" : "none"} />
-                        <span>Surge</span>
+                        <Zap size={14} fill={isSurging ? "currentColor" : "none"} />
                     </button>
 
                     <button
                         onClick={() => setPlaylistModalOpen(true)}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-colors text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]"
+                        className="w-8 h-8 flex items-center justify-center rounded-full transition-colors text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]"
                         aria-label="Save to playlist"
+                        title="Save to playlist"
                     >
-                        <Plus size={11} />
-                        <span>Save</span>
+                        <Plus size={14} />
                     </button>
                 </div>
             </div>
