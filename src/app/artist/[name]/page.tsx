@@ -1131,9 +1131,11 @@ export default function ArtistPage({
                 <h1 className="hidden sm:block text-6xl md:text-7xl font-bold uppercase tracking-tighter leading-none mb-4 selection:bg-shift5-dark selection:text-white break-words">
                   {artistName}
                 </h1>
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-3 sm:mt-4 mb-3 sm:mb-4">
+                <div className="flex gap-1.5 sm:gap-2 mt-3 sm:mt-4 mb-3 sm:mb-4 overflow-x-auto sm:overflow-visible sm:flex-wrap no-scrollbar pb-1 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x" }}>
                   {artistInfo?.genres.map(g => (
-                    <GenreTag key={g} genre={g} onClick={handleGenreClick} active={genreFilter === g} />
+                    <div key={g} className="shrink-0">
+                      <GenreTag genre={g} onClick={handleGenreClick} active={genreFilter === g} />
+                    </div>
                   ))}
                 </div>
 

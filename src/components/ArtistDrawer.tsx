@@ -500,8 +500,8 @@ export default function ArtistDrawer({
                                         <StreamingLinks artistName={artistName} size={18} className="mt-0.5" />
                                     </div>
                                     {artistInfo && (
-                                        <div className="mb-3 flex flex-wrap gap-1">
-                                            {artistInfo.genres.slice(0, 5).map(g => <GenreTag key={g} genre={g} onClick={() => onSelectGenre && onSelectGenre(g)} />)}
+                                        <div className="mb-3 flex gap-1 overflow-x-auto sm:overflow-visible sm:flex-wrap no-scrollbar" style={{ touchAction: "pan-x" }}>
+                                            {artistInfo.genres.slice(0, 5).map(g => <div key={g} className="shrink-0"><GenreTag genre={g} onClick={() => onSelectGenre && onSelectGenre(g)} /></div>)}
                                         </div>
                                     )}
                                     <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest">
