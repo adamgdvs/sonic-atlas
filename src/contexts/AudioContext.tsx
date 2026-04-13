@@ -14,6 +14,11 @@ export interface TrackParams {
 
 export type RepeatMode = "none" | "all" | "one";
 
+export interface HistoryEntry {
+    track: TrackParams;
+    playedAt: number; // timestamp
+}
+
 interface AudioContextType {
     currentTrack: TrackParams | null;
     isPlaying: boolean;
@@ -39,6 +44,15 @@ interface AudioContextType {
     setShuffleMode: (active: boolean) => void;
     repeatMode: RepeatMode;
     setRepeatMode: (mode: RepeatMode) => void;
+    // Queue management
+    addToQueue: (track: TrackParams) => void;
+    removeFromQueue: (index: number) => void;
+    reorderQueue: (fromIndex: number, toIndex: number) => void;
+    clearQueue: () => void;
+    playQueueIndex: (index: number) => void;
+    // Listening history
+    history: HistoryEntry[];
+    clearHistory: () => void;
 }
 
 // YouTube IFrame Player API types
@@ -139,6 +153,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const [shuffleMode, setShuffleMode] = useState(false);
     const [repeatMode, setRepeatMode] = useState<RepeatMode>("none");
 
+    // Listening history (persisted in localStorage)
+    const [history, setHistory] = useState<HistoryEntry[]>(() => {
+        if (typeof window === "undefined") return [];
+        try {
+            const stored = localStorage.getItem("sonic_history");
+            return stored ? JSON.parse(stored) : [];
+        } catch { return []; }
+    });
+
     // Audio element for Deezer previews
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -189,6 +212,23 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         }, 250);
     }, []);
 
+    // Add track to history when it starts playing
+    const addToHistory = useCallback((track: TrackParams) => {
+        setHistory(prev => {
+            const entry: HistoryEntry = { track, playedAt: Date.now() };
+            // Dedupe: remove if same track was last played
+            const filtered = prev.length > 0 && (prev[0].track.videoId === track.videoId && track.videoId || prev[0].track.url === track.url)
+                ? prev.slice(1)
+                : prev;
+            return [entry, ...filtered].slice(0, 100);
+        });
+    }, []);
+
+    const clearHistory = useCallback(() => {
+        setHistory([]);
+        try { localStorage.removeItem("sonic_history"); } catch {}
+    }, []);
+
     // Internal play function
     const startPlayback = useCallback((track: TrackParams) => {
         stopCurrentEngine();
@@ -197,6 +237,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         setCurrentTime(0);
         setWasManuallyStopped(false);
         setHasEverPlayed(true);
+        addToHistory(track);
 
         if (track.videoId) {
             // Use YouTube IFrame Player for full songs
@@ -298,7 +339,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
                 setIsPlaying(false);
             });
         }
-    }, [stopCurrentEngine, startYTTimeTracking]);
+    }, [stopCurrentEngine, startYTTimeTracking, addToHistory]);
 
     // Handle track ended — auto-advance queue or repeat
     const handleTrackEnded = useCallback(() => {
@@ -347,6 +388,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         handleTrackEndedRef.current = handleTrackEnded;
     }, [handleTrackEnded]);
+
+    // Persist history to localStorage
+    useEffect(() => {
+        try {
+            localStorage.setItem("sonic_history", JSON.stringify(history.slice(0, 100)));
+        } catch { /* storage full or unavailable */ }
+    }, [history]);
 
     // Set up HTML audio element for previews
     useEffect(() => {
@@ -558,6 +606,82 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         setProgress(ratio);
     }, [duration]);
 
+    // Queue management
+    const addToQueue = useCallback((track: TrackParams) => {
+        setQueue(prev => {
+            if (prev.length === 0) {
+                // If nothing in queue, start playing immediately
+                setQueueIndex(0);
+                startPlayback(track);
+                return [track];
+            }
+            return [...prev, track];
+        });
+    }, [startPlayback]);
+
+    const removeFromQueue = useCallback((index: number) => {
+        setQueue(prev => {
+            if (index < 0 || index >= prev.length) return prev;
+            const next = [...prev];
+            next.splice(index, 1);
+
+            // Adjust queueIndex
+            if (index === queueIndex) {
+                // Removing currently playing — play next or stop
+                if (next.length === 0) {
+                    stopCurrentEngine();
+                    setIsPlaying(false);
+                    setCurrentTrack(null);
+                    setQueueIndex(-1);
+                } else {
+                    const newIdx = Math.min(index, next.length - 1);
+                    setQueueIndex(newIdx);
+                    startPlayback(next[newIdx]);
+                }
+            } else if (index < queueIndex) {
+                setQueueIndex(qi => qi - 1);
+            }
+            return next;
+        });
+    }, [queueIndex, stopCurrentEngine, startPlayback]);
+
+    const reorderQueue = useCallback((fromIndex: number, toIndex: number) => {
+        setQueue(prev => {
+            if (fromIndex === toIndex) return prev;
+            const next = [...prev];
+            const [moved] = next.splice(fromIndex, 1);
+            next.splice(toIndex, 0, moved);
+
+            // Adjust queueIndex to follow the currently playing track
+            let newIdx = queueIndex;
+            if (queueIndex === fromIndex) {
+                newIdx = toIndex;
+            } else {
+                if (fromIndex < queueIndex && toIndex >= queueIndex) newIdx--;
+                else if (fromIndex > queueIndex && toIndex <= queueIndex) newIdx++;
+            }
+            setQueueIndex(newIdx);
+            return next;
+        });
+    }, [queueIndex]);
+
+    const clearQueue = useCallback(() => {
+        if (currentTrack) {
+            // Keep only the currently playing track
+            setQueue([currentTrack]);
+            setQueueIndex(0);
+        } else {
+            setQueue([]);
+            setQueueIndex(-1);
+        }
+    }, [currentTrack]);
+
+    const playQueueIndex = useCallback((index: number) => {
+        if (index < 0 || index >= queue.length) return;
+        setQueueIndex(index);
+        startPlayback(queue[index]);
+    }, [queue, startPlayback]);
+
     const closePlayer = useCallback(() => {
         stopCurrentEngine();
         setIsPlaying(false);
@@ -593,6 +717,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             setShuffleMode,
             repeatMode,
             setRepeatMode,
+            addToQueue,
+            removeFromQueue,
+            reorderQueue,
+            clearQueue,
+            playQueueIndex,
+            history,
+            clearHistory,
         }}>
             {children}
         </AudioContext.Provider>

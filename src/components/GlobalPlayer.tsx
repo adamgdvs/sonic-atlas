@@ -3,7 +3,10 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useAudio, RepeatMode } from "@/contexts/AudioContext";
 import { getSimilarArtists, getArtistPreviewData } from "@/lib/api";
-import { Play, Pause, X, Radio, Zap, Music, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, ChevronDown } from "lucide-react";
+import { Play, Pause, X, Radio, Zap, Music, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, ChevronDown, ListMusic, Clock, Plus } from "lucide-react";
+import QueuePanel from "@/components/QueuePanel";
+import HistoryPanel from "@/components/HistoryPanel";
+import PlaylistModal from "@/components/PlaylistModal";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate as motionAnimate } from "framer-motion";
 import { getGenreArtists } from "@/lib/api";
 import { usePathname } from "next/navigation";
@@ -55,6 +58,11 @@ export default function GlobalPlayer() {
 
     // Mobile expanded state
     const [mobileExpanded, setMobileExpanded] = useState(false);
+
+    // Queue, History & Playlist panels
+    const [queueOpen, setQueueOpen] = useState(false);
+    const [historyOpen, setHistoryOpen] = useState(false);
+    const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
 
     // Mini bar swipe gesture
     const miniBarX = useMotionValue(0);
@@ -534,22 +542,43 @@ export default function GlobalPlayer() {
                 </button>
             </div>
 
-            {/* Bottom controls: Radio + Surge */}
-            <div className="relative z-10 flex items-center justify-center gap-3 px-6 pb-[max(16px,env(safe-area-inset-bottom))]">
+            {/* Bottom controls: Queue, History, Radio, Surge */}
+            <div className="relative z-10 flex items-center justify-center gap-2 px-6 pb-[max(16px,env(safe-area-inset-bottom))] flex-wrap">
+                <button
+                    onClick={() => { setQueueOpen(true); setMobileExpanded(false); }}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border ${hasQueue ? 'bg-white/15 text-white border-white/20' : 'text-white/30 border-transparent'}`}
+                >
+                    <ListMusic size={13} />
+                    Queue{hasQueue ? ` (${queue.length})` : ""}
+                </button>
+                <button
+                    onClick={() => { setHistoryOpen(true); setMobileExpanded(false); }}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border text-white/30 border-transparent"
+                >
+                    <Clock size={13} />
+                    History
+                </button>
                 <button
                     onClick={() => setRadioMode(!radioMode)}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border ${radioMode ? 'bg-white/15 text-white border-white/20' : 'text-white/30 border-transparent'}`}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border ${radioMode ? 'bg-white/15 text-white border-white/20' : 'text-white/30 border-transparent'}`}
                 >
-                    <Radio size={14} />
+                    <Radio size={13} />
                     Radio
                 </button>
                 <button
                     onClick={handleSurge}
                     disabled={isSurging}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border ${isSurging ? 'bg-shift5-orange text-white border-shift5-orange animate-pulse' : 'text-white/30 border-transparent'}`}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border ${isSurging ? 'bg-shift5-orange text-white border-shift5-orange animate-pulse' : 'text-white/30 border-transparent'}`}
                 >
-                    <Zap size={14} fill={isSurging ? "currentColor" : "none"} />
+                    <Zap size={13} fill={isSurging ? "currentColor" : "none"} />
                     Surge
+                </button>
+                <button
+                    onClick={() => { setPlaylistModalOpen(true); setMobileExpanded(false); }}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-medium uppercase tracking-wider active:scale-95 transition-all border text-white/30 border-transparent"
+                >
+                    <Plus size={13} />
+                    Save
                 </button>
             </div>
         </motion.div>
@@ -830,7 +859,25 @@ export default function GlobalPlayer() {
                 </div>
 
                 {/* Secondary Controls */}
-                <div className="flex items-center justify-center gap-1 px-3 pb-2.5 pt-0.5">
+                <div className="flex items-center justify-center gap-1 px-3 pb-2.5 pt-0.5 flex-wrap">
+                    <button
+                        onClick={() => setQueueOpen(true)}
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-colors ${hasQueue ? 'bg-[#1D1D1F] text-white' : 'text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]'}`}
+                        aria-label="Queue"
+                    >
+                        <ListMusic size={11} />
+                        <span>Queue{hasQueue ? ` (${queue.length})` : ""}</span>
+                    </button>
+
+                    <button
+                        onClick={() => setHistoryOpen(true)}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-colors text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]"
+                        aria-label="History"
+                    >
+                        <Clock size={11} />
+                        <span>History</span>
+                    </button>
+
                     <button
                         onClick={() => setRadioMode(!radioMode)}
                         className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-colors ${radioMode ? 'bg-[#1D1D1F] text-white' : 'text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]'}`}
@@ -848,6 +895,15 @@ export default function GlobalPlayer() {
                     >
                         <Zap size={11} fill={isSurging ? "currentColor" : "none"} />
                         <span>Surge</span>
+                    </button>
+
+                    <button
+                        onClick={() => setPlaylistModalOpen(true)}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider transition-colors text-[#B0B0B0] hover:text-[#1D1D1F] hover:bg-[#F0F0F0]"
+                        aria-label="Save to playlist"
+                    >
+                        <Plus size={11} />
+                        <span>Save</span>
                     </button>
                 </div>
             </div>
@@ -895,6 +951,15 @@ export default function GlobalPlayer() {
             <AnimatePresence>
                 {!isHidden && renderDesktopPlayer()}
             </AnimatePresence>
+
+            {/* Queue Panel */}
+            <QueuePanel isOpen={queueOpen} onClose={() => setQueueOpen(false)} />
+
+            {/* History Panel */}
+            <HistoryPanel isOpen={historyOpen} onClose={() => setHistoryOpen(false)} />
+
+            {/* Playlist Modal */}
+            <PlaylistModal isOpen={playlistModalOpen} onClose={() => setPlaylistModalOpen(false)} />
         </>
     );
 }

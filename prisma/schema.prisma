@@ -45,6 +45,7 @@ model User {
   sessions      Session[]
   bookmarks     BookmarkedArtist[]
   votes         ArtistVote[]
+  playlists     Playlist[]
 }
 
 model VerificationToken {
@@ -94,6 +95,40 @@ model ArtistVote {
 
   @@unique([userId, artistId])
   @@index([artistId])
+}
+
+// User playlists
+model Playlist {
+  id          String          @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  coverUrl    String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tracks      PlaylistTrack[]
+
+  @@index([userId])
+}
+
+model PlaylistTrack {
+  id         String   @id @default(cuid())
+  playlistId String
+  title      String
+  artist     String
+  url        String   // preview URL or empty for YT-only
+  videoId    String?  // YouTube video ID for full playback
+  coverUrl   String?
+  genres     String   @default("[]") // JSON array
+  position   Int      // ordering within playlist
+  addedAt    DateTime @default(now())
+
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  @@index([playlistId])
+  @@unique([playlistId, position])
 }
 
 // Global scan event tracking for Frequency Hub

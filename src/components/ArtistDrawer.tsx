@@ -23,7 +23,7 @@ import SimilarityBar from "@/components/SimilarityBar";
 import { useAudio } from "@/contexts/AudioContext";
 import { Skeleton } from "@/components/Skeleton";
 import { useSession, signIn } from "next-auth/react";
-import { Heart, X } from "lucide-react";
+import { Heart, X, Radio } from "lucide-react";
 import StreamingLinks from "@/components/StreamingLinks";
 import CollapsibleBio from "@/components/CollapsibleBio";
 
@@ -295,7 +295,7 @@ export default function ArtistDrawer({
     const [bookmarkedArtists, setBookmarkedArtists] = useState<Set<string>>(new Set());
     const [bookmarkingIds, setBookmarkingIds] = useState<Set<string>>(new Set());
 
-    const { playTrack, playQueue, currentTrack, isPlaying, togglePlayPause } = useAudio();
+    const { playTrack, playQueue, currentTrack, isPlaying, togglePlayPause, setRadioMode, radioMode } = useAudio();
     const playingUrl = isPlaying ? (currentTrack?.url ?? null) : null;
 
     useEffect(() => {
@@ -546,6 +546,9 @@ export default function ArtistDrawer({
                                         <Heart size={16} className={bookmarkedArtists.has(artistName) ? "fill-current" : ""} strokeWidth={bookmarkedArtists.has(artistName) ? 2.5 : 2} />
                                     </button>
                                 )}
+                                <button onClick={() => { setRadioMode(true); if (primaryPreview) handlePlay(primaryPreview, primaryDisco?.topTracks?.[0]?.title, artistName, artistInfo?.image); }} className={`flex items-center justify-center border transition-all duration-300 cursor-pointer active:scale-95 touch-manipulation ${radioMode ? "border-shift5-orange bg-shift5-orange/10 text-shift5-orange" : "bg-white/[0.05] border-white/10 text-white/50 hover:text-white hover:border-white/30"}`} style={{ width: 42, height: 42 }} title="Start Radio">
+                                    <Radio size={16} />
+                                </button>
                             </div>
 
                             {artistInfo?.bio && (

@@ -32,7 +32,7 @@ import Toast from "@/components/Toast";
 import { useAudio } from "@/contexts/AudioContext";
 import { Skeleton } from "@/components/Skeleton";
 import { useSession, signIn } from "next-auth/react";
-import { Heart } from "lucide-react";
+import { Heart, Radio } from "lucide-react";
 import StreamingLinks from "@/components/StreamingLinks";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { useJourney } from "@/contexts/JourneyContext";
@@ -693,7 +693,7 @@ export default function ArtistPage({
   const [genreFilter, setGenreFilter] = useState<string | null>(null);
   const [constellationExpanded, setConstellationExpanded] = useState(false);
   const [graphMode, setGraphMode] = useState<GraphMode>("cloud");
-  const { playTrack, playQueue, currentTrack, isPlaying, togglePlayPause } = useAudio();
+  const { playTrack, playQueue, currentTrack, isPlaying, togglePlayPause, setRadioMode, addToQueue, radioMode } = useAudio();
   const playingUrl = isPlaying ? (currentTrack?.url ?? null) : null;
   const [previewMap, setPreviewMap] = useState<Record<string, { url: string; title: string; videoId?: string | null }>>({});
   const [primaryDiscoOpen, setPrimaryDiscoOpen] = useState(false);
@@ -1069,6 +1069,15 @@ export default function ArtistPage({
 
   // Removed auto-teardown of audio since it's global now!
 
+  // Start Radio from this artist
+  const handleStartRadio = () => {
+    setRadioMode(true);
+    if (primaryDisco && primaryDisco.topTracks.length > 0) {
+      const top = primaryDisco.topTracks[0];
+      handlePlay(top.preview, top.title, artistName, artistInfo?.image, top.videoId);
+    }
+  };
+
   // Primary artist preview (first top track)
   const primaryPreview = primaryDisco?.topTracks?.[0]?.preview || null;
 
@@ -1331,10 +1340,18 @@ export default function ArtistPage({
 
                 <button
                   onClick={() => handleToggleBookmark(artistInfo?.deezerId?.toString() || artistName, artistName, artistInfo?.image, artistInfo?.genres)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 border-2 font-mono text-[9px] font-bold uppercase tracking-wider transition-all active:scale-95 touch-manipulation ${bookmarkedArtists.has(artistName) ? 'bg-shift5-dark border-shift5-dark text-white' : 'border-shift5-dark/30 text-shift5-dark/70'}`}
+                  className={`flex items-center justify-center gap-1.5 px-3 py-2.5 border-2 font-mono text-[9px] font-bold uppercase tracking-wider transition-all active:scale-95 touch-manipulation ${bookmarkedArtists.has(artistName) ? 'bg-shift5-dark border-shift5-dark text-white' : 'border-shift5-dark/30 text-shift5-dark/70'}`}
                 >
                   <Heart size={12} className={bookmarkedArtists.has(artistName) ? 'fill-current' : ''} />
                   {bookmarkedArtists.has(artistName) ? 'SAVED' : 'SAVE'}
+                </button>
+
+                <button
+                  onClick={handleStartRadio}
+                  className={`flex items-center justify-center gap-1.5 px-3 py-2.5 border-2 font-mono text-[9px] font-bold uppercase tracking-wider transition-all active:scale-95 touch-manipulation ${radioMode ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'border-shift5-dark/30 text-shift5-dark/70'}`}
+                >
+                  <Radio size={12} />
+                  RADIO
                 </button>
 
                 <div className="shrink-0">
@@ -1369,6 +1386,14 @@ export default function ArtistPage({
                 >
                   <Heart size={16} className={bookmarkedArtists.has(artistName) ? 'fill-current' : ''} />
                   {bookmarkedArtists.has(artistName) ? 'SAVED_NODE' : 'SAVE_NODE'}
+                </button>
+
+                <button
+                  onClick={handleStartRadio}
+                  className={`flex items-center justify-center gap-3 px-8 py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${radioMode ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'border-shift5-dark/30 hover:border-shift5-dark text-shift5-dark/70 hover:text-shift5-dark'}`}
+                >
+                  <Radio size={16} />
+                  {radioMode ? 'RADIO_ACTIVE' : 'START_RADIO'}
                 </button>
 
                 <div className="flex justify-center md:justify-start">
