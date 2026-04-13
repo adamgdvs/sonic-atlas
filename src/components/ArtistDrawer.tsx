@@ -209,26 +209,25 @@ function SimilarCard({
 
     return (
         <div style={{ animation: `fadeIn 0.3s ease ${index * 0.04}s both` }}>
-            <div className="flex flex-col sm:flex-row sm:items-start gap-4 border-b border-white/5 cursor-default p-5 bg-white/[0.01] hover:bg-white/[0.02] transition-colors group">
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <ArtistAvatar name={artist.name} image={artist.image} size={48} />
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 border-b border-white/5 cursor-default p-3 sm:p-5 bg-white/[0.01] hover:bg-white/[0.02] transition-colors group active:bg-white/[0.04] touch-manipulation">
+                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                    <ArtistAvatar name={artist.name} image={artist.image} size={44} />
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-1.5 flex-wrap">
-                            <span onClick={() => onExplore(artist.name)} className="text-[13px] font-bold text-white uppercase tracking-tight cursor-pointer hover:text-shift5-orange transition-colors truncate">{artist.name}</span>
-                            <StreamingLinks artistName={artist.name} size={16} />
-                            <SimilarityBar value={artist.match} />
+                        <div className="flex items-center gap-2 sm:gap-3 mb-1 flex-wrap">
+                            <span onClick={() => onExplore(artist.name)} className="text-[12px] sm:text-[13px] font-bold text-white uppercase tracking-tight cursor-pointer hover:text-shift5-orange transition-colors truncate">{artist.name}</span>
+                            <StreamingLinks artistName={artist.name} size={14} />
                             <span className="text-[9px] font-mono text-shift5-orange font-bold">{(artist.match * 100).toFixed(0)}%</span>
                         </div>
                         {artist.genres.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
+                            <div className="flex gap-1 overflow-x-auto sm:overflow-visible sm:flex-wrap no-scrollbar" style={{ touchAction: "pan-x" }}>
                                 {artist.genres.slice(0, 3).map((g) => (
-                                    <GenreTag key={g} genre={g} onClick={() => { }} />
+                                    <div key={g} className="shrink-0"><GenreTag genre={g} onClick={() => { }} /></div>
                                 ))}
                             </div>
                         )}
                     </div>
                 </div>
-                <div className="flex gap-2 items-center sm:items-start shrink-0">
+                <div className="flex gap-2 items-center ml-[56px] sm:ml-0 sm:items-start shrink-0">
                     {previewUrl && (
                         <button onClick={() => isPlaying ? onStop() : onPlay(previewUrl, "Preview", artist.name, artist.image, previewVideoId)} className={`flex items-center justify-center border transition-all duration-300 shrink-0 ${isPlaying ? "bg-shift5-orange border-shift5-orange text-white" : "bg-white/[0.05] border-white/10 text-white hover:bg-white/10 hover:border-white/30"}`} style={{ width: 34, height: 34 }} title={isPlaying ? "Stop" : "Play"}>
                             {isPlaying ? <svg width={10} height={10} viewBox="0 0 12 12" fill="currentColor"><rect x="1" y="1" width="4" height="10" /><rect x="7" y="1" width="4" height="10" /></svg> : <svg width={10} height={10} viewBox="0 0 12 12" fill="currentColor"><polygon points="2,0 12,6 2,12" /></svg>}
@@ -237,8 +236,8 @@ function SimilarCard({
                     <button onClick={() => onToggleBookmark(cardId, artist.name, artist.image, artist.genres)} disabled={isBookmarking} className={`flex items-center justify-center border transition-all duration-300 cursor-pointer ${isBookmarked ? "border-shift5-orange bg-shift5-orange/10 text-shift5-orange" : "bg-white/[0.05] border-white/10 text-white/50 hover:text-white hover:border-white/30"}`} style={{ width: 34, height: 34 }}>
                         <Heart size={15} className={isBookmarked ? "fill-current" : ""} strokeWidth={isBookmarked ? 2.5 : 2} />
                     </button>
-                    <button onClick={() => onToggleDiscography(artist.name)} className={`text-[9px] font-bold font-mono border uppercase cursor-pointer whitespace-nowrap transition-all duration-300 ${discographyOpen ? "bg-shift5-orange border-shift5-orange text-white" : "bg-white/[0.05] border-white/10 text-white/50 hover:text-white hover:border-white/30"}`} style={{ padding: "0 10px", height: 34, letterSpacing: '0.1em' }}>
-                        {discographyOpen ? "CLOSE" : "EXPLORE"}
+                    <button onClick={() => onToggleDiscography(artist.name)} className={`text-[9px] font-bold font-mono border uppercase cursor-pointer whitespace-nowrap transition-all duration-300 active:scale-95 touch-manipulation ${discographyOpen ? "bg-shift5-orange border-shift5-orange text-white" : "bg-white/[0.05] border-white/10 text-white/50 hover:text-white hover:border-white/30"}`} style={{ padding: "0 8px", height: 32, letterSpacing: '0.08em' }}>
+                        {discographyOpen ? "CLOSE" : "MORE"}
                     </button>
                 </div>
             </div>
@@ -441,29 +440,31 @@ export default function ArtistDrawer({
 
     const primaryPreview = primaryDisco?.topTracks?.[0]?.preview || null;
 
+    const isEmbedded = !!className;
+
     return (
         <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={{ left: 0, right: 0.3 }}
-            onDragEnd={(_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
+            initial={isEmbedded ? false : { x: "100%" }}
+            animate={isEmbedded ? undefined : { x: 0 }}
+            exit={isEmbedded ? undefined : { x: "100%" }}
+            transition={isEmbedded ? undefined : { type: "spring", damping: 28, stiffness: 300 }}
+            drag={isEmbedded ? false : "x"}
+            dragConstraints={isEmbedded ? undefined : { left: 0, right: 0 }}
+            dragElastic={isEmbedded ? undefined : { left: 0, right: 0.3 }}
+            onDragEnd={isEmbedded ? undefined : (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
                 if (info.offset.x > 100 || info.velocity.x > 500) {
                     onClose();
                 }
             }}
             className={className || "fixed inset-y-0 right-0 w-full sm:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col touch-manipulation"}
         >
-            {/* Drag handle — mobile only */}
-            <div className="sm:hidden absolute left-2 top-1/2 -translate-y-1/2 w-1 h-12 rounded-full bg-white/10" />
+            {/* Drag handle — mobile only, floating mode only */}
+            {!isEmbedded && <div className="sm:hidden absolute left-2 top-1/2 -translate-y-1/2 w-1 h-12 rounded-full bg-white/10" />}
 
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-shift5-dark/95 backdrop-blur-md z-10">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5 bg-shift5-dark/95 backdrop-blur-md z-10">
                 <div className="flex items-center gap-3">
                     {showCloseAsBack && (
-                        <button onClick={onClose} className="text-white/40 hover:text-shift5-orange active:scale-90 transition-all p-1 -ml-1">
+                        <button onClick={onClose} className="text-white/40 hover:text-shift5-orange active:scale-90 transition-all p-1 -ml-1 touch-manipulation">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
                     )}
@@ -491,40 +492,40 @@ export default function ArtistDrawer({
                     </div>
                 ) : (
                     <>
-                        <div className="px-4 sm:px-6 py-6 sm:py-8 border-b border-white/5 bg-white/[0.01]">
-                            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5 mb-6">
+                        <div className="px-4 sm:px-6 py-4 sm:py-8 border-b border-white/5 bg-white/[0.01]">
+                            <div className="flex items-start gap-3 sm:flex-col sm:items-start sm:gap-5 mb-4 sm:mb-6">
                                 <ArtistAvatar name={artistName} image={artistInfo?.image} size={64} />
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <h2 className="text-xl sm:text-2xl font-bold text-white leading-none tracking-tighter uppercase truncate">{artistName}</h2>
-                                        <StreamingLinks artistName={artistName} size={18} className="mt-0.5" />
+                                    <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                                        <h2 className="text-lg sm:text-2xl font-bold text-white leading-none tracking-tighter uppercase truncate">{artistName}</h2>
+                                        <StreamingLinks artistName={artistName} size={16} className="mt-0.5 shrink-0" />
                                     </div>
                                     {artistInfo && (
-                                        <div className="mb-3 flex gap-1 overflow-x-auto sm:overflow-visible sm:flex-wrap no-scrollbar" style={{ touchAction: "pan-x" }}>
+                                        <div className="mb-2 sm:mb-3 flex gap-1 overflow-x-auto sm:overflow-visible sm:flex-wrap no-scrollbar -mr-4 pr-4 sm:mr-0 sm:pr-0" style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}>
                                             {artistInfo.genres.slice(0, 5).map(g => <div key={g} className="shrink-0"><GenreTag genre={g} onClick={() => onSelectGenre && onSelectGenre(g)} /></div>)}
                                         </div>
                                     )}
-                                    <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest">
-                                        {artistInfo?.listeners ? `Artifact_Density // ${(artistInfo.listeners / 1000).toFixed(0)}K` : "SCANNING_DENSITY..."}
+                                    <div className="text-[9px] sm:text-[10px] font-mono text-white/20 uppercase tracking-widest">
+                                        {artistInfo?.listeners ? `${(artistInfo.listeners / 1000).toFixed(0)}K listeners` : "SCANNING..."}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Metadata Scans Grid */}
-                            <div className="grid grid-cols-2 gap-4 mb-8 p-4 bg-white/[0.02] border border-white/5 font-mono text-[10px] uppercase tracking-widest">
-                                <div className="space-y-1">
-                                    <div className="text-white/20">Signal_Origin</div>
-                                    <div className="text-white truncate">{artistInfo?.location || "NULL_SECTOR"}</div>
+                            {/* Metadata Scans Grid — compact on mobile */}
+                            <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-5 sm:mb-8 p-3 sm:p-4 bg-white/[0.02] border border-white/5 font-mono text-[9px] sm:text-[10px] uppercase tracking-wider sm:tracking-widest">
+                                <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                                    <div className="text-white/20">Origin</div>
+                                    <div className="text-white truncate">{artistInfo?.location || "N/A"}</div>
                                 </div>
-                                <div className="space-y-1 border-l border-white/5 pl-4">
-                                    <div className="text-white/20">Established</div>
-                                    <div className="text-white">{artistInfo?.yearStarted || "NULL_TIME"}</div>
+                                <div className="space-y-0.5 sm:space-y-1 border-l border-white/5 pl-2 sm:pl-4 min-w-0">
+                                    <div className="text-white/20">Est.</div>
+                                    <div className="text-white">{artistInfo?.yearStarted || "N/A"}</div>
                                 </div>
-                                <div className="space-y-1 border-t border-white/5 pt-3">
-                                    <div className="text-white/20">Artifact_Count</div>
-                                    <div className="text-white">{artistInfo?.nbAlbums || 0} Records</div>
+                                <div className="space-y-0.5 sm:space-y-1 border-t border-white/5 pt-2 sm:pt-3 min-w-0">
+                                    <div className="text-white/20">Albums</div>
+                                    <div className="text-white">{artistInfo?.nbAlbums || 0}</div>
                                 </div>
-                                <div className="space-y-1 border-t border-l border-white/5 pt-3 pl-4">
+                                <div className="space-y-0.5 sm:space-y-1 border-t border-l border-white/5 pt-2 sm:pt-3 pl-2 sm:pl-4 min-w-0">
                                     <div className="text-white/20">Match_Confidence</div>
                                     <div className="text-shift5-orange">100% (PRIMARY)</div>
                                 </div>
@@ -532,30 +533,33 @@ export default function ArtistDrawer({
 
                             <div className="flex gap-2">
                                 {primaryPreview && (
-                                    <button onClick={() => playingUrl === primaryPreview ? togglePlayPause() : handlePlay(primaryPreview, primaryDisco?.topTracks?.[0]?.title, artistName, artistInfo?.image)} className={`flex-1 flex items-center justify-center gap-3 py-3 border text-[11px] font-mono font-bold uppercase tracking-widest transition-all ${playingUrl === primaryPreview ? "bg-shift5-orange border-shift5-orange text-white" : "bg-white/[0.05] border-white/10 text-white hover:bg-white/10 hover:border-white/30"}`}>
-                                        <div className="w-2 h-2 rounded-full bg-current animate-pulse md:block hidden" />
-                                        {playingUrl === primaryPreview ? "Stop Signal" : "Intercept Signal"}
+                                    <button onClick={() => playingUrl === primaryPreview ? togglePlayPause() : handlePlay(primaryPreview, primaryDisco?.topTracks?.[0]?.title, artistName, artistInfo?.image)} className={`flex-1 flex items-center justify-center gap-2 sm:gap-3 py-2.5 sm:py-3 border text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-widest transition-all active:scale-95 touch-manipulation ${playingUrl === primaryPreview ? "bg-shift5-orange border-shift5-orange text-white" : "bg-white/[0.05] border-white/10 text-white hover:bg-white/10 hover:border-white/30"}`}>
+                                        {playingUrl === primaryPreview ? (
+                                            <><span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" /><span className="sm:hidden">STOP</span><span className="hidden sm:inline">Stop Signal</span></>
+                                        ) : (
+                                            <><span className="text-[11px]">▶</span><span className="sm:hidden">PLAY</span><span className="hidden sm:inline">Intercept Signal</span></>
+                                        )}
                                     </button>
                                 )}
                                 {artistInfo && (
-                                    <button onClick={() => handleToggleBookmark(artistInfo.deezerId?.toString() || artistName, artistName, artistInfo.image, artistInfo.genres)} disabled={bookmarkingIds.has(artistInfo.deezerId?.toString() || "primary")} className={`flex items-center justify-center border transition-all duration-300 cursor-pointer ${bookmarkedArtists.has(artistName) ? "border-shift5-orange bg-shift5-orange/10 text-shift5-orange" : "bg-white/[0.05] border-white/10 text-white/50 hover:text-white hover:border-white/30"}`} style={{ width: 44, height: 44 }}>
-                                        <Heart size={18} className={bookmarkedArtists.has(artistName) ? "fill-current" : ""} strokeWidth={bookmarkedArtists.has(artistName) ? 2.5 : 2} />
+                                    <button onClick={() => handleToggleBookmark(artistInfo.deezerId?.toString() || artistName, artistName, artistInfo.image, artistInfo.genres)} disabled={bookmarkingIds.has(artistInfo.deezerId?.toString() || "primary")} className={`flex items-center justify-center border transition-all duration-300 cursor-pointer active:scale-95 touch-manipulation ${bookmarkedArtists.has(artistName) ? "border-shift5-orange bg-shift5-orange/10 text-shift5-orange" : "bg-white/[0.05] border-white/10 text-white/50 hover:text-white hover:border-white/30"}`} style={{ width: 42, height: 42 }}>
+                                        <Heart size={16} className={bookmarkedArtists.has(artistName) ? "fill-current" : ""} strokeWidth={bookmarkedArtists.has(artistName) ? 2.5 : 2} />
                                     </button>
                                 )}
                             </div>
 
                             {artistInfo?.bio && (
-                                <div className="mt-8">
-                                    <div className="text-[9px] font-mono text-white/20 uppercase mb-2">Subject_Context</div>
-                                    <CollapsibleBio bio={artistInfo.bio} maxLen={240} theme="dark" />
+                                <div className="mt-4 sm:mt-8">
+                                    <div className="text-[9px] font-mono text-white/20 uppercase mb-1.5 sm:mb-2"><span className="hidden sm:inline">Subject_</span>Bio</div>
+                                    <CollapsibleBio bio={artistInfo.bio} maxLen={160} theme="dark" />
                                 </div>
                             )}
                         </div>
 
                         {primaryDisco?.albums && primaryDisco.albums.length > 0 && (
-                            <div className="border-b border-white/5 pt-8">
-                                <div className="px-4 sm:px-6 mb-4">
-                                    <div className="text-[9px] font-mono text-white/20 tracking-[0.2em] uppercase mb-4">Core_Artifacts // Metadata</div>
+                            <div className="border-b border-white/5 pt-4 sm:pt-8">
+                                <div className="px-4 sm:px-6 mb-3 sm:mb-4">
+                                    <div className="text-[9px] font-mono text-white/20 tracking-[0.2em] uppercase mb-3 sm:mb-4"><span className="hidden sm:inline">Core_Artifacts // </span>Discography</div>
 
                                     {/* Horizontal Scroll Discography */}
                                     <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide no-scrollbar -mx-2 px-2 mask-linear-right">
@@ -644,8 +648,8 @@ export default function ArtistDrawer({
                             </div>
                         )}
 
-                        <div className="px-6 py-5 bg-white/[0.02] border-b border-white/5">
-                            <h3 className="text-[10px] font-mono text-white/20 tracking-[0.2em] uppercase">Neighboring_Nodes</h3>
+                        <div className="px-4 sm:px-6 py-3 sm:py-5 bg-white/[0.02] border-b border-white/5">
+                            <h3 className="text-[9px] sm:text-[10px] font-mono text-white/20 tracking-[0.2em] uppercase">Similar_Artists</h3>
                         </div>
                         <div className="pb-12">
                             {similar.map((a, i) => (

@@ -155,44 +155,46 @@ export default function GenreDrawer({
         playTrack({ url, title: title || "Top Track", artist: artist || "Unknown", coverUrl: coverUrl || null, videoId: videoId || undefined });
     };
 
+    const isEmbedded = !!className;
+
     return (
         <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={{ left: 0, right: 0.3 }}
-            onDragEnd={(_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
+            initial={isEmbedded ? false : { x: "100%" }}
+            animate={isEmbedded ? undefined : { x: 0 }}
+            exit={isEmbedded ? undefined : { x: "100%" }}
+            transition={isEmbedded ? undefined : { type: "spring", damping: 28, stiffness: 300 }}
+            drag={isEmbedded ? false : "x"}
+            dragConstraints={isEmbedded ? undefined : { left: 0, right: 0 }}
+            dragElastic={isEmbedded ? undefined : { left: 0, right: 0.3 }}
+            onDragEnd={isEmbedded ? undefined : (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
                 if (info.offset.x > 100 || info.velocity.x > 500) {
                     onClose();
                 }
             }}
             className={className || "fixed inset-y-0 right-0 w-full sm:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col touch-manipulation"}
         >
-            {/* Drag handle — mobile only */}
-            <div className="sm:hidden absolute left-2 top-1/2 -translate-y-1/2 w-1 h-12 rounded-full bg-white/10" />
+            {/* Drag handle — floating mode only */}
+            {!isEmbedded && <div className="sm:hidden absolute left-2 top-1/2 -translate-y-1/2 w-1 h-12 rounded-full bg-white/10" />}
 
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-shift5-dark/95 backdrop-blur-md z-10">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5 bg-shift5-dark/95 backdrop-blur-md z-10">
                 <div className="flex items-center gap-3">
                     {showCloseAsBack && (
-                        <button onClick={onClose} className="text-white/40 hover:text-shift5-orange active:scale-90 transition-all p-1 -ml-1">
+                        <button onClick={onClose} className="text-white/40 hover:text-shift5-orange active:scale-90 transition-all p-1 -ml-1 touch-manipulation">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
                     )}
-                    <h3 className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">Genre_Profile // Recon</h3>
+                    <h3 className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">Genre // Recon</h3>
                 </div>
             </div>
 
             <div className="flex-1 overflow-y-auto overscroll-contain">
-                <div className="px-4 sm:px-6 py-6 sm:py-8 border-b border-white/5 bg-white/[0.01]">
-                    <div className="flex items-center gap-3 mb-4">
-                        <span className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em] bg-shift5-orange/10 px-2 py-0.5 border border-shift5-orange/20">Category_Filter</span>
+                <div className="px-4 sm:px-6 py-4 sm:py-8 border-b border-white/5 bg-white/[0.01]">
+                    <div className="flex items-center gap-3 mb-2 sm:mb-4">
+                        <span className="text-[9px] sm:text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em] bg-shift5-orange/10 px-2 py-0.5 border border-shift5-orange/20">Genre</span>
                     </div>
-                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 leading-none tracking-tighter uppercase truncate">{genreName}</h2>
-                    <p className="text-[10px] font-mono text-white/20 uppercase tracking-widest leading-loose">
-                        Intercepting artifacts associated with this sonic signature category.
+                    <h2 className="text-xl sm:text-3xl font-bold text-white mb-1 sm:mb-2 leading-none tracking-tighter uppercase truncate">{genreName}</h2>
+                    <p className="text-[9px] sm:text-[10px] font-mono text-white/20 uppercase tracking-widest leading-relaxed sm:leading-loose">
+                        Artists associated with this sonic category.
                     </p>
                 </div>
 
@@ -214,20 +216,20 @@ export default function GenreDrawer({
 
                             return (
                                 <div key={cardId} style={{ animation: `fadeIn 0.3s ease ${index * 0.04}s both` }}>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 border-b border-white/5 cursor-default p-5 bg-white/[0.01] hover:bg-white/[0.02] transition-colors group">
-                                        <div className="flex items-center gap-4 flex-1 min-w-0">
-                                            <ArtistAvatar name={artist.name} image={artist.image} size={48} />
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 border-b border-white/5 cursor-default p-3 sm:p-5 bg-white/[0.01] hover:bg-white/[0.02] transition-colors group active:bg-white/[0.04] touch-manipulation">
+                                        <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                            <ArtistAvatar name={artist.name} image={artist.image} size={44} />
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-3 mb-1 flex-wrap">
-                                                    <span onClick={() => onSelectArtist(artist.name)} className="text-[13px] font-bold text-white uppercase tracking-tight cursor-pointer hover:text-shift5-orange transition-colors truncate">{artist.name}</span>
-                                                    <StreamingLinks artistName={artist.name} size={16} />
+                                                <div className="flex items-center gap-2 sm:gap-3 mb-0.5 sm:mb-1 flex-wrap">
+                                                    <span onClick={() => onSelectArtist(artist.name)} className="text-[12px] sm:text-[13px] font-bold text-white uppercase tracking-tight cursor-pointer hover:text-shift5-orange transition-colors truncate">{artist.name}</span>
+                                                    <StreamingLinks artistName={artist.name} size={14} />
                                                 </div>
-                                                <div className="text-[9px] font-mono text-white/20 uppercase tracking-[0.2em]">
-                                                    Node_Signature // {genreName}
+                                                <div className="text-[8px] sm:text-[9px] font-mono text-white/20 uppercase tracking-[0.15em] sm:tracking-[0.2em]">
+                                                    {genreName}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2 items-center shrink-0">
+                                        <div className="flex gap-2 items-center ml-[56px] sm:ml-0 shrink-0">
                                             {previewUrl && (
                                                 <button onClick={() => isPlayingHere ? togglePlayPause() : handlePlay(previewUrl, "Preview", artist.name, artist.image, previewData?.videoId)} className={`flex items-center justify-center border transition-all duration-300 shrink-0 ${isPlayingHere ? "bg-shift5-orange border-shift5-orange text-white" : "bg-white/[0.05] border-white/10 text-white hover:bg-white/10 hover:border-white/30"}`} style={{ width: 34, height: 34 }} title={isPlayingHere ? "Stop" : "Play"}>
                                                     {isPlayingHere ? <svg width={12} height={12} viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="2" width="3" height="8" /><rect x="7" y="2" width="3" height="8" /></svg> : <svg width={12} height={12} viewBox="0 0 12 12" fill="currentColor"><polygon points="3,1 11,6 3,11" /></svg>}
@@ -236,8 +238,8 @@ export default function GenreDrawer({
                                             <button onClick={() => handleToggleBookmark(cardId, artist.name, artist.image, [genreName])} disabled={isBookmarking} className={`flex items-center justify-center border transition-all duration-300 cursor-pointer ${isBookmarked ? "border-shift5-orange bg-shift5-orange/10 text-shift5-orange" : "bg-white/[0.05] border-white/10 text-white/50 hover:text-white hover:border-white/30"}`} style={{ width: 34, height: 34 }}>
                                                 <Heart size={15} className={isBookmarked ? "fill-current" : ""} strokeWidth={isBookmarked ? 2.5 : 2} />
                                             </button>
-                                            <button onClick={() => onSelectArtist(artist.name)} className={`text-[9px] font-bold font-mono border uppercase cursor-pointer whitespace-nowrap transition-all duration-300 bg-white/[0.05] border-white/10 text-white/50 hover:text-white hover:border-white/30`} style={{ padding: "0 10px", height: 34, letterSpacing: '0.1em' }}>
-                                                EXPLORE
+                                            <button onClick={() => onSelectArtist(artist.name)} className={`text-[9px] font-bold font-mono border uppercase cursor-pointer whitespace-nowrap transition-all duration-300 active:scale-95 touch-manipulation bg-white/[0.05] border-white/10 text-white/50 hover:text-white hover:border-white/30`} style={{ padding: "0 8px", height: 32, letterSpacing: '0.08em' }}>
+                                                VIEW
                                             </button>
                                         </div>
                                     </div>

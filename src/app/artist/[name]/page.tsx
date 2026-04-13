@@ -537,19 +537,19 @@ function SimilarCard({
               </div>
             </div>
             {artist.genres.length > 0 && (
-              <div className="flex flex-wrap gap-1">
+              <div className="flex gap-1 overflow-x-auto sm:overflow-visible sm:flex-wrap no-scrollbar" style={{ touchAction: "pan-x" }}>
                 {artist.genres.slice(0, 3).map((g) => (
-                  <GenreTag key={g} genre={g} onClick={onGenreClick} />
+                  <div key={g} className="shrink-0"><GenreTag genre={g} onClick={onGenreClick} /></div>
                 ))}
               </div>
             )}
           </div>
         </div>
-        <div className="flex gap-2 items-center sm:items-start sm:pt-1 ml-[72px] sm:ml-0 touch-manipulation flex-wrap">
+        <div className="flex gap-1.5 sm:gap-2 items-center sm:items-start sm:pt-1 ml-[72px] sm:ml-0 touch-manipulation flex-wrap">
           {previewUrl && (
             <button
               onClick={() => (isPlaying ? onStop() : onPlay(previewUrl, previewTitle || "Track Preview", artist.name, artist.image, previewVideoId))}
-              className={`flex items-center justify-center border cursor-pointer transition-all duration-300 shrink-0 ${isPlaying
+              className={`flex items-center justify-center border cursor-pointer transition-all duration-300 shrink-0 active:scale-95 ${isPlaying
                 ? "border-shift5-orange bg-shift5-orange text-white"
                 : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white hover:border-white/30"
                 }`}
@@ -557,22 +557,12 @@ function SimilarCard({
               title={isPlaying ? "Stop" : "Play"}
             >
               {isPlaying ? (
-                <svg
-                  width={12}
-                  height={12}
-                  viewBox="0 0 12 12"
-                  fill="currentColor"
-                >
+                <svg width={11} height={11} viewBox="0 0 12 12" fill="currentColor">
                   <rect x="2" y="1" width="3" height="10" />
                   <rect x="7" y="1" width="3" height="10" />
                 </svg>
               ) : (
-                <svg
-                  width={12}
-                  height={12}
-                  viewBox="0 0 12 12"
-                  fill="currentColor"
-                >
+                <svg width={11} height={11} viewBox="0 0 12 12" fill="currentColor">
                   <polygon points="3,0 12,6 3,12" />
                 </svg>
               )}
@@ -581,28 +571,28 @@ function SimilarCard({
           <button
             onClick={() => onToggleBookmark(cardId, artist.name, artist.image, artist.genres)}
             disabled={isBookmarking}
-            className={`flex items-center justify-center border transition-all duration-300 cursor-pointer ${isBookmarked
+            className={`flex items-center justify-center border transition-all duration-300 cursor-pointer active:scale-95 ${isBookmarked
               ? "border-shift5-orange/50 bg-shift5-orange/10 text-shift5-orange shadow-[0_0_10px_rgba(255,88,65,0.1)]"
               : "border-white/10 bg-white/5 text-white/30 hover:text-white/70 hover:border-white/30"
               }`}
-            style={{ width: 34, height: 34 }}
+            style={{ width: 32, height: 32 }}
             title={isBookmarked ? "Remove bookmark" : "Bookmark artist"}
           >
             <Heart
-              size={14}
+              size={13}
               className={isBookmarked ? "fill-current" : ""}
               strokeWidth={isBookmarked ? 2.5 : 2}
             />
           </button>
           <button
             onClick={() => onToggleDiscography(artist.name)}
-            className={`text-[10px] font-mono font-bold border cursor-pointer whitespace-nowrap transition-all duration-300 flex items-center gap-2 uppercase tracking-[0.1em] ${discographyOpen
+            className={`text-[9px] sm:text-[10px] font-mono font-bold border cursor-pointer whitespace-nowrap transition-all duration-300 flex items-center gap-1.5 sm:gap-2 uppercase tracking-[0.08em] sm:tracking-[0.1em] active:scale-95 ${discographyOpen
               ? "border-white bg-white text-shift5-dark"
               : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/30"
               }`}
-            style={{ padding: "6px 10px" }}
+            style={{ padding: "5px 8px" }}
           >
-            {discographyOpen ? "[ LESS ]" : "[ MORE ]"}
+            {discographyOpen ? "LESS" : "MORE"}
           </button>
         </div>
       </div>
@@ -1094,7 +1084,7 @@ export default function ArtistPage({
 
       <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1400px] mx-auto pb-24 sm:pb-10">
         {/* Hero Header section with high-contrast Shift5 Orange */}
-        <div className="mb-6 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-3 py-4 sm:px-5 sm:py-10 md:p-12 relative overflow-hidden sm:overflow-x-hidden sm:overflow-y-visible group">
+        <div className="mb-6 sm:mb-12 border border-white/10 bg-shift5-orange text-shift5-dark px-3 py-4 sm:px-5 sm:py-10 md:p-12 relative overflow-hidden group">
           {/* Decorative Background Text (Shift5 vibe) — hidden on mobile */}
           <div className="hidden sm:block absolute top-0 right-0 sm:text-[80px] md:text-[120px] font-bold text-shift5-dark/5 select-none leading-none pointer-events-none uppercase sm:mr-[-10px] md:mr-[-20px] sm:mt-[-10px] md:mt-[-20px]">
             {artistName.slice(0, 3)}
@@ -1110,17 +1100,17 @@ export default function ArtistPage({
                 </div>
                 {/* Mobile-only: name next to avatar */}
                 <div className="sm:hidden min-w-0 flex-1">
-                  <h1 className="text-2xl font-bold uppercase tracking-tighter leading-none break-words selection:bg-shift5-dark selection:text-white">
+                  <h1 className="text-xl font-bold uppercase tracking-tighter leading-none break-words selection:bg-shift5-dark selection:text-white">
                     {artistName}
                   </h1>
-                  <div className="flex items-center gap-2 mt-2">
-                    <StreamingLinks artistName={artistName} size={18} isHero={true} />
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <StreamingLinks artistName={artistName} size={16} isHero={true} />
                     <TourBadge artistName={artistName} />
                   </div>
                 </div>
               </div>
 
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 w-full sm:w-auto">
                 {/* Desktop-only: identifier badge */}
                 <div className="hidden sm:flex items-center gap-3 mb-4 flex-wrap">
                   <span className="text-[10px] font-mono text-shift5-dark uppercase tracking-[0.3em] font-bold bg-white/20 px-2 py-0.5 truncate max-w-full">Active_Node // {artistInfo?.deezerId || 'IDENT_PENDING'}</span>
@@ -1131,15 +1121,24 @@ export default function ArtistPage({
                 <h1 className="hidden sm:block text-6xl md:text-7xl font-bold uppercase tracking-tighter leading-none mb-4 selection:bg-shift5-dark selection:text-white break-words">
                   {artistName}
                 </h1>
-                <div className="flex gap-1.5 sm:gap-2 mt-3 sm:mt-4 mb-3 sm:mb-4 overflow-x-auto sm:overflow-visible sm:flex-wrap no-scrollbar pb-1 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x" }}>
-                  {artistInfo?.genres.map(g => (
-                    <div key={g} className="shrink-0">
-                      <GenreTag genre={g} onClick={handleGenreClick} active={genreFilter === g} />
-                    </div>
-                  ))}
+
+                {/* Genre tags — horizontal scroll on mobile, wrap on desktop */}
+                <div className="overflow-x-auto sm:overflow-visible no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0 mt-2 sm:mt-4 mb-2 sm:mb-4" style={{ WebkitOverflowScrolling: "touch" }}>
+                  <div className="flex gap-1.5 sm:gap-2 sm:flex-wrap w-max sm:w-auto" style={{ touchAction: "pan-x" }}>
+                    {artistInfo?.genres.map(g => (
+                      <GenreTag key={g} genre={g} onClick={handleGenreClick} active={genreFilter === g} />
+                    ))}
+                  </div>
                 </div>
 
-                {/* Metadata Scans Grid — hidden on mobile, shown on sm+ */}
+                {/* Mobile-only: compact metadata row */}
+                <div className="sm:hidden flex items-center gap-3 text-[9px] font-mono text-shift5-dark/50 uppercase tracking-wider mt-1 mb-2 overflow-x-auto no-scrollbar">
+                  {artistInfo?.location && <span className="whitespace-nowrap">{artistInfo.location}</span>}
+                  {artistInfo?.yearStarted && <><span className="text-shift5-dark/20">·</span><span className="whitespace-nowrap">{artistInfo.yearStarted}</span></>}
+                  {artistInfo?.nbAlbums && <><span className="text-shift5-dark/20">·</span><span className="whitespace-nowrap">{artistInfo.nbAlbums} Albums</span></>}
+                </div>
+
+                {/* Desktop: Metadata Scans Grid */}
                 <div className="hidden sm:grid grid-cols-4 gap-4 mb-8 p-4 bg-shift5-dark/5 border border-shift5-dark/10 font-mono text-[10px] uppercase tracking-widest text-shift5-dark w-fit">
                   <div className="space-y-1 min-w-0">
                     <div className="text-shift5-dark/40">Signal_Origin</div>
@@ -1159,11 +1158,12 @@ export default function ArtistPage({
                   </div>
                 </div>
 
-                <div className="mt-4 sm:mt-8 space-y-3 sm:space-y-4 max-w-full sm:max-w-2xl sm:border-l-2 sm:border-shift5-dark/10 sm:pl-6 min-w-0">
-                  <div className="text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold">Operational_Bio</div>
+                {/* Bio + Discography section */}
+                <div className="mt-3 sm:mt-8 space-y-3 sm:space-y-4 max-w-full sm:max-w-2xl sm:border-l-2 sm:border-shift5-dark/10 sm:pl-6 min-w-0 w-full">
+                  <div className="text-[9px] sm:text-[10px] font-mono text-shift5-dark/40 uppercase tracking-widest font-bold">Bio</div>
                   <CollapsibleBio
                     bio={artistInfo?.bio || ""}
-                    maxLen={260}
+                    maxLen={160}
                     theme="hero"
                   />
 
@@ -1309,8 +1309,10 @@ export default function ArtistPage({
               </div>
             </div>
 
-            <div className="flex flex-row sm:flex-col md:flex-col items-center md:items-end gap-2 sm:gap-4 pb-2 sm:pb-4 w-full md:w-auto">
-              <div className="flex flex-row sm:flex-col gap-2 sm:gap-3">
+            {/* Action buttons — sticky bottom bar on mobile, column on desktop */}
+            <div className="sm:flex sm:flex-col md:flex-col sm:items-end sm:gap-4 sm:pb-4 md:w-auto">
+              {/* Mobile: compact horizontal action bar */}
+              <div className="sm:hidden flex items-center gap-2 mt-2">
                 <button
                   onClick={() => {
                     if (primaryDisco && primaryDisco.topTracks.length > 0) {
@@ -1318,37 +1320,63 @@ export default function ArtistPage({
                       playingUrl === top.preview ? handleStop() : handlePlay(top.preview, top.title, undefined, undefined, top.videoId);
                     }
                   }}
-                  className={`flex-1 sm:flex-none sm:w-auto flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-3 sm:py-4 border-2 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all ${playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'bg-white/10 border-shift5-dark/40 hover:border-shift5-dark hover:bg-white/20 text-shift5-dark'}`}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 border-2 font-mono text-[9px] font-bold uppercase tracking-wider transition-all active:scale-95 touch-manipulation ${playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'bg-white/10 border-shift5-dark/40 text-shift5-dark'}`}
                 >
                   {playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? (
-                    <>
-                      <span className="w-2 h-2 rounded-full bg-shift5-orange animate-pulse" />
-                      ENGAGED
-                    </>
+                    <><span className="w-1.5 h-1.5 rounded-full bg-shift5-orange animate-pulse" />PLAYING</>
                   ) : (
-                    <>
-                      <span className="text-[14px]">▶</span>
-                      PLAY_SIGNAL
-                    </>
+                    <><span className="text-[12px]">▶</span>PLAY</>
                   )}
                 </button>
 
                 <button
                   onClick={() => handleToggleBookmark(artistInfo?.deezerId?.toString() || artistName, artistName, artistInfo?.image, artistInfo?.genres)}
-                  className={`flex-1 sm:flex-none sm:w-auto flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-3 sm:py-4 border-2 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all ${bookmarkedArtists.has(artistName) ? 'bg-shift5-dark border-shift5-dark text-white' : 'border-shift5-dark/30 hover:border-shift5-dark text-shift5-dark/70 hover:text-shift5-dark'}`}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 border-2 font-mono text-[9px] font-bold uppercase tracking-wider transition-all active:scale-95 touch-manipulation ${bookmarkedArtists.has(artistName) ? 'bg-shift5-dark border-shift5-dark text-white' : 'border-shift5-dark/30 text-shift5-dark/70'}`}
+                >
+                  <Heart size={12} className={bookmarkedArtists.has(artistName) ? 'fill-current' : ''} />
+                  {bookmarkedArtists.has(artistName) ? 'SAVED' : 'SAVE'}
+                </button>
+
+                <div className="shrink-0">
+                  <ApprovalMeter
+                    artistName={artistName}
+                    onAuthRequired={() => setToastMessage("Sign in to vote on artists")}
+                  />
+                </div>
+              </div>
+
+              {/* Desktop: full action buttons column */}
+              <div className="hidden sm:flex sm:flex-col gap-3">
+                <button
+                  onClick={() => {
+                    if (primaryDisco && primaryDisco.topTracks.length > 0) {
+                      const top = primaryDisco.topTracks[0];
+                      playingUrl === top.preview ? handleStop() : handlePlay(top.preview, top.title, undefined, undefined, top.videoId);
+                    }
+                  }}
+                  className={`flex items-center justify-center gap-3 px-8 py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? 'bg-shift5-dark border-shift5-dark text-shift5-orange' : 'bg-white/10 border-shift5-dark/40 hover:border-shift5-dark hover:bg-white/20 text-shift5-dark'}`}
+                >
+                  {playingUrl && primaryDisco?.topTracks.some(t => t.preview === playingUrl) ? (
+                    <><span className="w-2 h-2 rounded-full bg-shift5-orange animate-pulse" />ENGAGED</>
+                  ) : (
+                    <><span className="text-[14px]">▶</span>PLAY_SIGNAL</>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleToggleBookmark(artistInfo?.deezerId?.toString() || artistName, artistName, artistInfo?.image, artistInfo?.genres)}
+                  className={`flex items-center justify-center gap-3 px-8 py-4 border-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${bookmarkedArtists.has(artistName) ? 'bg-shift5-dark border-shift5-dark text-white' : 'border-shift5-dark/30 hover:border-shift5-dark text-shift5-dark/70 hover:text-shift5-dark'}`}
                 >
                   <Heart size={16} className={bookmarkedArtists.has(artistName) ? 'fill-current' : ''} />
                   {bookmarkedArtists.has(artistName) ? 'SAVED_NODE' : 'SAVE_NODE'}
                 </button>
 
-                {/* Community Approval Meter */}
                 <div className="flex justify-center md:justify-start">
                   <ApprovalMeter
                     artistName={artistName}
                     onAuthRequired={() => setToastMessage("Sign in to vote on artists")}
                   />
                 </div>
-
               </div>
 
               <div className="hidden sm:flex flex-col items-end gap-1 opacity-60">
@@ -1413,14 +1441,15 @@ export default function ArtistPage({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto sm:overflow-visible sm:flex-wrap no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0" style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}>
                   {FILTERS.map((f) => (
-                    <FilterPill
-                      key={f.key}
-                      label={f.label}
-                      active={activeFilter === f.key}
-                      onClick={() => { setActiveFilter(f.key); setGenreFilter(null); }}
-                    />
+                    <div key={f.key} className="shrink-0">
+                      <FilterPill
+                        label={f.label}
+                        active={activeFilter === f.key}
+                        onClick={() => { setActiveFilter(f.key); setGenreFilter(null); }}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
