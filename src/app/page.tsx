@@ -7,6 +7,8 @@ import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import GenreTag from "@/components/GenreTag";
+import RecentlyPlayed from "@/components/RecentlyPlayed";
+import DiscoverFeed from "@/components/DiscoverFeed";
 import { getTopGenres, getGenreArtists, getArtistPreviewData, type GenreInfo } from "@/lib/api";
 import { useAudio } from "@/contexts/AudioContext";
 import Footer from "@/components/Footer";
@@ -111,6 +113,12 @@ export default function Home() {
           </svg>
           [ RANDOM_SURGE_PROTOCOL ]
         </button>
+
+        {/* Recently Played */}
+        <RecentlyPlayed />
+
+        {/* Personalized Discovery */}
+        <DiscoverFeed />
 
         {/* Trending Genres */}
         {trendingGenres.length > 0 && (

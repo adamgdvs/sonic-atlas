@@ -18,7 +18,7 @@ import { useJourney } from "@/contexts/JourneyContext";
 import { useAudio } from "@/contexts/AudioContext";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ToastProvider";
-import { Heart } from "lucide-react";
+import { Heart, Radio } from "lucide-react";
 import Footer from "@/components/Footer";
 
 export default function GenreDetailPage({
@@ -46,7 +46,7 @@ export default function GenreDetailPage({
   const [loading, setLoading] = useState(true);
 
   // Audio state
-  const { playTrack, currentTrack, isPlaying } = useAudio();
+  const { playTrack, currentTrack, isPlaying, setRadioMode, radioMode } = useAudio();
   const [imageMap, setImageMap] = useState<Record<string, string>>({});
 
   // Bookmark state
@@ -183,6 +183,13 @@ export default function GenreDetailPage({
     router.push(`/artist/${encodeURIComponent(name)}`);
   };
 
+  const handleStartGenreRadio = async () => {
+    if (artists.length === 0) return;
+    const pick = artists[Math.floor(Math.random() * Math.min(artists.length, 10))];
+    setRadioMode(true);
+    await handlePlayArtist(pick.name, undefined, pick.image || imageMap[pick.name]);
+  };
+
   const handlePlayArtist = async (name: string, previewUrl?: string, artistImage?: string | null) => {
     if (isPlaying && currentTrack?.artist === name) {
       playTrack(currentTrack);
@@ -249,6 +256,33 @@ export default function GenreDetailPage({
             </div>
           </div>
         </div>
+
+        {/* Genre Radio CTA */}
+        {!loading && artists.length > 0 && (
+          <div className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-8">
+            <button
+              onClick={handleStartGenreRadio}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-2.5 px-4 sm:px-6 py-3.5 sm:py-3 border-2 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all duration-300 touch-manipulation active:scale-[0.98] ${
+                radioMode
+                  ? "bg-shift5-orange border-shift5-orange text-white shadow-[0_0_20px_rgba(255,88,65,0.3)]"
+                  : "border-white/20 bg-white/5 text-white/70 hover:border-shift5-orange hover:text-shift5-orange hover:bg-shift5-orange/5 active:border-shift5-orange active:text-shift5-orange"
+              }`}
+            >
+              <Radio size={14} className={radioMode ? "animate-pulse" : ""} />
+              <span className="whitespace-nowrap">
+                {radioMode ? "[ RADIO_ACTIVE ]" : "[ START_GENRE_RADIO ]"}
+              </span>
+            </button>
+            {radioMode && (
+              <button
+                onClick={() => setRadioMode(false)}
+                className="shrink-0 px-3 py-3.5 sm:py-3 text-[9px] font-mono text-white/30 hover:text-white/70 active:text-white/70 uppercase tracking-widest transition-colors touch-manipulation"
+              >
+                [ Stop ]
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Main Content Column */}
