@@ -10,7 +10,7 @@ import GenreDrawer from "@/components/GenreDrawer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { useJourney } from "@/contexts/JourneyContext";
 import { useAudio } from "@/contexts/AudioContext";
-import { ArrowUpDown, X, ChevronLeft, ListMusic, Play, Trash2, ChevronDown, ChevronRight, Music } from "lucide-react";
+import { ArrowUpDown, X, ChevronLeft, ListMusic, Play, Trash2, ChevronRight, Music } from "lucide-react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 export type ViewState =
@@ -56,7 +56,7 @@ export default function MyAtlasClient({
     const [genreFilter, setGenreFilter] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<TabMode>("artists");
     const [expandedPlaylist, setExpandedPlaylist] = useState<string | null>(null);
-    const { playTrack, addToQueue } = useAudio();
+    const { playTrack, addToQueue, currentTrack, isPlaying } = useAudio();
 
     const currentView = viewStack.length > 0 ? viewStack[viewStack.length - 1] : null;
     const selectedArtist = viewStack.findLast(v => v.type === 'artist')?.id || null;
@@ -382,21 +382,21 @@ export default function MyAtlasClient({
                             return (
                                 <div key={pl.id} className="border border-white/5 bg-white/[0.01] overflow-hidden">
                                     {/* Playlist header row */}
-                                    <div className="flex items-center gap-3 p-2.5 sm:p-3">
+                                    <div className="flex items-center gap-3 p-2.5 sm:p-3 group/pl">
                                         <button
                                             onClick={() => setExpandedPlaylist(isExpanded ? null : pl.id)}
                                             className="flex-1 flex items-center gap-3 text-left active:scale-[0.98] touch-manipulation min-w-0"
                                         >
-                                            <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 bg-white/5 border border-white/10 flex items-center justify-center">
-                                                <ListMusic size={16} className="text-white/20" />
+                                            <div className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 bg-shift5-orange/10 border border-shift5-orange/20 flex items-center justify-center">
+                                                <ListMusic size={16} className="text-shift5-orange/70" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="text-[12px] sm:text-sm font-bold text-white/80 uppercase tracking-tight truncate">{pl.name}</div>
-                                                <div className="text-[9px] font-mono text-white/25 uppercase tracking-wider">
-                                                    {pl._count.tracks} track{pl._count.tracks !== 1 ? "s" : ""}
+                                                <div className="text-[12px] sm:text-sm font-bold text-white uppercase tracking-tight truncate">{pl.name}</div>
+                                                <div className="text-[9px] font-mono text-white/35 uppercase tracking-wider">
+                                                    Playlist · {pl._count.tracks} track{pl._count.tracks !== 1 ? "s" : ""}
                                                 </div>
                                             </div>
-                                            <div className="text-white/15 shrink-0 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                                            <div className="text-white/30 shrink-0 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
                                                 <ChevronRight size={14} />
                                             </div>
                                         </button>
@@ -405,7 +405,7 @@ export default function MyAtlasClient({
                                         {pl.tracks.length > 0 && (
                                             <button
                                                 onClick={() => handlePlayAll(pl)}
-                                                className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center bg-shift5-orange/80 text-white active:scale-90 transition-all touch-manipulation hover:bg-shift5-orange"
+                                                className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full flex items-center justify-center bg-shift5-orange text-white shadow-[0_4px_14px_rgba(255,88,65,0.35)] hover:scale-105 active:scale-90 transition-all touch-manipulation hover:bg-shift5-orange/90"
                                                 aria-label="Play all"
                                                 title="Play all"
                                             >
@@ -414,7 +414,7 @@ export default function MyAtlasClient({
                                         )}
                                         <button
                                             onClick={() => handleDeletePlaylist(pl.id)}
-                                            className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center text-white/15 hover:text-red-400 active:scale-90 transition-colors touch-manipulation"
+                                            className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center text-white/15 hover:text-red-400 active:scale-90 transition-colors touch-manipulation opacity-0 group-hover/pl:opacity-100 sm:opacity-100"
                                             aria-label="Delete playlist"
                                             title="Delete playlist"
                                         >
@@ -433,44 +433,60 @@ export default function MyAtlasClient({
                                                 className="overflow-hidden"
                                             >
                                                 <div className="border-t border-white/5">
-                                                    {pl.tracks.map((track, idx) => (
-                                                        <div
-                                                            key={track.id}
-                                                            className="flex items-center gap-2.5 px-3 sm:px-4 py-2 border-b border-white/[0.03] last:border-b-0 group hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors"
-                                                        >
-                                                            <span className="text-[9px] font-mono text-white/15 w-5 text-right shrink-0">{idx + 1}</span>
-
-                                                            {/* Track art */}
-                                                            <button
+                                                    {pl.tracks.map((track, idx) => {
+                                                        const isThisPlaying = isPlaying && (
+                                                            track.videoId
+                                                                ? currentTrack?.videoId === track.videoId
+                                                                : currentTrack?.url === track.url
+                                                        );
+                                                        return (
+                                                            <div
+                                                                key={track.id}
                                                                 onClick={() => handlePlayTrack(track)}
-                                                                className="w-8 h-8 shrink-0 bg-white/5 border border-white/10 flex items-center justify-center relative overflow-hidden active:scale-90 touch-manipulation"
+                                                                className={`grid grid-cols-[24px_36px_1fr_24px] items-center gap-2.5 px-3 sm:px-4 py-2 border-b border-white/[0.03] last:border-b-0 group/track cursor-pointer transition-colors touch-manipulation ${isThisPlaying ? 'bg-white/[0.05]' : 'hover:bg-white/[0.04] active:bg-white/[0.06]'}`}
                                                             >
-                                                                {track.coverUrl ? (
-                                                                    <img src={track.coverUrl} alt="" className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <Music size={12} className="text-white/15" />
-                                                                )}
-                                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                                    <Play size={10} fill="white" className="text-white ml-0.5" />
+                                                                {/* Index / Now-playing / Play swap */}
+                                                                <div className="flex items-center justify-center">
+                                                                    {isThisPlaying ? (
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-shift5-orange animate-pulse" />
+                                                                    ) : (
+                                                                        <>
+                                                                            <span className="text-[10px] font-mono text-white/30 group-hover/track:hidden">{idx + 1}</span>
+                                                                            <Play size={10} fill="currentColor" className="hidden group-hover/track:block text-shift5-orange ml-0.5" />
+                                                                        </>
+                                                                    )}
                                                                 </div>
-                                                            </button>
 
-                                                            {/* Track info */}
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="text-[11px] font-mono text-white/70 uppercase tracking-tight truncate">{track.title}</div>
-                                                                <div className="text-[9px] font-mono text-white/25 uppercase tracking-wider truncate">{track.artist}</div>
+                                                                {/* Track art */}
+                                                                <div className="w-9 h-9 shrink-0 bg-white/5 border border-white/10 flex items-center justify-center relative overflow-hidden">
+                                                                    {track.coverUrl ? (
+                                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                                        <img src={track.coverUrl} alt="" className={`w-full h-full object-cover transition-all duration-300 ${isThisPlaying ? '' : 'grayscale group-hover/track:grayscale-0'}`} />
+                                                                    ) : (
+                                                                        <Music size={12} className="text-white/20" />
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Track info */}
+                                                                <div className="min-w-0">
+                                                                    <div className={`text-[12px] font-mono font-bold uppercase tracking-tight truncate transition-colors ${isThisPlaying ? 'text-shift5-orange' : 'text-white group-hover/track:text-shift5-orange'}`}>{track.title}</div>
+                                                                    <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider truncate mt-0.5">{track.artist}</div>
+                                                                </div>
+
+                                                                {/* Remove button */}
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleRemoveTrack(pl.id, track.id);
+                                                                    }}
+                                                                    className="w-6 h-6 shrink-0 flex items-center justify-center text-white/20 hover:text-red-400 active:scale-90 transition-colors touch-manipulation opacity-0 group-hover/track:opacity-100"
+                                                                    aria-label="Remove track"
+                                                                >
+                                                                    <X size={12} />
+                                                                </button>
                                                             </div>
-
-                                                            {/* Remove button */}
-                                                            <button
-                                                                onClick={() => handleRemoveTrack(pl.id, track.id)}
-                                                                className="w-6 h-6 shrink-0 flex items-center justify-center text-white/10 hover:text-red-400 active:scale-90 transition-colors touch-manipulation opacity-0 group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                                                                aria-label="Remove track"
-                                                            >
-                                                                <X size={12} />
-                                                            </button>
-                                                        </div>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
                                             </motion.div>
                                         )}
