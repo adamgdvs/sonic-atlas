@@ -1,62 +1,24 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
-import GenreTag from "@/components/GenreTag";
 import RecentlyPlayed from "@/components/RecentlyPlayed";
 import DiscoverFeed from "@/components/DiscoverFeed";
-import { getTopGenres, getGenreArtists, getArtistPreviewData, type GenreInfo } from "@/lib/api";
-import { useAudio } from "@/contexts/AudioContext";
+import RotatingBanners from "@/components/RotatingBanners";
+import YourAtlasRotation from "@/components/YourAtlasRotation";
+import GenreCards from "@/components/GenreCards";
+import { getTopGenres, type GenreInfo } from "@/lib/api";
 import Footer from "@/components/Footer";
 
 export default function Home() {
   const router = useRouter();
-  const { data: session, status } = useSession();
   const [trendingGenres, setTrendingGenres] = useState<GenreInfo[]>([]);
-  const { playTrack, currentTrack, isPlaying } = useAudio();
-
-  // Redirection removed to allow authenticated users to access the homepage per design request
 
   useEffect(() => {
     getTopGenres(30).then(setTrendingGenres);
   }, []);
-
-  const handlePlayGenre = async (genreName: string) => {
-    // Determine if this genre is already playing
-    const isThisGenrePlaying = currentTrack?.id === genreName;
-    if (isThisGenrePlaying) {
-      // Defer to the Context toggle logic
-      playTrack(currentTrack);
-      return;
-    }
-
-    try {
-      const artists = await getGenreArtists(genreName, 5);
-      if (!artists || artists.length === 0) return;
-
-      const randomArtist = artists[Math.floor(Math.random() * artists.length)];
-      const previewData = await getArtistPreviewData(randomArtist.name);
-      const trackWithPreview = previewData.tracks.find(t => t.videoId || t.preview);
-
-      if (!trackWithPreview) return;
-
-      playTrack({
-        id: genreName,
-        url: trackWithPreview.preview || "",
-        title: trackWithPreview.title,
-        artist: randomArtist.name,
-        coverUrl: previewData.image || undefined,
-        genres: [genreName],
-        videoId: trackWithPreview.videoId || undefined,
-      });
-    } catch (e) {
-      void e;
-    }
-  };
 
   const handleSelect = (artistName: string) => {
     router.push(`/artist/${encodeURIComponent(artistName)}`);
@@ -114,40 +76,20 @@ export default function Home() {
           [ RANDOM_SURGE_PROTOCOL ]
         </button>
 
+        {/* Rotating Featured Banners — mood / era / genre / region */}
+        <RotatingBanners />
+
         {/* Recently Played */}
         <RecentlyPlayed />
 
-        {/* Personalized Discovery */}
+        {/* Your Atlas — On Rotation (bookmarks shuffled; trending fallback) */}
+        <YourAtlasRotation />
+
+        {/* Personalized Discovery — Because You Saved X */}
         <DiscoverFeed />
 
-        {/* Trending Genres */}
-        {trendingGenres.length > 0 && (
-          <div className="mt-20 sm:mt-24 w-full max-w-[800px]">
-            <div className="flex items-center justify-between mb-8 border-b border-white/[0.06] pb-2">
-              <div
-                className="text-[10px] font-mono text-shift5-orange/80 uppercase tracking-[0.2em]"
-              >
-                Hot_Genre_Signals
-              </div>
-              <Link
-                href="/genres"
-                className="text-[10px] font-mono text-shift5-muted hover:text-shift5-orange transition-colors no-underline uppercase tracking-[0.1em]"
-              >
-                Full_Nexus →
-              </Link>
-            </div>
-            <div className="flex flex-wrap justify-center gap-1">
-              {trendingGenres.map((g) => (
-                <GenreTag
-                  key={g.name}
-                  genre={g.name}
-                  onPlayClick={handlePlayGenre}
-                  isPlaying={isPlaying && currentTrack?.id === g.name}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Hot Genre Signals — card grid */}
+        <GenreCards limit={16} />
       </div>
       <Footer />
     </div>
