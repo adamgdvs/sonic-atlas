@@ -36,23 +36,56 @@ export default function Home() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#888_1px,transparent_1px),linear-gradient(to_bottom,#888_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center pt-24 sm:pt-32 px-5 sm:px-10 pb-20">
-        <div className="mb-10 animate-fade-in">
-          <span className="text-[11px] font-mono text-white px-3 py-1 bg-shift5-orange border-2 border-shift5-orange uppercase tracking-[0.4em] font-bold shadow-[0_0_15px_rgba(255,88,65,0.4)]">
-            ATLAS_INTEL // ACTIVE_SCAN
-          </span>
+      <div className="v2 relative z-10 flex flex-col items-center pt-20 sm:pt-28 px-5 sm:px-10 pb-20">
+        <div
+          className="mb-8 animate-fade-in inline-flex items-center gap-2 text-[10px] uppercase"
+          style={{
+            fontFamily: "var(--font-editorial-mono)",
+            letterSpacing: "0.2em",
+            color: "var(--color-edit-ink-mute)",
+          }}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ background: "var(--color-edit-accent)" }}
+          />
+          <span>ATLAS_INTEL · ACTIVE_SCAN</span>
         </div>
 
         <h1
-          className="text-4xl sm:text-7xl md:text-8xl font-black text-white mb-6 uppercase tracking-[-0.05em] leading-[0.85] text-center max-w-[900px] selection:bg-shift5-orange"
+          className="mb-5 text-center max-w-[900px] text-[40px] sm:text-[56px] md:text-[72px]"
+          style={{
+            fontFamily: "var(--font-editorial)",
+            fontWeight: 300,
+            letterSpacing: "-0.035em",
+            lineHeight: 0.98,
+            color: "var(--color-edit-ink)",
+          }}
         >
-          Discover similar artists & sonic neighborhoods.
+          Discover similar artists
+          <br />
+          &amp;{" "}
+          <em
+            style={{
+              fontStyle: "italic",
+              fontWeight: 400,
+              color: "var(--color-edit-accent)",
+            }}
+          >
+            sonic neighborhoods.
+          </em>
         </h1>
         <p
-          className="text-sm sm:text-base text-shift5-muted mb-10 sm:mb-16 font-mono text-center max-w-xl"
-          style={{ letterSpacing: "-0.01em" }}
+          className="mb-10 sm:mb-12 text-center max-w-xl text-sm sm:text-[15px]"
+          style={{
+            fontFamily: "var(--font-editorial-body)",
+            color: "var(--color-edit-ink-dim)",
+            letterSpacing: "-0.005em",
+            lineHeight: 1.5,
+          }}
         >
-          Operational reconnaissance for music discovery. <br className="hidden sm:block" />
+          Operational reconnaissance for music discovery.
+          <br className="hidden sm:block" />
           Map the constellation. ID the signal.
         </p>
 
@@ -71,12 +104,38 @@ export default function Home() {
               router.push(`/genre/${encodeURIComponent(random.name)}`);
             }
           }}
-          className="mt-12 flex items-center gap-4 px-10 py-4 bg-white/5 border-2 border-white/20 hover:border-shift5-orange hover:bg-shift5-orange hover:text-shift5-dark transition-all duration-300 text-[12px] font-bold font-mono tracking-[0.2em] text-white uppercase cursor-pointer group"
+          className="mt-10 flex items-center gap-3 px-6 py-3 text-[11px] uppercase cursor-pointer group transition-colors"
+          style={{
+            fontFamily: "var(--font-editorial-mono)",
+            letterSpacing: "0.14em",
+            color: "var(--color-edit-ink-dim)",
+            background: "transparent",
+            border: "1px solid var(--color-edit-line-2)",
+            borderRadius: "var(--radius)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "var(--color-edit-accent)";
+            e.currentTarget.style.color = "var(--color-edit-ink)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "var(--color-edit-line-2)";
+            e.currentTarget.style.color = "var(--color-edit-ink-dim)";
+          }}
         >
-          <svg className="group-hover:rotate-180 transition-transform duration-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            className="group-hover:rotate-180 transition-transform duration-500"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" />
           </svg>
-          [ RANDOM_SURGE_PROTOCOL ]
+          random_surge_protocol
         </button>
 
         {/* Rotating Featured Banners — mood / era / genre / region */}

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 @theme inline {
   /* ═══ Palette — Spotify-style warm dark ═══ */
@@ -15,13 +16,37 @@
   --color-shift5-subtle: #7a7a7a;      /* Tertiary / disabled text */
   --color-shift5-light: #dcdcdc;       /* Light sections on light backgrounds */
 
+  /* ═══ Editorial tokens (pilot v2 aesthetic, opt-in) ═══ */
+  --color-edit-bg: #0c0c0c;
+  --color-edit-bg-1: #141414;
+  --color-edit-bg-2: #1a1a1a;
+  --color-edit-bg-3: #222222;
+  --color-edit-line: #262626;
+  --color-edit-line-2: #333333;
+  --color-edit-ink: #ededed;
+  --color-edit-ink-dim: #8a8a8a;
+  --color-edit-ink-mute: #565656;
+  --color-edit-accent: #ff5722;
+
   --color-background: var(--color-shift5-dark);
   --color-foreground: #ffffff;
   --font-sans: var(--font-non-sans);
   --font-mono: var(--font-space-mono);
+  --font-editorial: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-editorial-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-editorial-mono: "JetBrains Mono", ui-monospace, monospace;
 
   --spacing-18: 4.5rem;
 }
+
+/* Editorial v2 density scope — apply via class="v2" on a wrapper element */
+.v2 {
+  --pad: 28px;
+  --row: 48px;
+  --radius: 2px;
+}
+.v2[data-density="compact"] { --pad: 14px; --row: 40px; }
+.v2[data-density="spacious"] { --pad: 36px; --row: 56px; }
 
 * {
   box-sizing: border-box;

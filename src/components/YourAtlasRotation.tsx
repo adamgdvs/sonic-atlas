@@ -170,22 +170,43 @@ export default function YourAtlasRotation() {
     <div className="w-full max-w-[900px] mt-14 sm:mt-20">
       <div className="mb-5 sm:mb-6 border-b border-white/[0.06] pb-3 flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] font-mono text-shift5-orange/80 uppercase tracking-[0.2em]">
-            {isAtlas ? "Your_Atlas" : "Trending_Signals"}
+          <div
+            className="text-[10px] uppercase"
+            style={{
+              fontFamily: "var(--font-editorial-mono)",
+              letterSpacing: "0.18em",
+              color: "var(--color-edit-accent)",
+              opacity: 0.85,
+            }}
+          >
+            {isAtlas ? "your_atlas" : "trending_signals"}
           </div>
-          <div className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
+          <div
+            className="text-[12px] sm:text-[13px] mt-1"
+            style={{
+              fontFamily: "var(--font-editorial-body)",
+              color: "var(--color-edit-ink-dim)",
+            }}
+          >
             {isAtlas ? "On rotation — shuffled from your saved artists" : "Popular across the constellation right now"}
           </div>
         </div>
         <button
           onClick={() => setRotationKey((n) => n + 1)}
-          className="shrink-0 text-[9px] font-mono text-shift5-muted hover:text-shift5-orange active:text-shift5-orange uppercase tracking-widest transition-colors touch-manipulation flex items-center gap-1.5 px-2 py-1 border border-white/10 hover:border-shift5-orange"
+          className="shrink-0 text-[10px] hover:text-shift5-orange active:text-shift5-orange uppercase transition-colors touch-manipulation flex items-center gap-1.5 px-2 py-1 hover:border-shift5-orange"
+          style={{
+            fontFamily: "var(--font-editorial-mono)",
+            letterSpacing: "0.14em",
+            color: "var(--color-edit-ink-dim)",
+            border: "1px solid var(--color-edit-line-2)",
+            borderRadius: "2px",
+          }}
           aria-label="Reshuffle"
         >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" />
           </svg>
-          Reshuffle
+          reshuffle
         </button>
       </div>
 
@@ -209,9 +230,10 @@ export default function YourAtlasRotation() {
               <div
                 className={`relative aspect-square bg-shift5-surface overflow-hidden mb-3 border transition-all duration-300 ${
                   isActive
-                    ? "border-shift5-orange shadow-[0_0_20px_rgba(255,88,65,0.25)]"
-                    : "border-white/[0.06] group-hover:border-white/20 group-active:border-white/30"
+                    ? "border-shift5-orange"
+                    : "border-white/[0.08] group-hover:border-white/20 group-active:border-white/30"
                 }`}
+                style={{ borderRadius: "2px" }}
               >
                 {artist.image ? (
                   <Image
@@ -252,7 +274,8 @@ export default function YourAtlasRotation() {
                     e.stopPropagation();
                     handlePlay(artist);
                   }}
-                  className="absolute bottom-2.5 right-2.5 w-11 h-11 bg-shift5-orange text-white border-2 border-shift5-orange flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 group-active:opacity-100 group-active:translate-y-0 transition-all duration-300 shadow-[0_4px_20px_rgba(255,88,65,0.5)] hover:bg-white hover:text-shift5-orange touch-manipulation"
+                  className="absolute bottom-2.5 right-2.5 w-10 h-10 bg-shift5-orange text-white flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 group-active:opacity-100 group-active:translate-y-0 transition-all duration-300 hover:bg-white hover:text-shift5-orange touch-manipulation"
+                  style={{ borderRadius: "2px" }}
                   aria-label={`Play ${artist.name}`}
                 >
                   <svg width={12} height={12} viewBox="0 0 12 12" fill="currentColor">
@@ -263,14 +286,27 @@ export default function YourAtlasRotation() {
 
               <div className="px-0.5 min-w-0">
                 <div
-                  className={`text-[12px] sm:text-[13px] font-mono font-bold uppercase tracking-tight truncate transition-colors ${
+                  className={`text-[13px] sm:text-[14px] truncate transition-colors ${
                     isActive ? "text-shift5-orange" : "text-white group-hover:text-shift5-orange"
                   }`}
+                  style={{
+                    fontFamily: "var(--font-editorial)",
+                    fontWeight: 400,
+                    letterSpacing: "-0.01em",
+                  }}
                 >
                   {artist.name}
                 </div>
-                <div className="text-[10px] font-mono text-shift5-muted uppercase truncate mt-1 tracking-wider">
-                  {artist.genres[0] || "Uncharted"}
+                <div
+                  className="text-[10px] truncate mt-1"
+                  style={{
+                    fontFamily: "var(--font-editorial-mono)",
+                    letterSpacing: "0.14em",
+                    color: "var(--color-edit-ink-mute)",
+                    textTransform: "lowercase",
+                  }}
+                >
+                  {artist.genres[0] || "uncharted"}
                 </div>
               </div>
             </div>

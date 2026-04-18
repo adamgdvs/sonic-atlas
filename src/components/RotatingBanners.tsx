@@ -143,14 +143,35 @@ export default function RotatingBanners() {
     >
       <div className="mb-5 sm:mb-6 border-b border-white/[0.06] pb-3 flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] font-mono text-shift5-orange/80 uppercase tracking-[0.2em]">
-            Featured_Channels
+          <div
+            className="text-[10px] uppercase"
+            style={{
+              fontFamily: "var(--font-editorial-mono)",
+              letterSpacing: "0.18em",
+              color: "var(--color-edit-accent)",
+              opacity: 0.85,
+            }}
+          >
+            featured_channels
           </div>
-          <div className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
+          <div
+            className="text-[12px] sm:text-[13px] mt-1"
+            style={{
+              fontFamily: "var(--font-editorial-body)",
+              color: "var(--color-edit-ink-dim)",
+            }}
+          >
             Curated signals — mood, era, genre, region
           </div>
         </div>
-        <span className="shrink-0 text-[9px] font-mono text-shift5-subtle uppercase tracking-widest">
+        <span
+          className="shrink-0 text-[9px] uppercase"
+          style={{
+            fontFamily: "var(--font-editorial-mono)",
+            letterSpacing: "0.14em",
+            color: "var(--color-edit-ink-mute)",
+          }}
+        >
           {(index + 1).toString().padStart(2, "0")}/{ordered.length.toString().padStart(2, "0")}
         </span>
       </div>
@@ -158,14 +179,15 @@ export default function RotatingBanners() {
       {/* Primary rotating banner */}
       <button
         onClick={() => go(active)}
-        className={`group relative w-full h-[200px] sm:h-[260px] overflow-hidden border-2 border-white/10 text-left cursor-pointer transition-all duration-500 bg-gradient-to-br ${active.gradient} hover:border-white/30`}
+        className={`group relative w-full h-[200px] sm:h-[260px] overflow-hidden border border-white/[0.08] text-left cursor-pointer transition-all duration-500 bg-gradient-to-br ${active.gradient} hover:border-white/20`}
+        style={{ borderRadius: "2px" }}
       >
         {/* Grid texture */}
-        <div className="absolute inset-0 opacity-[0.06] bg-[linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] bg-[size:32px_32px]" />
+        <div className="absolute inset-0 opacity-[0.04] bg-[linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] bg-[size:32px_32px]" />
 
-        {/* Accent glow */}
+        {/* Accent tint (softer) */}
         <div
-          className="absolute -top-20 -right-20 w-[320px] h-[320px] rounded-full blur-3xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
+          className="absolute -top-20 -right-20 w-[320px] h-[320px] rounded-full blur-3xl opacity-20 group-hover:opacity-30 transition-opacity duration-700"
           style={{ backgroundColor: active.accent }}
         />
 
@@ -175,16 +197,22 @@ export default function RotatingBanners() {
         <div className="relative z-10 p-5 sm:p-8 h-full flex flex-col justify-between">
           <div className="flex items-center gap-2">
             <span
-              className="w-1.5 h-1.5 rounded-full animate-pulse shadow-[0_0_10px_currentColor]"
-              style={{ color: active.accent, backgroundColor: active.accent }}
+              className="w-1 h-1 rounded-full"
+              style={{ backgroundColor: active.accent }}
             />
             <span
-              className="text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.3em] font-bold"
-              style={{ color: active.accent }}
+              className="text-[9px] sm:text-[10px] uppercase tracking-[0.22em]"
+              style={{
+                color: active.accent,
+                fontFamily: "var(--font-editorial-mono)",
+              }}
             >
               {active.label}
             </span>
-            <span className="text-[9px] font-mono text-white/30 uppercase tracking-widest ml-auto">
+            <span
+              className="text-[9px] text-white/30 uppercase tracking-widest ml-auto"
+              style={{ fontFamily: "var(--font-editorial-mono)" }}
+            >
               {active.category}
             </span>
           </div>
@@ -192,15 +220,26 @@ export default function RotatingBanners() {
           <div>
             <h2
               key={active.id}
-              className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-tighter leading-[0.9] text-white mb-2 sm:mb-3 animate-fade-in"
+              className="text-3xl sm:text-5xl md:text-[56px] leading-[0.98] text-white mb-2 sm:mb-3 animate-fade-in"
+              style={{
+                fontFamily: "var(--font-editorial)",
+                fontWeight: 300,
+                letterSpacing: "-0.03em",
+              }}
             >
               {active.title}
             </h2>
-            <p className="text-[11px] sm:text-[13px] font-mono text-white/70 uppercase tracking-wider max-w-[520px] leading-relaxed">
+            <p
+              className="text-[12px] sm:text-[13.5px] text-white/65 max-w-[520px] leading-relaxed"
+              style={{ fontFamily: "var(--font-editorial-body)" }}
+            >
               {active.subtitle}
             </p>
-            <div className="mt-3 sm:mt-4 inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-white group-hover:text-shift5-orange transition-colors">
-              Enter_Channel <span className="group-hover:translate-x-1 transition-transform">→</span>
+            <div
+              className="mt-3 sm:mt-4 inline-flex items-center gap-2 text-[10px] sm:text-[11px] uppercase tracking-[0.16em] text-white/80 group-hover:text-shift5-orange transition-colors"
+              style={{ fontFamily: "var(--font-editorial-mono)" }}
+            >
+              enter_channel <span className="group-hover:translate-x-1 transition-transform">→</span>
             </div>
           </div>
         </div>

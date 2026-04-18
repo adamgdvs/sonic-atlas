@@ -5,6 +5,7 @@ import "./globals.css";
 import { GlobalProviders } from "@/providers/GlobalProviders";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import MobilePageTransition from "@/components/MobilePageTransition";
+import DesktopSidebar from "@/components/DesktopSidebar";
 
 const nonSans = localFont({
   src: "../../public/fonts/NON-Sans-Medium.woff2",
@@ -45,9 +46,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${nonSans.variable} ${spaceMono.variable} antialiased`}>
         <GlobalProviders>
+          <DesktopSidebar />
           <ErrorBoundary>
             <MobilePageTransition>
-              {children}
+              <div className="lg:pl-[240px]">
+                {children}
+              </div>
             </MobilePageTransition>
           </ErrorBoundary>
         </GlobalProviders>

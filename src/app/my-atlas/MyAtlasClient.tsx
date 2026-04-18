@@ -574,7 +574,7 @@ export default function MyAtlasClient({
 
     return (
         <>
-            <main className="flex-1 flex flex-col lg:flex-row relative lg:h-[calc(100vh-64px)] lg:overflow-hidden">
+            <main className="flex-1 min-h-0 flex flex-col lg:flex-row relative lg:overflow-hidden">
                 {/* Background Grid */}
                 <div className="fixed inset-0 pointer-events-none opacity-[0.02] overflow-hidden z-0">
                     <div className="absolute inset-0 bg-[linear-gradient(to_right,#888_1px,transparent_1px),linear-gradient(to_bottom,#888_1px,transparent_1px)] bg-[size:40px_40px]" />

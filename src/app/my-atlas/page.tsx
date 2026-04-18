@@ -27,7 +27,7 @@ export default async function MyAtlasPage() {
     });
 
     return (
-        <div className="min-h-screen bg-shift5-dark text-white flex flex-col">
+        <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-shift5-dark text-white flex flex-col">
             <Header />
             <MyAtlasClient bookmarks={bookmarks} playlists={playlists} />
         </div>

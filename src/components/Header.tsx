@@ -81,28 +81,28 @@ export default function Header() {
           {session ? (
             <Link
               href="/my-atlas"
-              className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5"
+              className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5"
             >
               MY ATLAS
             </Link>
           ) : (
             <Link
               href="/genres"
-              className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5"
+              className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5"
             >
               GENRES
             </Link>
           )}
 
-          <Link href="/about" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
+          <Link href="/about" className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
             ABOUT
           </Link>
 
-          <Link href="/frequency" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
+          <Link href="/frequency" className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
             FREQUENCY
           </Link>
 
-          <Link href="/help" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
+          <Link href="/help" className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
             HELP
           </Link>
 

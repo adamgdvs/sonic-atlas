@@ -74,18 +74,37 @@ export default function GenreCards({ limit = 16 }: { limit?: number }) {
     <div className="w-full max-w-[900px] mt-16 sm:mt-24">
       <div className="flex items-end justify-between mb-6 sm:mb-8 border-b border-white/[0.06] pb-3 gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] font-mono text-shift5-orange/80 uppercase tracking-[0.2em]">
-            Hot_Genre_Signals
+          <div
+            className="text-[10px] uppercase"
+            style={{
+              fontFamily: "var(--font-editorial-mono)",
+              letterSpacing: "0.18em",
+              color: "var(--color-edit-accent)",
+              opacity: 0.85,
+            }}
+          >
+            hot_genre_signals
           </div>
-          <div className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
+          <div
+            className="text-[12px] sm:text-[13px] mt-1"
+            style={{
+              fontFamily: "var(--font-editorial-body)",
+              color: "var(--color-edit-ink-dim)",
+            }}
+          >
             Cross-pollinated frequencies — tap to enter
           </div>
         </div>
         <Link
           href="/genres"
-          className="shrink-0 text-[10px] font-mono text-shift5-muted hover:text-shift5-orange active:text-shift5-orange transition-colors no-underline uppercase tracking-[0.1em] flex items-center gap-1"
+          className="shrink-0 text-[10px] hover:text-shift5-orange active:text-shift5-orange transition-colors no-underline uppercase flex items-center gap-1"
+          style={{
+            fontFamily: "var(--font-editorial-mono)",
+            letterSpacing: "0.12em",
+            color: "var(--color-edit-ink-mute)",
+          }}
         >
-          Full_Nexus <span>→</span>
+          full_nexus <span>→</span>
         </Link>
       </div>
 
@@ -100,9 +119,10 @@ export default function GenreCards({ limit = 16 }: { limit?: number }) {
             <div
               key={genre.name}
               onClick={() => router.push(`/genre/${encodeURIComponent(genre.name)}`)}
-              className="group relative aspect-[4/3] overflow-hidden cursor-pointer border-2 border-white/[0.06] hover:border-white/30 transition-all duration-300 bg-shift5-surface touch-manipulation"
+              className="group relative aspect-[4/3] overflow-hidden cursor-pointer border border-white/[0.08] hover:border-white/20 transition-all duration-300 bg-shift5-surface touch-manipulation"
               style={{
-                background: `linear-gradient(135deg, rgba(${r}, ${g}, ${b}, 0.85) 0%, rgba(${r}, ${g}, ${b}, 0.35) 50%, rgba(18, 18, 18, 1) 100%)`,
+                background: `linear-gradient(135deg, rgba(${r}, ${g}, ${b}, 0.7) 0%, rgba(${r}, ${g}, ${b}, 0.25) 50%, rgba(18, 18, 18, 1) 100%)`,
+                borderRadius: "2px",
               }}
             >
               {/* Halftone texture */}
@@ -123,16 +143,39 @@ export default function GenreCards({ limit = 16 }: { limit?: number }) {
               {/* Content */}
               <div className="relative z-10 h-full flex flex-col justify-between p-3 sm:p-4">
                 <div>
-                  <div className="text-[8px] sm:text-[9px] font-mono text-white/50 uppercase tracking-[0.2em]">
-                    Channel
+                  <div
+                    className="text-[9px] sm:text-[10px] uppercase"
+                    style={{
+                      fontFamily: "var(--font-editorial-mono)",
+                      letterSpacing: "0.18em",
+                      color: "rgba(255,255,255,0.55)",
+                    }}
+                  >
+                    channel
                   </div>
-                  <div className="text-[8px] font-mono text-white/30 uppercase mt-0.5 tracking-widest">
-                    {genre.count ? `${genre.count} signals` : "Live_Scan"}
+                  <div
+                    className="text-[9px] mt-0.5"
+                    style={{
+                      fontFamily: "var(--font-editorial-mono)",
+                      letterSpacing: "0.16em",
+                      color: "rgba(255,255,255,0.32)",
+                    }}
+                  >
+                    {genre.count ? `${genre.count} signals` : "live_scan"}
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-lg sm:text-2xl font-black uppercase tracking-tighter leading-[0.9] text-white line-clamp-2">
+                  <div
+                    className="text-[20px] sm:text-[26px] text-white line-clamp-2"
+                    style={{
+                      fontFamily: "var(--font-editorial)",
+                      fontWeight: 400,
+                      letterSpacing: "-0.02em",
+                      lineHeight: 1.02,
+                      textTransform: "capitalize",
+                    }}
+                  >
                     {genre.name}
                   </div>
                 </div>
