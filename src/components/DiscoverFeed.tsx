@@ -12,6 +12,7 @@ import {
   type TagArtistResult,
 } from "@/lib/api";
 import { useAudio } from "@/contexts/AudioContext";
+import { buildGeneratedDiscoveryMix, type GeneratedDiscoveryMix } from "@/lib/playlist-engine";
 import ArtistInitials from "./ArtistInitials";
 
 interface BookmarkSeed {
@@ -248,15 +249,19 @@ function DailyScanHero({
 
 export default function DiscoverFeed() {
   const { data: session, status } = useSession();
-  const { history, currentTrack, isPlaying, playTrack, setRadioMode } = useAudio();
+  const { history, currentTrack, isPlaying, playTrack, playQueue, setRadioMode } = useAudio();
   const router = useRouter();
 
   const [recoPools, setRecoPools] = useState<RecoPool[]>([]);
   const [displayGroups, setDisplayGroups] = useState<RecoGroup[]>([]);
   const [collageImages, setCollageImages] = useState<string[]>([]);
   const [seedNames, setSeedNames] = useState<string[]>([]);
+  const [bookmarkSeeds, setBookmarkSeeds] = useState<BookmarkSeed[]>([]);
+  const [generatedMix, setGeneratedMix] = useState<GeneratedDiscoveryMix | null>(null);
   const [loading, setLoading] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [isSavingMix, setIsSavingMix] = useState(false);
+  const [mixSaveState, setMixSaveState] = useState<"idle" | "saved" | "error">("idle");
   const [rotationKey, setRotationKey] = useState(0);
 
   const tasteSignature = useMemo(() => {
@@ -352,6 +357,8 @@ export default function DiscoverFeed() {
         }
       }
 
+      setBookmarkSeeds(bookmarkSeeds);
+
       const bookmarkArtists = bookmarkSeeds.slice(0, 6).map((bookmark) => bookmark.name);
       const bookmarkGenres = [...new Set(
         bookmarkSeeds.flatMap((bookmark) => bookmark.genres.map((genre) => genre.toLowerCase()))
@@ -437,30 +444,95 @@ export default function DiscoverFeed() {
   }, [history.length, session?.user, status, tasteSignature]);
 
   const handleStartMix = async () => {
-    if (displayGroups.length === 0 || isStarting) return;
+    if (recoPools.length === 0 || isStarting) return;
     setIsStarting(true);
+    setMixSaveState("idle");
 
     try {
-      const pool = shuffle(displayGroups.flatMap((group) => group.artists)).slice(0, 12);
-      for (const pick of pool) {
-        const data = await getArtistPreviewData(pick.name);
-        const track = data.tracks.find((item) => item.videoId || item.preview);
-        if (!track) continue;
+      const mix = await buildGeneratedDiscoveryMix(
+        {
+          candidatePools: recoPools,
+          tasteSeeds: {
+            artists: [...new Set([
+              ...bookmarkSeeds.map((bookmark) => bookmark.name),
+              ...tasteSignature.recentArtists,
+            ])].slice(0, 6),
+            genres: [...new Set([
+              ...bookmarkSeeds.flatMap((bookmark) => bookmark.genres.map((genre) => genre.toLowerCase())),
+              ...tasteSignature.recentGenres,
+            ])].slice(0, 6),
+          },
+          maxTracks: 12,
+        },
+        getArtistPreviewData
+      );
 
-        setRadioMode(true);
-        playTrack({
-          id: pick.name,
-          url: track.preview || "",
+      if (mix.tracks.length === 0) return;
+
+      setGeneratedMix(mix);
+      setRadioMode(false);
+      playQueue(
+        mix.tracks.map((track, index) => ({
+          id: `${track.artist}-${track.title}-${index}`,
+          url: track.url,
           title: track.title,
-          artist: pick.name,
-          coverUrl: data.image || pick.image || undefined,
-          genres: pick.genres,
-          videoId: track.videoId || undefined,
-        });
-        return;
-      }
+          artist: track.artist,
+          coverUrl: track.coverUrl || undefined,
+          genres: track.genres,
+          videoId: track.videoId,
+        })),
+        0
+      );
     } finally {
       setIsStarting(false);
+    }
+  };
+
+  const handleSaveMix = async () => {
+    if (!generatedMix || !session?.user || isSavingMix) return;
+    setIsSavingMix(true);
+    setMixSaveState("idle");
+
+    try {
+      const playlistRes = await fetch("/api/playlists", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: generatedMix.name,
+          description: generatedMix.description,
+        }),
+      });
+
+      if (!playlistRes.ok) {
+        throw new Error("Failed to create playlist");
+      }
+
+      const playlist = await playlistRes.json();
+
+      for (const track of generatedMix.tracks) {
+        const trackRes = await fetch(`/api/playlists/${playlist.id}/tracks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: track.title,
+            artist: track.artist,
+            url: track.url,
+            videoId: track.videoId,
+            coverUrl: track.coverUrl,
+            genres: track.genres,
+          }),
+        });
+
+        if (!trackRes.ok) {
+          throw new Error("Failed to save playlist tracks");
+        }
+      }
+
+      setMixSaveState("saved");
+    } catch {
+      setMixSaveState("error");
+    } finally {
+      setIsSavingMix(false);
     }
   };
 
@@ -535,6 +607,100 @@ export default function DiscoverFeed() {
         onStart={handleStartMix}
         isStarting={isStarting}
       />
+
+      {generatedMix && (
+        <div className="border border-white/[0.08] bg-white/[0.02] mb-8 sm:mb-10">
+          <div className="px-4 sm:px-5 py-4 border-b border-white/[0.06] flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em]">
+                Generated_Playlist
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tighter text-white mt-1">
+                {generatedMix.name}
+              </h3>
+              <p className="text-[10px] sm:text-[11px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
+                {generatedMix.tracks.length} tracks tuned from My Atlas and recent listening
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {session?.user && (
+                <button
+                  onClick={handleSaveMix}
+                  disabled={isSavingMix || mixSaveState === "saved"}
+                  className="px-4 py-2 border border-white/10 text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-white hover:border-shift5-orange hover:text-shift5-orange active:border-shift5-orange active:text-shift5-orange transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+                >
+                  {mixSaveState === "saved"
+                    ? "Saved_To_My_Atlas"
+                    : isSavingMix
+                      ? "Saving..."
+                      : "Save_Playlist"}
+                </button>
+              )}
+              <button
+                onClick={() => router.push("/my-atlas")}
+                className="px-4 py-2 border border-white/10 text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-white/80 hover:border-shift5-orange hover:text-shift5-orange active:border-shift5-orange active:text-shift5-orange transition-colors touch-manipulation"
+              >
+                Open_My_Atlas
+              </button>
+            </div>
+          </div>
+
+          <div className="px-4 sm:px-5 py-4 grid gap-4 sm:grid-cols-[1.2fr_1fr]">
+            <div>
+              <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mb-2">
+                Why_This_Mix
+              </div>
+              <div className="space-y-2">
+                {generatedMix.rationale.map((line) => (
+                  <p
+                    key={line}
+                    className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-wide"
+                  >
+                    {line}
+                  </p>
+                ))}
+                {mixSaveState === "error" && (
+                  <p className="text-[10px] font-mono text-shift5-orange uppercase tracking-widest">
+                    Save failed. Try again.
+                  </p>
+                )}
+                {!session?.user && (
+                  <p className="text-[10px] font-mono text-white/35 uppercase tracking-widest">
+                    Sign in to save this mix to My Atlas
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mb-2">
+                Track_Run
+              </div>
+              <div className="space-y-2">
+                {generatedMix.tracks.slice(0, 6).map((track, index) => (
+                  <div
+                    key={`${track.artist}-${track.title}-${index}`}
+                    className="flex items-start justify-between gap-3 text-[11px] font-mono uppercase tracking-wide"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-white truncate">
+                        {index + 1}. {track.title}
+                      </div>
+                      <div className="text-shift5-muted truncate mt-0.5">
+                        {track.artist} · {track.sourceLabel}
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-[9px] text-white/30 tracking-widest">
+                      {track.sourceType}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-8 sm:space-y-10">
         {displayGroups.map((group) => (

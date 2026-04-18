@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import ArtistInitials from "@/components/ArtistInitials";
@@ -57,6 +56,8 @@ export default function MyAtlasClient({
     const [activeTab, setActiveTab] = useState<TabMode>("artists");
     const [expandedPlaylist, setExpandedPlaylist] = useState<string | null>(null);
     const { playTrack, addToQueue, currentTrack, isPlaying } = useAudio();
+    const artistListRef = useRef<HTMLDivElement | null>(null);
+    const playlistListRef = useRef<HTMLDivElement | null>(null);
 
     const currentView = viewStack.length > 0 ? viewStack[viewStack.length - 1] : null;
     const selectedArtist = viewStack.findLast(v => v.type === 'artist')?.id || null;
@@ -160,6 +161,20 @@ export default function MyAtlasClient({
     const handleSidebarClick = (name: string) => {
         setViewStack([{ type: 'artist', id: name }]);
     };
+
+    const handleSidebarWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+        if (window.innerWidth < 1024) return;
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.deltaY === 0) return;
+
+        const activeContainer = activeTab === "artists" ? artistListRef.current : playlistListRef.current;
+        if (!activeContainer) return;
+
+        const target = e.target as HTMLElement | null;
+        if (target?.closest("[data-wheel-ignore='true']")) return;
+
+        activeContainer.scrollTop += e.deltaY;
+        e.preventDefault();
+    }, [activeTab]);
 
     const SORT_OPTIONS: { key: SortMode; label: string }[] = [
         { key: "date", label: "Recent" },
@@ -313,7 +328,11 @@ export default function MyAtlasClient({
             )}
 
             {/* ─── Bookmark List ─── */}
-            <div className="flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 pb-24 sm:pb-4" style={{ WebkitOverflowScrolling: "touch" }}>
+            <div
+                ref={artistListRef}
+                className="flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 pb-24 sm:pb-4"
+                style={{ WebkitOverflowScrolling: "touch" }}
+            >
                 {displayedBookmarks.length === 0 ? (
                     <div className="flex flex-col items-center justify-center mt-12 sm:mt-10 p-6 border border-dashed border-white/5">
                         <div className="text-white/10 text-2xl mb-3">♪</div>
@@ -365,7 +384,11 @@ export default function MyAtlasClient({
 
             {/* ═══ Playlists Tab ═══ */}
             {activeTab === "playlists" && (
-                <div className="flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 pb-24 sm:pb-4" style={{ WebkitOverflowScrolling: "touch" }}>
+                <div
+                    ref={playlistListRef}
+                    className="flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4 space-y-1.5 sm:space-y-2 pb-24 sm:pb-4"
+                    style={{ WebkitOverflowScrolling: "touch" }}
+                >
                     {playlists.length === 0 ? (
                         <div className="flex flex-col items-center justify-center mt-12 sm:mt-10 p-6 border border-dashed border-white/5">
                             <ListMusic size={24} className="text-white/10 mb-3" />
@@ -582,7 +605,10 @@ export default function MyAtlasClient({
                 </div>
 
                 {/* ═══ Sidebar: Full-screen on mobile, fixed-width on desktop ═══ */}
-                <div className="flex flex-col h-full w-full lg:w-[380px] bg-shift5-dark lg:border-r border-white/5 shrink-0 z-10 relative">
+                <div
+                    className="flex flex-col h-full w-full lg:w-[380px] bg-shift5-dark lg:border-r border-white/5 shrink-0 z-10 relative"
+                    onWheel={handleSidebarWheel}
+                >
                     {renderSidebarContent()}
                 </div>
 

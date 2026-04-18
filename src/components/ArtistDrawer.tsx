@@ -290,6 +290,7 @@ export default function ArtistDrawer({
     const [expandedAlbumPrimary, setExpandedAlbumPrimary] = useState<number | null>(null);
     const [isDiscoFocused, setIsDiscoFocused] = useState(false);
     const primaryAccordionRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     // Bookmarking
     const [bookmarkedArtists, setBookmarkedArtists] = useState<Set<string>>(new Set());
@@ -441,6 +442,17 @@ export default function ArtistDrawer({
     const primaryPreview = primaryDisco?.topTracks?.[0]?.preview || null;
 
     const isEmbedded = !!className;
+    const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.deltaY === 0) return;
+
+        const target = e.target as HTMLElement | null;
+        if (target?.closest("[data-wheel-ignore='true']")) return;
+
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop += e.deltaY;
+            e.preventDefault();
+        }
+    };
 
     const drawerBody = (
         <>
@@ -463,7 +475,11 @@ export default function ArtistDrawer({
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto overscroll-contain">
+            <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto overscroll-contain"
+                onWheel={handleWheelScroll}
+            >
                 {loading ? (
                     <div className="p-10 space-y-8 animate-pulse">
                         <div className="flex items-start gap-5">
@@ -487,7 +503,11 @@ export default function ArtistDrawer({
                                         <StreamingLinks artistName={artistName} size={16} className="mt-0.5 shrink-0" />
                                     </div>
                                     {artistInfo && (
-                                        <div className="mb-2 sm:mb-3 flex gap-1 overflow-x-auto sm:overflow-visible sm:flex-wrap no-scrollbar -mr-4 pr-4 sm:mr-0 sm:pr-0" style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}>
+                                    <div
+                                        className="mb-2 sm:mb-3 flex gap-1 overflow-x-auto sm:overflow-visible sm:flex-wrap no-scrollbar -mr-4 pr-4 sm:mr-0 sm:pr-0"
+                                        style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}
+                                        data-wheel-ignore="true"
+                                    >
                                             {artistInfo.genres.slice(0, 5).map(g => <div key={g} className="shrink-0"><GenreTag genre={g} onClick={() => onSelectGenre && onSelectGenre(g)} /></div>)}
                                         </div>
                                     )}
@@ -551,7 +571,10 @@ export default function ArtistDrawer({
                                     <div className="text-[9px] font-mono text-white/20 tracking-[0.2em] uppercase mb-3 sm:mb-4"><span className="hidden sm:inline">Core_Artifacts // </span>Discography</div>
 
                                     {/* Horizontal Scroll Discography */}
-                                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide no-scrollbar -mx-2 px-2 mask-linear-right">
+                                    <div
+                                        className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide no-scrollbar -mx-2 px-2 mask-linear-right"
+                                        data-wheel-ignore="true"
+                                    >
                                         {primaryDisco.albums.map((a) => (
                                             <div
                                                 key={a.id}

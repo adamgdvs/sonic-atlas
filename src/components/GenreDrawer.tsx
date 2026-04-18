@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
     getTopTagArtists,
@@ -59,6 +59,7 @@ export default function GenreDrawer({
     className?: string;
 }) {
     const { data: session } = useSession();
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     // Data State
     const [artists, setArtists] = useState<TagArtistResult[]>([]);
@@ -156,6 +157,17 @@ export default function GenreDrawer({
     };
 
     const isEmbedded = !!className;
+    const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.deltaY === 0) return;
+
+        const target = e.target as HTMLElement | null;
+        if (target?.closest("[data-wheel-ignore='true']")) return;
+
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop += e.deltaY;
+            e.preventDefault();
+        }
+    };
 
     const drawerBody = (
         <>
@@ -173,7 +185,11 @@ export default function GenreDrawer({
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto overscroll-contain">
+            <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto overscroll-contain"
+                onWheel={handleWheelScroll}
+            >
                 <div className="px-4 sm:px-6 py-4 sm:py-8 border-b border-white/5 bg-white/[0.01]">
                     <div className="flex items-center gap-3 mb-2 sm:mb-4">
                         <span className="text-[9px] sm:text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em] bg-shift5-orange/10 px-2 py-0.5 border border-shift5-orange/20">Genre</span>
