@@ -443,33 +443,79 @@ export default function DiscoverFeed() {
     }
   }, [history.length, session?.user, status, tasteSignature]);
 
+  // Auto-generate the mix as soon as reco pools are ready, without playing.
+  // The panel (rationale + track run + save/open buttons) then renders on first
+  // paint; pressing START_MIX just replays the already-built mix.
+  useEffect(() => {
+    if (recoPools.length === 0) return;
+    if (generatedMix) return;
+
+    let cancelled = false;
+    async function autoGen() {
+      try {
+        const mix = await buildGeneratedDiscoveryMix(
+          {
+            candidatePools: recoPools,
+            tasteSeeds: {
+              artists: [...new Set([
+                ...bookmarkSeeds.map((bookmark) => bookmark.name),
+                ...tasteSignature.recentArtists,
+              ])].slice(0, 6),
+              genres: [...new Set([
+                ...bookmarkSeeds.flatMap((bookmark) => bookmark.genres.map((genre) => genre.toLowerCase())),
+                ...tasteSignature.recentGenres,
+              ])].slice(0, 6),
+            },
+            maxTracks: 12,
+          },
+          getArtistPreviewData
+        );
+        if (cancelled) return;
+        if (mix.tracks.length > 0) {
+          setGeneratedMix(mix);
+          setMixSaveState("idle");
+        }
+      } catch {
+        // non-critical — user can still click START_MIX to retry
+      }
+    }
+    autoGen();
+    return () => {
+      cancelled = true;
+    };
+  }, [recoPools, bookmarkSeeds, tasteSignature, generatedMix]);
+
   const handleStartMix = async () => {
-    if (recoPools.length === 0 || isStarting) return;
+    if (isStarting) return;
     setIsStarting(true);
-    setMixSaveState("idle");
+    setMixSaveState((prev) => (prev === "saved" ? prev : "idle"));
 
     try {
-      const mix = await buildGeneratedDiscoveryMix(
-        {
-          candidatePools: recoPools,
-          tasteSeeds: {
-            artists: [...new Set([
-              ...bookmarkSeeds.map((bookmark) => bookmark.name),
-              ...tasteSignature.recentArtists,
-            ])].slice(0, 6),
-            genres: [...new Set([
-              ...bookmarkSeeds.flatMap((bookmark) => bookmark.genres.map((genre) => genre.toLowerCase())),
-              ...tasteSignature.recentGenres,
-            ])].slice(0, 6),
+      let mix = generatedMix;
+
+      if (!mix) {
+        if (recoPools.length === 0) return;
+        mix = await buildGeneratedDiscoveryMix(
+          {
+            candidatePools: recoPools,
+            tasteSeeds: {
+              artists: [...new Set([
+                ...bookmarkSeeds.map((bookmark) => bookmark.name),
+                ...tasteSignature.recentArtists,
+              ])].slice(0, 6),
+              genres: [...new Set([
+                ...bookmarkSeeds.flatMap((bookmark) => bookmark.genres.map((genre) => genre.toLowerCase())),
+                ...tasteSignature.recentGenres,
+              ])].slice(0, 6),
+            },
+            maxTracks: 12,
           },
-          maxTracks: 12,
-        },
-        getArtistPreviewData
-      );
+          getArtistPreviewData
+        );
+        if (mix.tracks.length === 0) return;
+        setGeneratedMix(mix);
+      }
 
-      if (mix.tracks.length === 0) return;
-
-      setGeneratedMix(mix);
       setRadioMode(false);
       playQueue(
         mix.tracks.map((track, index) => ({
