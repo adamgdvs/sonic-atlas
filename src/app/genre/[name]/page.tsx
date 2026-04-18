@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, use } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -11,7 +11,6 @@ import {
 } from "@/lib/api";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
-import GenreTag from "@/components/GenreTag";
 import ArtistInitials from "@/components/ArtistInitials";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { useJourney } from "@/contexts/JourneyContext";
@@ -158,7 +157,7 @@ export default function GenreDetailPage({
 
     fetchMissingImages();
     return () => { cancelled = true; };
-  }, [artists]);
+  }, [artists, imageMap]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -308,6 +307,15 @@ export default function GenreDetailPage({
                       className="group relative border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] transition-all duration-300 overflow-hidden"
                       style={{ animation: `fadeIn 0.5s ease ${i * 0.05}s both` }}
                       onClick={() => handleExplore(a.name)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleExplore(a.name);
+                        }
+                      }}
+                      role="link"
+                      tabIndex={0}
+                      aria-label={`Open artist ${a.name}`}
                     >
                       <div className="relative aspect-square overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700">
                         {(imageMap[a.name] || a.image) ? (
@@ -316,8 +324,8 @@ export default function GenreDetailPage({
                             alt={a.name}
                             width={300}
                             height={300}
+                            sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
                             className="object-cover w-full h-full scale-105 group-hover:scale-100 transition-transform duration-700"
-                            unoptimized
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-white/[0.02]">
@@ -333,8 +341,9 @@ export default function GenreDetailPage({
                           disabled={isBookmarking}
                           className={`absolute top-3 right-3 w-9 h-9 flex items-center justify-center border transition-all duration-300 backdrop-blur-md ${isBookmarked
                               ? 'bg-shift5-orange border-shift5-orange text-white'
-                              : 'bg-shift5-dark/80 border-white/10 text-white/60 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:bg-shift5-orange/20 hover:border-shift5-orange/40 hover:text-shift5-orange'
+                              : 'bg-shift5-dark/80 border-white/10 text-white/60 opacity-100 translate-y-0 sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 hover:bg-shift5-orange/20 hover:border-shift5-orange/40 hover:text-shift5-orange'
                             } ${isBookmarking ? 'animate-pulse' : ''}`}
+                          aria-label={isBookmarked ? `Remove bookmark for ${a.name}` : `Bookmark ${a.name}`}
                         >
                           <Heart size={14} fill={isBookmarked ? "currentColor" : "none"} />
                         </button>
@@ -342,7 +351,8 @@ export default function GenreDetailPage({
                         {/* Play Button */}
                         <button
                           onClick={(e) => { e.stopPropagation(); handlePlayArtist(a.name, undefined, a.image); }}
-                          className={`absolute bottom-3 right-3 w-10 h-10 flex items-center justify-center border transition-all duration-300 backdrop-blur-md ${isCurrentPlaying ? 'bg-shift5-orange border-shift5-orange text-white' : 'bg-shift5-dark/80 border-white/10 text-white opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:bg-shift5-orange hover:border-shift5-orange'}`}
+                          className={`absolute bottom-3 right-3 w-10 h-10 flex items-center justify-center border transition-all duration-300 backdrop-blur-md ${isCurrentPlaying ? 'bg-shift5-orange border-shift5-orange text-white' : 'bg-shift5-dark/80 border-white/10 text-white opacity-100 translate-y-0 sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 hover:bg-shift5-orange hover:border-shift5-orange'}`}
+                          aria-label={`${isCurrentPlaying ? "Pause" : "Play"} ${a.name}`}
                         >
                           {isCurrentPlaying ? (
                             <svg width={14} height={14} viewBox="0 0 12 12" fill="currentColor">
@@ -382,7 +392,20 @@ export default function GenreDetailPage({
                 <div className="text-[10px] font-mono text-white/30 uppercase mb-6 tracking-[0.2em] border-b border-white/5 pb-2">Proximal_Signals</div>
                 <div className="space-y-2">
                   {similarGenres.map((g) => (
-                    <div key={g.name} className="group flex items-center justify-between p-2 border border-white/5 hover:border-white/20 transition-all cursor-pointer" onClick={() => router.push(`/genre/${encodeURIComponent(g.name)}`)}>
+                    <div
+                      key={g.name}
+                      className="group flex items-center justify-between p-2 border border-white/5 hover:border-white/20 transition-all cursor-pointer"
+                      onClick={() => router.push(`/genre/${encodeURIComponent(g.name)}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          router.push(`/genre/${encodeURIComponent(g.name)}`);
+                        }
+                      }}
+                      role="link"
+                      tabIndex={0}
+                      aria-label={`Open related genre ${g.name}`}
+                    >
                       <span className="text-[11px] font-mono text-white/50 uppercase group-hover:text-white transition-colors">{g.name}</span>
                       <span className="text-[10px] text-white/10 group-hover:text-shift5-orange">→</span>
                     </div>

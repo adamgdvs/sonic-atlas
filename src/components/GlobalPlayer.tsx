@@ -9,7 +9,7 @@ import HistoryPanel from "@/components/HistoryPanel";
 import PlaylistModal from "@/components/PlaylistModal";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate as motionAnimate } from "framer-motion";
 import { getGenreArtists } from "@/lib/api";
-import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 function formatTime(seconds: number): string {
     if (!isFinite(seconds) || seconds < 0) return "0:00";
@@ -32,7 +32,6 @@ export default function GlobalPlayer() {
         trackEndedRaw,
         playTrack,
         seek,
-        hasEverPlayed,
         nextTrack,
         prevTrack,
         hasQueue,
@@ -43,14 +42,6 @@ export default function GlobalPlayer() {
         repeatMode,
         setRepeatMode,
     } = useAudio();
-
-    const pathname = usePathname();
-
-    const isDiscoveryPage = pathname === "/" ||
-        pathname.startsWith("/artist") ||
-        pathname.startsWith("/my-atlas") ||
-        pathname.startsWith("/genre") ||
-        pathname.startsWith("/genres");
 
     const [loadingNext, setLoadingNext] = useState(false);
     const [isSurging, setIsSurging] = useState(false);
@@ -78,7 +69,7 @@ export default function GlobalPlayer() {
         if (offsetX < -swipeThreshold || velocityX < -velocityThreshold) {
             // Swipe left → next track
             if (canSkipForward) {
-                hasQueue ? nextTrack() : seek(0.9999);
+                handleSkipForward();
             }
         } else if (offsetX > swipeThreshold || velocityX > velocityThreshold) {
             // Swipe right → previous track
@@ -88,10 +79,6 @@ export default function GlobalPlayer() {
         setSwipeHint(null);
         motionAnimate(miniBarX, 0, { type: "spring", stiffness: 400, damping: 30 });
     };
-
-    // Auto-hide: player collapses after 8s of inactivity (paused state)
-    const [isHidden, setIsHidden] = useState(false);
-    const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Seekbar dragging
     const seekbarRef = useRef<HTMLDivElement | null>(null);
@@ -125,31 +112,6 @@ export default function GlobalPlayer() {
         handleSeekbarInteraction(e.touches[0].clientX);
     }, [handleSeekbarInteraction]);
 
-    // Reset hide timer on any interaction or play state change
-    useEffect(() => {
-        if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-
-        if (!isPlaying && currentTrack) {
-            hideTimerRef.current = setTimeout(() => {
-                setIsHidden(true);
-            }, 8000);
-        } else {
-            setIsHidden(false);
-        }
-
-        return () => {
-            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-        };
-    }, [isPlaying, currentTrack]);
-
-    const handleReveal = () => {
-        setIsHidden(false);
-        if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-        hideTimerRef.current = setTimeout(() => {
-            if (!isPlaying) setIsHidden(true);
-        }, 8000);
-    };
-
     // Protection for Radio Mode to prevent infinite skip-loops
     const lastProcessedTrackEndedRef = useRef<number>(0);
 
@@ -161,6 +123,14 @@ export default function GlobalPlayer() {
 
     const canSkipForward = hasQueue || radioMode;
     const canSkipBack = hasQueue || true; // always allow restart
+    const handleSkipForward = () => {
+        if (!canSkipForward) return;
+        if (hasQueue) {
+            nextTrack();
+            return;
+        }
+        seek(0.9999);
+    };
 
     const handleSurge = async () => {
         if (!currentTrack?.genres || currentTrack.genres.length === 0) {
@@ -284,19 +254,8 @@ export default function GlobalPlayer() {
         };
     }, [trackEndedRaw, radioMode, currentTrack, playTrack, shuffleMode]);
 
-    // Show floating button on discovery pages if player has been used before but no track is loaded
     if (!currentTrack) {
-        if (!hasEverPlayed || !isDiscoveryPage) return null;
-        return (
-            <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-12 h-12 rounded-full bg-[#1D1D1F]/80 text-white/40 shadow-lg flex items-center justify-center hover:scale-110 hover:text-white/70 active:scale-95 transition-all border border-white/10"
-                title="No track loaded"
-            >
-                <Music size={18} />
-            </motion.button>
-        );
+        return null;
     }
 
     const timeRemaining = duration - currentTime;
@@ -329,6 +288,8 @@ export default function GlobalPlayer() {
                     <img
                         src={currentTrack.coverUrl}
                         alt=""
+                        loading="eager"
+                        decoding="async"
                         className="w-full h-full object-cover scale-110 blur-[80px] opacity-40"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-shift5-dark/80 via-shift5-dark/90 to-shift5-dark" />
@@ -403,6 +364,8 @@ export default function GlobalPlayer() {
                             <img
                                 src={currentTrack.coverUrl}
                                 alt={currentTrack.title}
+                                loading="eager"
+                                decoding="async"
                                 className="object-cover w-full h-full rounded-full"
                                 style={{ clipPath: "circle(50%)" }}
                             />
@@ -449,13 +412,13 @@ export default function GlobalPlayer() {
                         transition={{ duration: 0.25 }}
                     >
                         <h2 className="text-lg font-bold text-white truncate">{currentTrack.title}</h2>
-                        <a
+                        <Link
                             href={`/artist/${encodeURIComponent(currentTrack.artist)}`}
                             onClick={() => setMobileExpanded(false)}
                             className="text-[13px] text-white/50 truncate block mt-0.5 active:text-white/70"
                         >
                             {currentTrack.artist}
-                        </a>
+                        </Link>
                     </motion.div>
                 </AnimatePresence>
                 {error && <p className="text-[11px] text-red-400 mt-1 truncate">{error}</p>}
@@ -466,6 +429,11 @@ export default function GlobalPlayer() {
                 <div
                     ref={seekbarRef}
                     className="w-full h-[5px] bg-white/10 rounded-full cursor-pointer relative"
+                    role="slider"
+                    aria-label="Seek track position"
+                    aria-valuemin={0}
+                    aria-valuemax={Math.round(duration || 0)}
+                    aria-valuenow={Math.round(currentTime)}
                     onMouseDown={handleSeekMouseDown}
                     onTouchStart={handleSeekTouch}
                     onTouchMove={handleSeekTouch}
@@ -525,7 +493,7 @@ export default function GlobalPlayer() {
                 </motion.button>
 
                 <button
-                    onClick={canSkipForward ? () => { hasQueue ? nextTrack() : seek(0.9999); } : undefined}
+                    onClick={canSkipForward ? handleSkipForward : undefined}
                     disabled={!canSkipForward}
                     className={`w-11 h-11 flex items-center justify-center active:scale-90 transition-colors ${canSkipForward ? 'text-white' : 'text-white/15'}`}
                     aria-label="Next"
@@ -619,6 +587,16 @@ export default function GlobalPlayer() {
                 }}
                 onDragEnd={handleMiniBarDragEnd}
                 onTap={() => setMobileExpanded(true)}
+                onClick={() => setMobileExpanded(true)}
+                role="button"
+                tabIndex={0}
+                aria-label={`Now playing ${currentTrack.title} by ${currentTrack.artist}. Open player.`}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setMobileExpanded(true);
+                    }
+                }}
             >
                 {/* Swipe direction indicators */}
                 {swipeHint === "prev" && (
@@ -641,7 +619,14 @@ export default function GlobalPlayer() {
                         style={{ clipPath: "circle(50%)" }}
                     >
                         {currentTrack.coverUrl ? (
-                            <img src={currentTrack.coverUrl} alt="" className="w-full h-full object-cover rounded-full" style={{ clipPath: "circle(50%)" }} />
+                            <img
+                                src={currentTrack.coverUrl}
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-cover rounded-full"
+                                style={{ clipPath: "circle(50%)" }}
+                            />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center rounded-full"><Music size={16} className="text-white/20" /></div>
                         )}
@@ -692,7 +677,10 @@ export default function GlobalPlayer() {
                 {/* Skip forward */}
                 <motion.button
                     whileTap={{ scale: 0.85 }}
-                    onClick={(e) => { e.stopPropagation(); if (canSkipForward) { hasQueue ? nextTrack() : seek(0.9999); } }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleSkipForward();
+                    }}
                     className={`w-9 h-9 flex items-center justify-center shrink-0 ${canSkipForward ? 'text-white/60' : 'text-white/15'}`}
                     aria-label="Next"
                 >
@@ -741,6 +729,8 @@ export default function GlobalPlayer() {
                                     <img
                                         src={currentTrack.coverUrl}
                                         alt={currentTrack.title}
+                                        loading="eager"
+                                        decoding="async"
                                         className="object-cover w-full h-full rounded-full"
                                         style={{ clipPath: 'circle(50%)', WebkitClipPath: 'circle(50%)' }}
                                     />
@@ -770,12 +760,12 @@ export default function GlobalPlayer() {
                             {loadingNext && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0" />}
                         </div>
                         <p className="text-xs truncate mt-0.5">
-                            <a
+                            <Link
                                 href={`/artist/${encodeURIComponent(currentTrack.artist)}`}
                                 className="text-[#6B7280] hover:text-[#1D1D1F] hover:underline transition-colors"
                             >
                                 {currentTrack.artist}
-                            </a>
+                            </Link>
                         </p>
                         {hasQueue && (
                             <p className="text-[10px] font-mono text-[#6B7280] mt-0.5 uppercase tracking-wider">
@@ -791,6 +781,11 @@ export default function GlobalPlayer() {
                     <div
                         ref={!mobileExpanded ? seekbarRef : undefined}
                         className="w-full h-[6px] bg-[#F0F0F0] rounded-full cursor-pointer group/seek relative"
+                        role="slider"
+                        aria-label="Seek track position"
+                        aria-valuemin={0}
+                        aria-valuemax={Math.round(duration || 0)}
+                        aria-valuenow={Math.round(currentTime)}
                         onMouseDown={handleSeekMouseDown}
                         onTouchStart={handleSeekTouch}
                         onTouchMove={handleSeekTouch}
@@ -843,7 +838,7 @@ export default function GlobalPlayer() {
                     </button>
 
                     <button
-                        onClick={canSkipForward ? () => { hasQueue ? nextTrack() : seek(0.9999); } : undefined}
+                        onClick={canSkipForward ? handleSkipForward : undefined}
                         disabled={!canSkipForward}
                         className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${canSkipForward ? 'text-[#6B7280] hover:text-[#1D1D1F] active:scale-95' : 'text-[#E5E5E5] cursor-not-allowed'}`}
                         aria-label="Next"
@@ -918,44 +913,19 @@ export default function GlobalPlayer() {
 
     return (
         <>
-            {/* Floating reveal button when player is hidden */}
-            <AnimatePresence>
-                {isHidden && (
-                    <motion.button
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        onClick={handleReveal}
-                        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-12 h-12 rounded-full bg-[#1D1D1F] text-white shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform border border-white/10"
-                        title="Show Player"
-                    >
-                        <Music size={18} />
-                        <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 48 48">
-                            <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,88,65,0.3)" strokeWidth="2" />
-                            <circle
-                                cx="24" cy="24" r="22" fill="none"
-                                stroke="#ff5841" strokeWidth="2"
-                                strokeDasharray={`${progress * 138.2} 138.2`}
-                                strokeLinecap="round"
-                            />
-                        </svg>
-                    </motion.button>
-                )}
-            </AnimatePresence>
-
             {/* Mobile: expanded full-screen player */}
             <AnimatePresence>
                 {mobileExpanded && renderMobileExpanded()}
             </AnimatePresence>
 
-            {/* Mobile: mini bar (when not expanded and not hidden) */}
+            {/* Mobile: mini bar (when not expanded) */}
             <AnimatePresence>
-                {!isHidden && !mobileExpanded && renderMobileMiniBar()}
+                {!mobileExpanded && renderMobileMiniBar()}
             </AnimatePresence>
 
             {/* Desktop player */}
             <AnimatePresence>
-                {!isHidden && renderDesktopPlayer()}
+                {renderDesktopPlayer()}
             </AnimatePresence>
 
             {/* Queue Panel */}

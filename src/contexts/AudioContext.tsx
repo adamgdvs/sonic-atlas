@@ -55,6 +55,61 @@ interface AudioContextType {
     clearHistory: () => void;
 }
 
+interface PersistedAudioState {
+    currentTrack: TrackParams | null;
+    queue: TrackParams[];
+    queueIndex: number;
+    shuffleMode: boolean;
+    repeatMode: RepeatMode;
+    hasEverPlayed: boolean;
+}
+
+function getPersistedAudioState(): PersistedAudioState {
+    if (typeof window === "undefined") {
+        return {
+            currentTrack: null,
+            queue: [],
+            queueIndex: -1,
+            shuffleMode: false,
+            repeatMode: "none",
+            hasEverPlayed: false,
+        };
+    }
+
+    try {
+        const persisted = localStorage.getItem("sonic_audio_state");
+        if (!persisted) {
+            return {
+                currentTrack: null,
+                queue: [],
+                queueIndex: -1,
+                shuffleMode: false,
+                repeatMode: "none",
+                hasEverPlayed: false,
+            };
+        }
+
+        const data = JSON.parse(persisted) as PersistedAudioState;
+        return {
+            currentTrack: data.currentTrack ?? null,
+            queue: Array.isArray(data.queue) ? data.queue : [],
+            queueIndex: typeof data.queueIndex === "number" ? data.queueIndex : -1,
+            shuffleMode: Boolean(data.shuffleMode),
+            repeatMode: data.repeatMode ?? "none",
+            hasEverPlayed: Boolean(data.hasEverPlayed || data.currentTrack),
+        };
+    } catch {
+        return {
+            currentTrack: null,
+            queue: [],
+            queueIndex: -1,
+            shuffleMode: false,
+            repeatMode: "none",
+            hasEverPlayed: false,
+        };
+    }
+}
+
 // YouTube IFrame Player API types
 interface YTPlayer {
     playVideo(): void;
@@ -135,7 +190,8 @@ function loadYTApi(): Promise<void> {
 }
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
-    const [currentTrack, setCurrentTrack] = useState<TrackParams | null>(null);
+    const [persistedState] = useState<PersistedAudioState>(() => getPersistedAudioState());
+    const [currentTrack, setCurrentTrack] = useState<TrackParams | null>(persistedState.currentTrack);
     const [isPlaying, setIsPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
@@ -143,15 +199,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const [radioMode, setRadioMode] = useState(false);
     const [trackEndedRaw, setTrackEndedRaw] = useState(0);
     const [wasManuallyStopped, setWasManuallyStopped] = useState(false);
-    const [hasEverPlayed, setHasEverPlayed] = useState(false);
+    const [hasEverPlayed, setHasEverPlayed] = useState(persistedState.hasEverPlayed);
 
     // Queue
-    const [queue, setQueue] = useState<TrackParams[]>([]);
-    const [queueIndex, setQueueIndex] = useState(-1);
+    const [queue, setQueue] = useState<TrackParams[]>(persistedState.queue);
+    const [queueIndex, setQueueIndex] = useState(persistedState.queueIndex);
 
     // Shuffle & Repeat
-    const [shuffleMode, setShuffleMode] = useState(false);
-    const [repeatMode, setRepeatMode] = useState<RepeatMode>("none");
+    const [shuffleMode, setShuffleMode] = useState(persistedState.shuffleMode);
+    const [repeatMode, setRepeatMode] = useState<RepeatMode>(persistedState.repeatMode);
 
     // Listening history (persisted in localStorage)
     const [history, setHistory] = useState<HistoryEntry[]>(() => {
@@ -172,6 +228,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     // Which playback engine is active: "audio" (Deezer preview) or "yt" (YouTube)
     const activeEngineRef = useRef<"audio" | "yt">("audio");
+    const playbackPreparedRef = useRef(false);
 
     // Refs for callbacks that need latest state
     const handleTrackEndedRef = useRef<() => void>(() => {});
@@ -193,6 +250,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             clearInterval(ytTimerRef.current);
             ytTimerRef.current = null;
         }
+        playbackPreparedRef.current = false;
     }, []);
 
     // Start YT time tracking interval
@@ -232,6 +290,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     // Internal play function
     const startPlayback = useCallback((track: TrackParams) => {
         stopCurrentEngine();
+        playbackPreparedRef.current = true;
         setCurrentTrack(track);
         setProgress(0);
         setCurrentTime(0);
@@ -396,6 +455,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         } catch { /* storage full or unavailable */ }
     }, [history]);
 
+    useEffect(() => {
+        try {
+            const payload: PersistedAudioState = {
+                currentTrack,
+                queue,
+                queueIndex,
+                shuffleMode,
+                repeatMode,
+                hasEverPlayed,
+            };
+            localStorage.setItem("sonic_audio_state", JSON.stringify(payload));
+        } catch {
+            // Ignore unavailable storage
+        }
+    }, [currentTrack, queue, queueIndex, shuffleMode, repeatMode, hasEverPlayed]);
+
     // Set up HTML audio element for previews
     useEffect(() => {
         const audio = new Audio();
@@ -445,6 +520,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             : currentTrack?.url === track.url;
 
         if (isSameTrack) {
+            if (!playbackPreparedRef.current) {
+                setQueue([]);
+                setQueueIndex(-1);
+                startPlayback(track);
+                return;
+            }
             if (isPlaying) {
                 if (activeEngineRef.current === "yt" && ytPlayerRef.current) {
                     ytPlayerRef.current.pauseVideo();
@@ -484,6 +565,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             : currentTrack?.url === target.url;
 
         if (isSameTrack) {
+            if (!playbackPreparedRef.current) {
+                setQueue(tracks);
+                setQueueIndex(idx);
+                startPlayback(target);
+                return;
+            }
             if (isPlaying) {
                 if (activeEngineRef.current === "yt" && ytPlayerRef.current) {
                     ytPlayerRef.current.pauseVideo();
@@ -572,6 +659,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const togglePlayPause = useCallback(() => {
         if (!currentTrack) return;
 
+        if (!playbackPreparedRef.current) {
+            startPlayback(currentTrack);
+            return;
+        }
+
         if (isPlaying) {
             if (activeEngineRef.current === "yt" && ytPlayerRef.current) {
                 ytPlayerRef.current.pauseVideo();
@@ -593,7 +685,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
                 }).catch(() => setIsPlaying(false));
             }
         }
-    }, [currentTrack, isPlaying, startYTTimeTracking]);
+    }, [currentTrack, isPlaying, startPlayback, startYTTimeTracking]);
 
     const seek = useCallback((ratio: number) => {
         const time = ratio * duration;

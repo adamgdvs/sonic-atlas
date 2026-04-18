@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useMemo } from "react";
-import { getInitials, getGenreColor } from "@/lib/utils";
+import { getInitials } from "@/lib/utils";
 import * as d3 from "d3";
 import { useRouter } from "next/navigation";
 
@@ -37,6 +37,7 @@ export default function HomeConstellationGraph({
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [isPanning, setIsPanning] = useState(false);
     const [hoveredId, setHoveredId] = useState<string | null>(null);
+    const [keyboardIndex, setKeyboardIndex] = useState(0);
     const lastMouse = useRef({ x: 0, y: 0 });
     const router = useRouter();
 
@@ -89,7 +90,7 @@ export default function HomeConstellationGraph({
             .stop();
 
         // Run the simulation synchronously
-        simulation.tick(300);
+        simulation.tick(Math.min(220, Math.max(100, bookmarks.length * 10)));
 
         return {
             nodes: _nodes as LayoutNode[],
@@ -101,11 +102,6 @@ export default function HomeConstellationGraph({
 
     const nodeR = 12 * scale;
     const nodeRHl = 15 * scale;
-
-    function nodeColor(genres: string[]): string {
-        if (genres.length === 0) return "#6B7280";
-        return getGenreColor(genres[0]);
-    }
 
     const handleWheel = useCallback((e: React.WheelEvent) => {
         e.preventDefault();
@@ -151,10 +147,11 @@ export default function HomeConstellationGraph({
     const vbH = height / zoom;
     const vbX = (width - vbW) / 2 - pan.x;
     const vbY = (height - vbH) / 2 - pan.y;
+    const activeKeyboardIndex = bookmarks.length === 0 ? 0 : Math.min(keyboardIndex, bookmarks.length - 1);
+    const keyboardNode = bookmarks[activeKeyboardIndex] ?? null;
 
-    function renderNode(node: LayoutNode, i: number) {
+    function renderNode(node: LayoutNode) {
         const isHl = hoveredId === node.id;
-        const color = nodeColor(node.genres);
         const r = isHl ? nodeRHl : nodeR;
 
         return (
@@ -242,6 +239,51 @@ export default function HomeConstellationGraph({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            tabIndex={0}
+            role="group"
+            aria-label="Constellation graph of bookmarked artists"
+            aria-describedby="atlas-constellation-help"
+            onFocus={() => {
+                if (keyboardNode) setHoveredId(keyboardNode.id);
+            }}
+            onBlur={() => setHoveredId(null)}
+            onKeyDown={(e) => {
+                if (bookmarks.length === 0) return;
+                if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+                    e.preventDefault();
+                    const nextIndex = (activeKeyboardIndex + 1) % bookmarks.length;
+                    setKeyboardIndex(nextIndex);
+                    setHoveredId(bookmarks[nextIndex].id);
+                    return;
+                }
+                if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+                    e.preventDefault();
+                    const nextIndex = activeKeyboardIndex <= 0 ? bookmarks.length - 1 : activeKeyboardIndex - 1;
+                    setKeyboardIndex(nextIndex);
+                    setHoveredId(bookmarks[nextIndex].id);
+                    return;
+                }
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    const selected = bookmarks[activeKeyboardIndex];
+                    if (selected) handleExplore(selected.name);
+                    return;
+                }
+                if (e.key === "+" || e.key === "=") {
+                    e.preventDefault();
+                    setZoom((z) => Math.min(4, z + 0.25));
+                    return;
+                }
+                if (e.key === "-" || e.key === "_") {
+                    e.preventDefault();
+                    setZoom((z) => Math.max(0.4, z - 0.25));
+                    return;
+                }
+                if (e.key === "0") {
+                    e.preventDefault();
+                    handleReset();
+                }
+            }}
             style={{
                 cursor: isPanning ? "grabbing" : "grab",
                 touchAction: "none",
@@ -281,7 +323,7 @@ export default function HomeConstellationGraph({
 
                 {/* Nodes */}
                 <g>
-                    {layoutNodes.map((node, i) => renderNode(node, i))}
+                    {layoutNodes.map((node) => renderNode(node))}
                 </g>
             </svg>
 
@@ -315,6 +357,9 @@ export default function HomeConstellationGraph({
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
             </div>
+            <p id="atlas-constellation-help" className="sr-only">
+                Use arrow keys to move between bookmarked artists, Enter to open the selected artist, plus and minus to zoom, and zero to reset the graph.
+            </p>
         </div>
     );
 }

@@ -19,20 +19,25 @@ export default function SearchBar({
   const [focused, setFocused] = useState(false);
   const [results, setResults] = useState<AutocompleteResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const resultsId = useRef(`search-results-${Math.random().toString(36).slice(2)}`);
 
   const doSearch = useCallback(async (q: string) => {
     if (q.length < 2) {
       setResults([]);
+      setActiveIndex(-1);
       return;
     }
     setLoading(true);
     try {
       const data = await getAutocompleteSuggestions(q);
       setResults(data);
+      setActiveIndex(data.length > 0 ? 0 : -1);
     } catch {
       setResults([]);
+      setActiveIndex(-1);
     } finally {
       setLoading(false);
     }
@@ -49,12 +54,15 @@ export default function SearchBar({
   const handleSelect = (item: AutocompleteResult) => {
     setQuery("");
     setResults([]);
+    setActiveIndex(-1);
     if (item.type === "genre" && onSelectGenre) {
       onSelectGenre(item.name);
     } else {
       onSelectArtist(item.name);
     }
   };
+
+  const isExpanded = focused && (results.length > 0 || loading);
 
   return (
     <div className={`relative group/search ${headerMode ? 'w-full' : ''}`}>
@@ -68,13 +76,44 @@ export default function SearchBar({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => {
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            if (results.length > 0) {
+              setActiveIndex((prev) => (prev + 1) % results.length);
+            }
+            return;
+          }
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            if (results.length > 0) {
+              setActiveIndex((prev) => (prev <= 0 ? results.length - 1 : prev - 1));
+            }
+            return;
+          }
           if (e.key === "Enter" && results.length > 0) {
-            handleSelect(results[0]);
+            e.preventDefault();
+            const selected = results[activeIndex >= 0 ? activeIndex : 0];
+            if (selected) handleSelect(selected);
+            return;
+          }
+          if (e.key === "Escape") {
+            setResults([]);
+            setActiveIndex(-1);
+            setFocused(false);
+            inputRef.current?.blur();
           }
         }}
         onFocus={() => setFocused(true)}
-        onBlur={() => setTimeout(() => setFocused(false), 200)}
-        aria-label="Search for artists"
+        onBlur={() => setTimeout(() => {
+          setFocused(false);
+          setActiveIndex(-1);
+        }, 200)}
+        aria-label="Search for artists or genres"
+        aria-autocomplete="list"
+        aria-controls={resultsId.current}
+        aria-expanded={isExpanded}
+        aria-activedescendant={activeIndex >= 0 ? `${resultsId.current}-option-${activeIndex}` : undefined}
+        role="combobox"
         placeholder={headerMode ? "SEARCH" : (compact ? "SEARCH" : "SEARCH_NEXUS...")}
         className={`w-full outline-none text-white font-mono transition-all duration-300 placeholder:text-white/20 uppercase tracking-wider ${headerMode ? 'border-b border-white/10 focus:border-shift5-orange' : 'border'}`}
         style={{
@@ -86,8 +125,13 @@ export default function SearchBar({
           boxShadow: focused && !headerMode ? "0 0 15px rgba(255, 88, 65, 0.1)" : "none",
         }}
       />
-      {focused && (results.length > 0 || loading) && (
-        <div className="absolute top-full left-0 right-0 bg-shift5-gray border border-shift5-orange/30 border-t-0 z-50 shadow-2xl backdrop-blur-md max-h-[60vh] sm:max-h-[400px] overflow-y-auto overscroll-contain">
+      {isExpanded && (
+        <div
+          id={resultsId.current}
+          role="listbox"
+          aria-label="Search suggestions"
+          className="absolute top-full left-0 right-0 bg-shift5-gray border border-shift5-orange/30 border-t-0 z-50 shadow-2xl backdrop-blur-md max-h-[60vh] sm:max-h-[400px] overflow-y-auto overscroll-contain"
+        >
           {loading && results.length === 0 && (
             <div className="px-4 py-8 text-[11px] text-shift5-orange font-mono animate-pulse flex flex-col items-center gap-2">
               <div className="w-12 h-1 bg-shift5-orange/20 overflow-hidden relative">
@@ -97,10 +141,17 @@ export default function SearchBar({
             </div>
           )}
           {results.map((r, i) => (
-            <div
+            <button
               key={`${r.type}-${r.name}-${i}`}
+              id={`${resultsId.current}-option-${i}`}
+              type="button"
+              role="option"
+              aria-selected={activeIndex === i}
               onClick={() => handleSelect(r)}
-              className="flex items-center gap-4 cursor-pointer hover:bg-white/5 active:bg-white/10 group border-b border-white/5 last:border-b-0 transition-colors touch-manipulation"
+              onMouseEnter={() => setActiveIndex(i)}
+              className={`w-full text-left flex items-center gap-4 cursor-pointer active:bg-white/10 group border-b border-white/5 last:border-b-0 transition-colors touch-manipulation ${
+                activeIndex === i ? "bg-white/5" : "hover:bg-white/5"
+              }`}
               style={{ padding: "12px 16px", fontSize: "13px" }}
             >
               {r.type === "artist" ? (
@@ -124,20 +175,26 @@ export default function SearchBar({
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <div className="font-bold text-white group-hover:text-shift5-orange truncate uppercase font-mono tracking-tight transition-colors">
+                <div className={`font-bold truncate uppercase font-mono tracking-tight transition-colors ${
+                  activeIndex === i ? "text-shift5-orange" : "text-white group-hover:text-shift5-orange"
+                }`}>
                   {r.name}
                 </div>
                 {!compact && (
-                  <div className="text-[10px] text-white/30 group-hover:text-white/50 truncate uppercase font-mono tracking-widest transition-colors flex items-center gap-2">
+                  <div className={`text-[10px] truncate uppercase font-mono tracking-widest transition-colors flex items-center gap-2 ${
+                    activeIndex === i ? "text-white/50" : "text-white/30 group-hover:text-white/50"
+                  }`}>
                     <span className="w-1 h-1 bg-white/10 rounded-full" />
                     SIG_TYPE_{r.type}
                   </div>
                 )}
               </div>
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity text-shift5-orange font-mono text-[10px]">
+              <div className={`transition-opacity text-shift5-orange font-mono text-[10px] ${
+                activeIndex === i ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              }`}>
                 [SELECT]
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}

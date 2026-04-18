@@ -1,21 +1,85 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   getSimilarArtists,
   getArtistPreviewData,
+  getTopTagArtists,
   type SimilarArtistResult,
+  type TagArtistResult,
 } from "@/lib/api";
 import { useAudio } from "@/contexts/AudioContext";
 import ArtistInitials from "./ArtistInitials";
 
+interface BookmarkSeed {
+  name: string;
+  imageUrl?: string | null;
+  genres: string[];
+}
+
+interface DiscoveryArtist extends SimilarArtistResult {
+  score?: number;
+}
+
 interface RecoGroup {
   source: string;
   sourceImage?: string;
-  artists: SimilarArtistResult[];
+  sourceType: "artist" | "genre";
+  artists: DiscoveryArtist[];
+}
+
+interface RecoPool {
+  source: string;
+  sourceImage?: string;
+  sourceType: "artist" | "genre";
+  artists: DiscoveryArtist[];
+}
+
+const DISPLAY_GROUP_COUNT = 4;
+const DISPLAY_ARTISTS_PER_GROUP = 8;
+const ROTATION_INTERVAL_MS = 45000;
+
+function shuffle<T>(items: T[]): T[] {
+  const next = [...items];
+  for (let i = next.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
+  }
+  return next;
+}
+
+function sample<T>(items: T[], count: number): T[] {
+  return shuffle(items).slice(0, count);
+}
+
+function parseBookmarkGenres(raw: unknown): string[] {
+  if (typeof raw !== "string") return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((value): value is string => typeof value === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function normalizeDiscoveryArtist(
+  artist: SimilarArtistResult | TagArtistResult,
+  score = 0
+): DiscoveryArtist {
+  return {
+    name: artist.name,
+    mbid: artist.mbid || "",
+    match: "match" in artist ? artist.match : score,
+    url: artist.url || "",
+    image: artist.image || null,
+    genres: "genres" in artist && Array.isArray(artist.genres) ? artist.genres : [],
+    score,
+  };
 }
 
 function DiscoveryCard({
@@ -24,7 +88,7 @@ function DiscoveryCard({
   onPlay,
   isActive,
 }: {
-  artist: SimilarArtistResult;
+  artist: DiscoveryArtist;
   onOpen: () => void;
   onPlay: (e: React.MouseEvent) => void;
   isActive: boolean;
@@ -56,17 +120,14 @@ function DiscoveryCard({
           </div>
         )}
 
-        {/* Gradient base overlay (always subtle) */}
         <div className="absolute inset-0 bg-gradient-to-t from-shift5-dark/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
 
-        {/* Active indicator ribbon */}
         {isActive && (
           <div className="absolute top-2 left-2 px-2 py-0.5 bg-shift5-orange text-white text-[8px] font-mono font-bold uppercase tracking-widest">
             ● Signal
           </div>
         )}
 
-        {/* Play button */}
         <button
           onClick={onPlay}
           className="absolute bottom-2.5 right-2.5 w-11 h-11 bg-shift5-orange text-white border-2 border-shift5-orange flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 group-active:opacity-100 group-active:translate-y-0 transition-all duration-300 shadow-[0_4px_20px_rgba(255,88,65,0.5)] hover:bg-white hover:text-shift5-orange touch-manipulation"
@@ -118,7 +179,6 @@ function DailyScanHero({
 
   return (
     <div className="relative w-full overflow-hidden border-2 border-white/10 mb-8 sm:mb-10 group bg-shift5-dark">
-      {/* 2x2 image collage */}
       <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
         {filled.slice(0, 4).map((img, i) =>
           img ? (
@@ -138,14 +198,10 @@ function DailyScanHero({
         )}
       </div>
 
-      {/* Orange accent gradient + dark veil */}
       <div className="absolute inset-0 bg-gradient-to-br from-shift5-orange/25 via-shift5-dark/80 to-shift5-dark/95" />
       <div className="absolute inset-0 bg-gradient-to-t from-shift5-dark via-shift5-dark/60 to-transparent" />
-
-      {/* Subtle grid texture */}
       <div className="absolute inset-0 opacity-[0.04] bg-[linear-gradient(to_right,#888_1px,transparent_1px),linear-gradient(to_bottom,#888_1px,transparent_1px)] bg-[size:32px_32px]" />
 
-      {/* Content */}
       <div className="relative z-10 p-5 sm:p-7 md:p-9 flex flex-col sm:flex-row sm:items-end justify-between gap-5 sm:gap-6 min-h-[220px] sm:min-h-[240px]">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-3 sm:mb-4">
@@ -158,8 +214,8 @@ function DailyScanHero({
             Your Daily Scan
           </h2>
           <p className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-widest truncate">
-            Tuned for {seedNames.slice(0, 2).join(" · ")}
-            {seedNames.length > 2 && " · +more"}
+            Tuned for {seedNames.slice(0, 3).join(" · ")}
+            {seedNames.length > 3 && " · +more"}
           </p>
           <p className="text-[9px] font-mono text-shift5-subtle uppercase tracking-widest mt-1">
             {today}
@@ -194,71 +250,182 @@ export default function DiscoverFeed() {
   const { data: session, status } = useSession();
   const { history, currentTrack, isPlaying, playTrack, setRadioMode } = useAudio();
   const router = useRouter();
-  const [recoGroups, setRecoGroups] = useState<RecoGroup[]>([]);
+
+  const [recoPools, setRecoPools] = useState<RecoPool[]>([]);
+  const [displayGroups, setDisplayGroups] = useState<RecoGroup[]>([]);
   const [collageImages, setCollageImages] = useState<string[]>([]);
   const [seedNames, setSeedNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
-  const initialized = useRef(false);
+  const [rotationKey, setRotationKey] = useState(0);
+
+  const tasteSignature = useMemo(() => {
+    const recentArtists = [...new Set(history.slice(0, 18).map((entry) => entry.track.artist))]
+      .filter(Boolean);
+    const genreCounts = new Map<string, number>();
+
+    history.slice(0, 30).forEach((entry) => {
+      (entry.track.genres || []).forEach((genre) => {
+        const normalized = genre.toLowerCase();
+        genreCounts.set(normalized, (genreCounts.get(normalized) || 0) + 1);
+      });
+    });
+
+    return {
+      recentArtists,
+      recentGenres: [...genreCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([genre]) => genre),
+    };
+  }, [history]);
+
+  const rebuildDisplayGroups = useCallback((pools: RecoPool[]) => {
+    if (pools.length === 0) {
+      setDisplayGroups([]);
+      setCollageImages([]);
+      return;
+    }
+
+    const selectedPools = sample(
+      pools.filter((pool) => pool.artists.length > 0),
+      DISPLAY_GROUP_COUNT
+    ).map((pool) => ({
+      ...pool,
+      artists: sample(pool.artists, DISPLAY_ARTISTS_PER_GROUP),
+    }));
+
+    setDisplayGroups(selectedPools);
+
+    const images: string[] = [];
+    for (const group of selectedPools) {
+      for (const artist of group.artists) {
+        if (artist.image && !images.includes(artist.image)) {
+          images.push(artist.image);
+        }
+        if (images.length >= 4) break;
+      }
+      if (images.length >= 4) break;
+    }
+    setCollageImages(images);
+  }, []);
+
+  useEffect(() => {
+    if (recoPools.length === 0) return;
+    rebuildDisplayGroups(recoPools);
+  }, [rotationKey, recoPools, rebuildDisplayGroups]);
+
+  useEffect(() => {
+    if (recoPools.length === 0) return;
+    const timer = window.setInterval(() => {
+      setRotationKey((value) => value + 1);
+    }, ROTATION_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [recoPools.length]);
 
   useEffect(() => {
     if (status === "loading") return;
-    if (initialized.current) return;
-    initialized.current = true;
 
     async function loadRecos() {
-      const historyArtists = [
-        ...new Set(history.slice(0, 15).map((h) => h.track.artist)),
-      ].slice(0, 2);
+      const historyArtists = tasteSignature.recentArtists.slice(0, 4);
+      const historyGenres = tasteSignature.recentGenres.slice(0, 4);
 
-      let bookmarkArtists: string[] = [];
+      let bookmarkSeeds: BookmarkSeed[] = [];
       if (session?.user) {
         try {
           const res = await fetch("/api/bookmarks");
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            bookmarkArtists = (data as { name: string }[])
-              .slice(0, 3)
-              .map((b) => b.name);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data)) {
+              bookmarkSeeds = data.slice(0, 12).map((bookmark: {
+                name: string;
+                imageUrl?: string | null;
+                genres?: string;
+              }) => ({
+                name: bookmark.name,
+                imageUrl: bookmark.imageUrl || null,
+                genres: parseBookmarkGenres(bookmark.genres),
+              }));
+            }
           }
         } catch {
           // non-critical
         }
       }
 
-      const allSeeds = [
-        ...new Set([...bookmarkArtists, ...historyArtists]),
-      ].slice(0, 3);
+      const bookmarkArtists = bookmarkSeeds.slice(0, 6).map((bookmark) => bookmark.name);
+      const bookmarkGenres = [...new Set(
+        bookmarkSeeds.flatMap((bookmark) => bookmark.genres.map((genre) => genre.toLowerCase()))
+      )].slice(0, 6);
 
-      if (allSeeds.length === 0) return;
-      setSeedNames(allSeeds);
+      const artistSeeds = [...new Set([...bookmarkArtists, ...historyArtists])].slice(0, 6);
+      const genreSeeds = [...new Set([...bookmarkGenres, ...historyGenres])].slice(0, 4);
+      const bannedNames = new Set(
+        [...bookmarkArtists, ...historyArtists].map((name) => name.toLowerCase())
+      );
 
+      if (artistSeeds.length === 0 && genreSeeds.length === 0) {
+        setRecoPools([]);
+        setDisplayGroups([]);
+        return;
+      }
+
+      setSeedNames([...artistSeeds.slice(0, 4), ...genreSeeds.slice(0, 2)]);
       setLoading(true);
+
       try {
-        const groups = await Promise.all(
-          allSeeds.map(async (source) => {
-            const similar = await getSimilarArtists(source, 10, 60);
-            const filtered = similar
-              .filter((a) => !allSeeds.includes(a.name))
-              .slice(0, 8);
-            return { source, artists: filtered };
+        const artistPoolsPromise = Promise.all(
+          artistSeeds.map(async (source) => {
+            const sourceMeta = bookmarkSeeds.find((bookmark) => bookmark.name === source);
+            const similar = await getSimilarArtists(source, 18, 70);
+
+            const deduped = similar
+              .filter((artist) => artist.name.toLowerCase() !== source.toLowerCase())
+              .filter((artist) => !bannedNames.has(artist.name.toLowerCase()))
+              .reduce<DiscoveryArtist[]>((acc, artist) => {
+                if (acc.some((item) => item.name.toLowerCase() === artist.name.toLowerCase())) {
+                  return acc;
+                }
+                acc.push(normalizeDiscoveryArtist(artist, artist.match));
+                return acc;
+              }, []);
+
+            return {
+              source,
+              sourceImage: sourceMeta?.imageUrl || undefined,
+              sourceType: "artist" as const,
+              artists: deduped,
+            };
           })
         );
-        const validGroups = groups.filter((g) => g.artists.length > 0);
-        setRecoGroups(validGroups);
 
-        // Build collage from first image of each row + extras
-        const images: string[] = [];
-        for (const g of validGroups) {
-          for (const a of g.artists) {
-            if (a.image && !images.includes(a.image)) {
-              images.push(a.image);
-              if (images.length >= 4) break;
-            }
-          }
-          if (images.length >= 4) break;
-        }
-        setCollageImages(images);
+        const genrePoolsPromise = Promise.all(
+          genreSeeds.map(async (genre) => {
+            const artists = await getTopTagArtists(genre, 16);
+            const deduped = artists
+              .filter((artist) => !bannedNames.has(artist.name.toLowerCase()))
+              .reduce<DiscoveryArtist[]>((acc, artist, index) => {
+                if (acc.some((item) => item.name.toLowerCase() === artist.name.toLowerCase())) {
+                  return acc;
+                }
+                const normalized = normalizeDiscoveryArtist(artist, Math.max(0.3, 1 - index * 0.04));
+                normalized.genres = normalized.genres.length > 0 ? normalized.genres : [genre];
+                acc.push(normalized);
+                return acc;
+              }, []);
+
+            return {
+              source: genre,
+              sourceType: "genre" as const,
+              artists: deduped,
+            };
+          })
+        );
+
+        const combined = [...await artistPoolsPromise, ...await genrePoolsPromise]
+          .filter((pool) => pool.artists.length > 0);
+
+        setRecoPools(combined);
+        setRotationKey((value) => value + 1);
       } finally {
         setLoading(false);
       }
@@ -267,46 +434,49 @@ export default function DiscoverFeed() {
     if (history.length > 0 || session?.user) {
       loadRecos();
     }
-  }, [status]);
+  }, [history.length, session?.user, status, tasteSignature]);
 
   const handleStartMix = async () => {
-    if (recoGroups.length === 0 || isStarting) return;
+    if (displayGroups.length === 0 || isStarting) return;
     setIsStarting(true);
+
     try {
-      // Flatten all recommendations and pick a track-playable one
-      const pool = recoGroups.flatMap((g) => g.artists);
-      const pick = pool[Math.floor(Math.random() * Math.min(pool.length, 6))];
-      if (!pick) return;
-      const data = await getArtistPreviewData(pick.name);
-      const track = data.tracks.find((t) => t.videoId || t.preview);
-      if (!track) return;
-      setRadioMode(true);
-      playTrack({
-        id: pick.name,
-        url: track.preview || "",
-        title: track.title,
-        artist: pick.name,
-        coverUrl: data.image || pick.image || undefined,
-        genres: pick.genres,
-        videoId: track.videoId || undefined,
-      });
+      const pool = shuffle(displayGroups.flatMap((group) => group.artists)).slice(0, 12);
+      for (const pick of pool) {
+        const data = await getArtistPreviewData(pick.name);
+        const track = data.tracks.find((item) => item.videoId || item.preview);
+        if (!track) continue;
+
+        setRadioMode(true);
+        playTrack({
+          id: pick.name,
+          url: track.preview || "",
+          title: track.title,
+          artist: pick.name,
+          coverUrl: data.image || pick.image || undefined,
+          genres: pick.genres,
+          videoId: track.videoId || undefined,
+        });
+        return;
+      }
     } finally {
       setIsStarting(false);
     }
   };
 
-  const handlePlayArtist = async (a: SimilarArtistResult) => {
+  const handlePlayArtist = async (artist: DiscoveryArtist) => {
     try {
-      const data = await getArtistPreviewData(a.name);
-      const track = data.tracks.find((t) => t.videoId || t.preview);
+      const data = await getArtistPreviewData(artist.name);
+      const track = data.tracks.find((item) => item.videoId || item.preview);
       if (!track) return;
+
       playTrack({
-        id: a.name,
+        id: artist.name,
         url: track.preview || "",
         title: track.title,
-        artist: a.name,
-        coverUrl: data.image || a.image || undefined,
-        genres: a.genres,
+        artist: artist.name,
+        coverUrl: data.image || artist.image || undefined,
+        genres: artist.genres,
         videoId: track.videoId || undefined,
       });
     } catch {
@@ -327,12 +497,12 @@ export default function DiscoverFeed() {
         </div>
         <div className="w-full h-[220px] sm:h-[240px] bg-white/[0.03] border-2 border-white/5 animate-pulse mb-8 sm:mb-10" />
         <div className="space-y-8">
-          {[1, 2].map((r) => (
-            <div key={r}>
+          {[1, 2, 3].map((row) => (
+            <div key={row}>
               <div className="h-4 w-48 bg-white/5 animate-pulse mb-3" />
               <div className="flex gap-3 -mx-5 sm:mx-0 px-5 sm:px-0 overflow-hidden">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="shrink-0 w-[150px] sm:w-[170px]">
+                {[1, 2, 3, 4, 5].map((index) => (
+                  <div key={index} className="shrink-0 w-[150px] sm:w-[170px]">
                     <div className="aspect-square bg-white/5 animate-pulse mb-3" />
                     <div className="h-3 w-3/4 bg-white/5 animate-pulse mb-1" />
                     <div className="h-2 w-1/2 bg-white/5 animate-pulse" />
@@ -346,7 +516,7 @@ export default function DiscoverFeed() {
     );
   }
 
-  if (recoGroups.length === 0) return null;
+  if (displayGroups.length === 0) return null;
 
   return (
     <div className="w-full max-w-[900px] mt-14 sm:mt-20">
@@ -355,11 +525,10 @@ export default function DiscoverFeed() {
           Discover_For_You
         </div>
         <div className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
-          Tuned to your signal profile
+          Tuned to your atlas profile
         </div>
       </div>
 
-      {/* Hero Daily Scan */}
       <DailyScanHero
         collageImages={collageImages}
         seedNames={seedNames}
@@ -367,19 +536,22 @@ export default function DiscoverFeed() {
         isStarting={isStarting}
       />
 
-      {/* Recommendation rows */}
       <div className="space-y-8 sm:space-y-10">
-        {recoGroups.map((group) => (
-          <div key={group.source}>
+        {displayGroups.map((group) => (
+          <div key={`${group.sourceType}-${group.source}`}>
             <div className="flex items-end justify-between gap-3 mb-3 sm:mb-4">
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-mono text-shift5-muted uppercase tracking-widest flex items-center gap-1.5">
                   <span className="text-shift5-orange">›</span>
-                  Because_You_Explored
+                  {group.sourceType === "genre" ? "Because_You_Like_This_Genre" : "Because_You_Saved"}
                 </div>
                 <h3
                   onClick={() =>
-                    router.push(`/artist/${encodeURIComponent(group.source)}`)
+                    router.push(
+                      group.sourceType === "genre"
+                        ? `/genre/${encodeURIComponent(group.source)}`
+                        : `/artist/${encodeURIComponent(group.source)}`
+                    )
                   }
                   className="text-lg sm:text-2xl font-black uppercase tracking-tighter truncate text-white hover:text-shift5-orange active:text-shift5-orange transition-colors cursor-pointer mt-1 touch-manipulation"
                 >
@@ -388,7 +560,11 @@ export default function DiscoverFeed() {
               </div>
               <button
                 onClick={() =>
-                  router.push(`/artist/${encodeURIComponent(group.source)}`)
+                  router.push(
+                    group.sourceType === "genre"
+                      ? `/genre/${encodeURIComponent(group.source)}`
+                      : `/artist/${encodeURIComponent(group.source)}`
+                  )
                 }
                 className="shrink-0 text-[9px] font-mono text-white/30 hover:text-shift5-orange active:text-shift5-orange uppercase tracking-widest transition-colors touch-manipulation px-1"
               >
@@ -404,18 +580,16 @@ export default function DiscoverFeed() {
                 scrollPaddingLeft: "20px",
               }}
             >
-              {group.artists.map((a) => {
-                const isActive = isPlaying && currentTrack?.artist === a.name;
+              {group.artists.map((artist) => {
+                const isActive = isPlaying && currentTrack?.artist === artist.name;
                 return (
                   <DiscoveryCard
-                    key={a.name}
-                    artist={a}
-                    onOpen={() =>
-                      router.push(`/artist/${encodeURIComponent(a.name)}`)
-                    }
-                    onPlay={(e) => {
-                      e.stopPropagation();
-                      handlePlayArtist(a);
+                    key={`${group.source}-${artist.name}`}
+                    artist={artist}
+                    onOpen={() => router.push(`/artist/${encodeURIComponent(artist.name)}`)}
+                    onPlay={(event) => {
+                      event.stopPropagation();
+                      handlePlayArtist(artist);
                     }}
                     isActive={isActive}
                   />

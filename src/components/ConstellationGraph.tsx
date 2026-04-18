@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { getInitials, getGenreColor } from "@/lib/utils";
+import { useState, useRef, useCallback, useMemo } from "react";
+import { getInitials } from "@/lib/utils";
 import * as d3 from "d3";
 
 export interface ConstellationNode {
@@ -44,6 +44,7 @@ export default function ConstellationGraph({
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
+  const [keyboardIndex, setKeyboardIndex] = useState(0);
   const lastMouse = useRef({ x: 0, y: 0 });
 
   const cx = width / 2;
@@ -90,13 +91,13 @@ export default function ConstellationGraph({
       .stop();
 
     // Run the simulation synchronously
-    simulation.tick(300);
+    simulation.tick(Math.min(220, Math.max(100, sorted.length * 12)));
 
     return {
       nodes: _nodes as (LayoutNode & { isCenter: boolean })[],
       links: _links as unknown as SimLink[]
     };
-  }, [center, centerGenres, sorted, cx, cy, width, height]);
+  }, [center, centerGenres, sorted, cx, cy, width]);
 
   // ─── Node rendering ────────────────────────────────────────────
 
@@ -108,14 +109,6 @@ export default function ConstellationGraph({
 
   // Shift5 branding
   const shift5Orange = "#ff5841";
-  const shift5Gray = "#1a1a1a";
-
-  function nodeColor(genres: string[]): string {
-    return shift5Orange; // Unified technical branding
-  }
-
-  const centerColor = shift5Gray;
-
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
@@ -193,6 +186,8 @@ export default function ConstellationGraph({
   const vbH = height / zoom;
   const vbX = (width - vbW) / 2 - pan.x;
   const vbY = (height - vbH) / 2 - pan.y;
+  const activeKeyboardIndex = sorted.length === 0 ? 0 : Math.min(keyboardIndex, sorted.length - 1);
+  const keyboardNode = sorted[activeKeyboardIndex] ?? null;
 
   function renderNode(node: LayoutNode, i: number, keyPrefix: string) {
     const isHl = highlightedId === node.id;
@@ -259,6 +254,8 @@ export default function ConstellationGraph({
       <svg
         role="img"
         aria-label={`Constellation graph showing artists similar to ${center}`}
+        aria-describedby={`constellation-help-${center.replace(/\s+/g, "-").toLowerCase()}`}
+        tabIndex={0}
         width="100%" height="100%"
         viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
         className="block bg-neutral-900/50 rounded-lg"
@@ -271,6 +268,47 @@ export default function ConstellationGraph({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onFocus={() => {
+          if (keyboardNode) onHover(keyboardNode.id);
+        }}
+        onBlur={() => onHover(null)}
+        onKeyDown={(e) => {
+          if (sorted.length === 0) return;
+          if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+            e.preventDefault();
+            const nextIndex = (activeKeyboardIndex + 1) % sorted.length;
+            setKeyboardIndex(nextIndex);
+            onHover(sorted[nextIndex].id);
+            return;
+          }
+          if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+            e.preventDefault();
+            const nextIndex = activeKeyboardIndex <= 0 ? sorted.length - 1 : activeKeyboardIndex - 1;
+            setKeyboardIndex(nextIndex);
+            onHover(sorted[nextIndex].id);
+            return;
+          }
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            const selected = sorted[activeKeyboardIndex];
+            if (selected) onExplore(selected.name);
+            return;
+          }
+          if (e.key === "+" || e.key === "=") {
+            e.preventDefault();
+            setZoom((z) => Math.min(4, z + 0.25));
+            return;
+          }
+          if (e.key === "-" || e.key === "_") {
+            e.preventDefault();
+            setZoom((z) => Math.max(0.4, z - 0.25));
+            return;
+          }
+          if (e.key === "0") {
+            e.preventDefault();
+            handleReset();
+          }
+        }}
       >
         {/* Draw Links (Dashed Technical Style) */}
         {layoutLinks.map((link, i) => {
@@ -345,6 +383,9 @@ export default function ConstellationGraph({
           {Math.round(zoom * 100)}%
         </div>
       )}
+      <p id={`constellation-help-${center.replace(/\s+/g, "-").toLowerCase()}`} className="sr-only">
+        Use arrow keys to move between artists, Enter to open the selected artist, plus and minus to zoom, and zero to reset the graph.
+      </p>
     </div>
   );
 }
