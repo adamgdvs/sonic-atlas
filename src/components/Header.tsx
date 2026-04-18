@@ -41,7 +41,7 @@ export default function Header() {
     <>
       <header className="border-b-2 border-shift5-accent bg-shift5-dark h-16 flex items-center justify-between px-4 sm:px-6 md:px-12 z-50 relative gap-4 md:gap-8">
         <div className="flex items-center gap-4 md:gap-8 flex-1 min-w-0">
-          <Link href="/" className="flex items-center gap-2 sm:gap-3 no-underline group shrink-0">
+          <Link href="/" className="lg:hidden flex items-center gap-2 sm:gap-3 no-underline group shrink-0">
             <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-shift5-orange border-2 border-white/20 group-hover:scale-125 transition-all duration-300 shadow-[0_0_10px_rgba(255,88,65,0.4)]" />
             <span
               className="text-[12px] sm:text-[14px] md:text-[16px] font-black text-white font-mono uppercase tracking-[0.15em] sm:tracking-[0.2em] group-hover:text-shift5-orange transition-colors truncate"
@@ -65,7 +65,7 @@ export default function Header() {
         <nav aria-label="Main navigation" className="hidden md:flex items-center gap-4 sm:gap-6 text-[10px] text-white/50 font-mono uppercase tracking-[0.05em] shrink-0">
           <button
             onClick={() => setIsProtocolOpen(!isProtocolOpen)}
-            className="flex items-center gap-3 mr-4 border-r border-shift5-accent pr-6 group hover:text-white transition-colors cursor-pointer"
+            className="lg:hidden flex items-center gap-3 mr-4 border-r border-shift5-accent pr-6 group hover:text-white transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-1.5">
               <span className={`w-1.5 h-1.5 rounded-full ${isProtocolOpen ? 'bg-shift5-orange scale-125' : 'bg-shift5-orange animate-pulse'}`} />

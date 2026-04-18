@@ -41,7 +41,6 @@ interface RecoPool {
 
 const DISPLAY_GROUP_COUNT = 4;
 const DISPLAY_ARTISTS_PER_GROUP = 8;
-const ROTATION_INTERVAL_MS = 45000;
 
 function shuffle<T>(items: T[]): T[] {
   const next = [...items];
@@ -320,13 +319,8 @@ export default function DiscoverFeed() {
     rebuildDisplayGroups(recoPools);
   }, [rotationKey, recoPools, rebuildDisplayGroups]);
 
-  useEffect(() => {
-    if (recoPools.length === 0) return;
-    const timer = window.setInterval(() => {
-      setRotationKey((value) => value + 1);
-    }, ROTATION_INTERVAL_MS);
-    return () => window.clearInterval(timer);
-  }, [recoPools.length]);
+  // Discovery groups are sampled once on load and remain stable for the session.
+  // Re-sampling happens only on page refresh or a manual rotation action.
 
   useEffect(() => {
     if (status === "loading") return;

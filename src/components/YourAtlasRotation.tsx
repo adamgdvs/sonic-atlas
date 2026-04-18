@@ -127,13 +127,8 @@ export default function YourAtlasRotation() {
     };
   }, [session?.user, status]);
 
-  useEffect(() => {
-    if (mode !== "atlas" && mode !== "trending") return;
-    const timer = window.setInterval(() => {
-      setRotationKey((n) => n + 1);
-    }, 60_000);
-    return () => window.clearInterval(timer);
-  }, [mode]);
+  // Rotation only occurs on load, page refresh, or manual reshuffle.
+  // No in-session auto-shuffle — content stays stable while the user is on the page.
 
   const display = useMemo(() => {
     if (artists.length === 0) return [];

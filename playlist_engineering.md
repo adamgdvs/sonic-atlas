@@ -152,6 +152,10 @@ If users start "saving" curated playlists into their own library later, reuse th
 2. Trim YT Music responses to our `PlaylistTrack` shape before returning to the client — never leak raw ytmusicapi blobs
 3. Respect cache TTLs; do not call the Python bridge on every request
 4. Fail soft: if the Python bridge errors, the row hides itself rather than breaking the page
+5. **Session stability — no in-session regeneration.** Curated playlists, mood rows, chart rows, genre spotlights, and the personalized Daily Discovery mix are all fetched/sampled **once on page load** and remain stable until the user navigates away or refreshes. No `setInterval`-driven reshuffle, re-sample, or re-roll while the user is on the page. Manual reshuffle buttons may be exposed for user-initiated re-rolls, but they must never fire automatically.
+   - Rationale: the user expects a predictable surface. Content shifting underneath them while they're reading or deciding what to play is disorienting.
+   - Applies to: `CuratedMoodsRow`, `ChartsRow`, `GenreSpotlightsRow`, `YourAtlasRotation`, `DiscoverFeed` generated mix.
+   - Exception: the `RotatingBanners` hero carousel cycles through a fixed array of hand-curated banners — this is a display carousel, not regeneration, and is permitted.
 
 ## Rollout
 
