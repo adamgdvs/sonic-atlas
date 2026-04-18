@@ -13,16 +13,16 @@ export default function RecentlyPlayed() {
 
   return (
     <div className="w-full max-w-[900px] mt-14 sm:mt-20">
-      <div className="mb-5 sm:mb-6 border-b border-white/5 pb-3 flex items-end justify-between gap-3">
+      <div className="mb-5 sm:mb-6 border-b border-white/[0.06] pb-3 flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">
+          <div className="text-[10px] font-mono text-shift5-orange/80 uppercase tracking-[0.2em]">
             Recent_Signals
           </div>
-          <div className="text-[9px] font-mono text-white/15 uppercase tracking-widest mt-1">
+          <div className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
             Jump back in
           </div>
         </div>
-        <span className="shrink-0 text-[9px] font-mono text-white/20 uppercase tracking-widest">
+        <span className="shrink-0 text-[9px] font-mono text-shift5-subtle uppercase tracking-widest">
           {recent.length.toString().padStart(2, "0")}_Entries
         </span>
       </div>
@@ -48,10 +48,10 @@ export default function RecentlyPlayed() {
               className="shrink-0 w-[150px] sm:w-[170px] cursor-pointer group snap-start touch-manipulation"
             >
               <div
-                className={`relative aspect-square bg-white/5 overflow-hidden mb-3 border transition-all duration-300 ${
+                className={`relative aspect-square bg-shift5-surface overflow-hidden mb-3 border transition-all duration-300 ${
                   isActive
                     ? "border-shift5-orange shadow-[0_0_20px_rgba(255,88,65,0.25)]"
-                    : "border-white/5 group-hover:border-white/20 group-active:border-white/30"
+                    : "border-white/[0.06] group-hover:border-white/20 group-active:border-white/30"
                 }`}
               >
                 {entry.track.coverUrl ? (
@@ -116,7 +116,7 @@ export default function RecentlyPlayed() {
                 >
                   {entry.track.title}
                 </div>
-                <div className="text-[9px] font-mono text-white/30 uppercase truncate mt-1 tracking-wider">
+                <div className="text-[10px] font-mono text-shift5-muted uppercase truncate mt-1 tracking-wider">
                   {entry.track.artist}
                 </div>
               </div>

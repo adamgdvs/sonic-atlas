@@ -332,7 +332,7 @@ export default function MyAtlasClient({
                             <button
                                 key={b.id}
                                 onClick={() => handleSidebarClick(b.name)}
-                                className={`w-full flex items-center gap-3 p-2.5 sm:p-3 transition-all border group text-left active:scale-[0.98] touch-manipulation ${isActive ? "bg-shift5-orange/10 border-shift5-orange/30" : "bg-white/[0.01] border-white/5 hover:border-white/10 hover:bg-white/[0.03] active:bg-white/[0.06]"}`}
+                                className={`w-full flex items-center gap-3 p-2.5 sm:p-3 transition-all border group text-left active:scale-[0.98] touch-manipulation ${isActive ? "bg-shift5-orange/10 border-shift5-orange/30" : "bg-shift5-surface border-white/[0.06] hover:border-white/15 hover:bg-shift5-elevated active:bg-shift5-elevated"}`}
                             >
                                 <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 border border-white/10 p-0.5 bg-shift5-dark relative overflow-hidden">
                                     {b.imageUrl ? (
@@ -343,17 +343,17 @@ export default function MyAtlasClient({
                                     {isActive && <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-shift5-orange animate-pulse" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="hidden sm:block text-[9px] font-mono text-white/20 uppercase tracking-widest mb-0.5">Node_Ident</div>
-                                    <h3 className={`text-[12px] sm:text-sm font-bold truncate transition-colors uppercase tracking-tight ${isActive ? "text-shift5-orange" : "text-white/80 group-hover:text-white"}`}>{b.name}</h3>
+                                    <div className="hidden sm:block text-[9px] font-mono text-shift5-subtle uppercase tracking-widest mb-0.5">Node_Ident</div>
+                                    <h3 className={`text-[12px] sm:text-sm font-bold truncate transition-colors uppercase tracking-tight ${isActive ? "text-shift5-orange" : "text-white group-hover:text-white"}`}>{b.name}</h3>
                                     {genres.length > 0 && (
                                         <div className="flex gap-1 mt-0.5 overflow-hidden h-3.5 sm:h-4">
                                             {genres.slice(0, 2).map((g: string) => (
-                                                <span key={g} className="text-[7px] sm:text-[9px] font-mono text-white/20 uppercase whitespace-nowrap">#{g}</span>
+                                                <span key={g} className="text-[7px] sm:text-[9px] font-mono text-shift5-muted uppercase whitespace-nowrap">#{g}</span>
                                             ))}
                                         </div>
                                     )}
                                 </div>
-                                <div className={`transition-colors shrink-0 ${isActive ? "text-shift5-orange" : "text-white/10 group-hover:text-white/30"}`}>
+                                <div className={`transition-colors shrink-0 ${isActive ? "text-shift5-orange" : "text-shift5-subtle group-hover:text-white"}`}>
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                                 </div>
                             </button>
@@ -380,7 +380,7 @@ export default function MyAtlasClient({
                         playlists.map(pl => {
                             const isExpanded = expandedPlaylist === pl.id;
                             return (
-                                <div key={pl.id} className="border border-white/5 bg-white/[0.01] overflow-hidden">
+                                <div key={pl.id} className="border border-white/[0.06] bg-shift5-surface overflow-hidden">
                                     {/* Playlist header row */}
                                     <div className="flex items-center gap-3 p-2.5 sm:p-3 group/pl">
                                         <button
@@ -443,7 +443,7 @@ export default function MyAtlasClient({
                                                             <div
                                                                 key={track.id}
                                                                 onClick={() => handlePlayTrack(track)}
-                                                                className={`grid grid-cols-[24px_36px_1fr_24px] items-center gap-2.5 px-3 sm:px-4 py-2 border-b border-white/[0.03] last:border-b-0 group/track cursor-pointer transition-colors touch-manipulation ${isThisPlaying ? 'bg-white/[0.05]' : 'hover:bg-white/[0.04] active:bg-white/[0.06]'}`}
+                                                                className={`grid grid-cols-[24px_36px_1fr_24px] items-center gap-2.5 px-3 sm:px-4 py-2 border-b border-white/[0.04] last:border-b-0 group/track cursor-pointer transition-colors touch-manipulation ${isThisPlaying ? 'bg-shift5-elevated' : 'hover:bg-shift5-elevated active:bg-shift5-elevated'}`}
                                                             >
                                                                 {/* Index / Now-playing / Play swap */}
                                                                 <div className="flex items-center justify-center">
@@ -619,7 +619,7 @@ export default function MyAtlasClient({
                         </div>
                     ) : (
                         <div className="absolute inset-0 flex items-center justify-center bg-transparent z-10">
-                            <div className="px-8 py-5 border border-white/10 bg-white/[0.01] text-[10px] font-mono text-white/30 uppercase tracking-[0.2em] backdrop-blur-md">
+                            <div className="px-8 py-5 border border-white/[0.08] bg-shift5-surface text-[10px] font-mono text-shift5-muted uppercase tracking-[0.2em] backdrop-blur-md">
                                 Waiting_For_Node_Command...
                             </div>
                         </div>

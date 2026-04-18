@@ -88,7 +88,7 @@ function DiscoveryCard({
         >
           {artist.name}
         </div>
-        <div className="text-[9px] font-mono text-white/30 uppercase truncate mt-1 tracking-wider">
+        <div className="text-[10px] font-mono text-shift5-muted uppercase truncate mt-1 tracking-wider">
           {artist.genres[0] || "Uncharted"}
         </div>
       </div>
@@ -157,11 +157,11 @@ function DailyScanHero({
           <h2 className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-tighter leading-[0.9] mb-3 sm:mb-4 text-white">
             Your Daily Scan
           </h2>
-          <p className="text-[10px] sm:text-[11px] font-mono text-white/50 uppercase tracking-widest truncate">
+          <p className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-widest truncate">
             Tuned for {seedNames.slice(0, 2).join(" · ")}
             {seedNames.length > 2 && " · +more"}
           </p>
-          <p className="text-[9px] font-mono text-white/25 uppercase tracking-widest mt-1">
+          <p className="text-[9px] font-mono text-shift5-subtle uppercase tracking-widest mt-1">
             {today}
           </p>
         </div>
@@ -317,11 +317,11 @@ export default function DiscoverFeed() {
   if (loading) {
     return (
       <div className="w-full max-w-[900px] mt-14 sm:mt-20">
-        <div className="mb-5 border-b border-white/5 pb-3">
-          <div className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">
+        <div className="mb-5 border-b border-white/[0.06] pb-3">
+          <div className="text-[10px] font-mono text-shift5-orange/80 uppercase tracking-[0.2em]">
             Discover_For_You
           </div>
-          <div className="text-[9px] font-mono text-white/15 uppercase tracking-widest mt-1">
+          <div className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
             Calibrating_Signal...
           </div>
         </div>
@@ -350,11 +350,11 @@ export default function DiscoverFeed() {
 
   return (
     <div className="w-full max-w-[900px] mt-14 sm:mt-20">
-      <div className="mb-5 sm:mb-6 border-b border-white/5 pb-3">
-        <div className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">
+      <div className="mb-5 sm:mb-6 border-b border-white/[0.06] pb-3">
+        <div className="text-[10px] font-mono text-shift5-orange/80 uppercase tracking-[0.2em]">
           Discover_For_You
         </div>
-        <div className="text-[9px] font-mono text-white/15 uppercase tracking-widest mt-1">
+        <div className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
           Tuned to your signal profile
         </div>
       </div>
@@ -373,8 +373,8 @@ export default function DiscoverFeed() {
           <div key={group.source}>
             <div className="flex items-end justify-between gap-3 mb-3 sm:mb-4">
               <div className="min-w-0 flex-1">
-                <div className="text-[9px] font-mono text-white/20 uppercase tracking-widest flex items-center gap-1.5">
-                  <span className="text-shift5-orange/50">›</span>
+                <div className="text-[10px] font-mono text-shift5-muted uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="text-shift5-orange">›</span>
                   Because_You_Explored
                 </div>
                 <h3

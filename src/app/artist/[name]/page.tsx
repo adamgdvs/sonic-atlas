@@ -1092,8 +1092,8 @@ export default function ArtistPage({
       </div>
 
       <main className="relative z-10 p-3 sm:p-5 md:p-10 max-w-[1400px] mx-auto pb-24 sm:pb-10">
-        {/* Hero Header — dark primary with blurred artist image backdrop + orange accent */}
-        <div className="mb-6 sm:mb-12 border border-white/10 bg-shift5-dark text-white px-3 py-4 sm:px-5 sm:py-10 md:p-12 relative overflow-hidden group">
+        {/* Hero Header — elevated surface card with blurred artist image backdrop + orange accent */}
+        <div className="mb-6 sm:mb-12 border border-white/[0.08] bg-shift5-surface text-white px-3 py-4 sm:px-5 sm:py-10 md:p-12 relative overflow-hidden group rounded-sm">
           {/* Blurred artist image backdrop */}
           {artistInfo?.image && (
             <div className="absolute inset-0 pointer-events-none">
@@ -1102,11 +1102,11 @@ export default function ArtistPage({
                 alt=""
                 fill
                 sizes="100vw"
-                className="object-cover opacity-[0.18] scale-110 blur-2xl"
+                className="object-cover opacity-[0.22] scale-110 blur-2xl"
                 unoptimized
                 priority={false}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-shift5-dark/80 via-shift5-dark/90 to-shift5-dark" />
+              <div className="absolute inset-0 bg-gradient-to-b from-shift5-surface/75 via-shift5-surface/90 to-shift5-surface" />
             </div>
           )}
 
@@ -1167,21 +1167,21 @@ export default function ArtistPage({
                 </div>
 
                 {/* Desktop: Metadata Scans Grid */}
-                <div className="hidden sm:grid grid-cols-4 gap-4 mb-8 p-4 bg-white/[0.03] border border-white/10 font-mono text-[10px] uppercase tracking-widest text-white w-fit">
+                <div className="hidden sm:grid grid-cols-4 gap-4 mb-8 p-4 bg-shift5-elevated border border-white/[0.06] font-mono text-[10px] uppercase tracking-widest text-white w-fit">
                   <div className="space-y-1 min-w-0">
-                    <div className="text-white/40">Signal_Origin</div>
+                    <div className="text-shift5-muted">Signal_Origin</div>
                     <div className="font-bold truncate">{artistInfo?.location || "NULL_SECTOR"}</div>
                   </div>
                   <div className="space-y-1 border-l border-white/10 pl-4 min-w-0">
-                    <div className="text-white/40">Established</div>
+                    <div className="text-shift5-muted">Established</div>
                     <div className="font-bold">{artistInfo?.yearStarted || "NULL_TIME"}</div>
                   </div>
                   <div className="space-y-1 border-l border-white/10 pl-4 min-w-0">
-                    <div className="text-white/40">Artifacts</div>
+                    <div className="text-shift5-muted">Artifacts</div>
                     <div className="font-bold">{artistInfo?.nbAlbums || 0} Records</div>
                   </div>
                   <div className="space-y-1 border-l border-white/10 pl-4 min-w-0">
-                    <div className="text-white/40">Confidence</div>
+                    <div className="text-shift5-muted">Confidence</div>
                     <div className="font-bold text-shift5-orange">100%</div>
                   </div>
                 </div>
@@ -1404,17 +1404,17 @@ export default function ArtistPage({
         {/* Popular Tracks — Spotify-style list, top 5 */}
         {primaryDisco && primaryDisco.topTracks.length > 0 && (
           <section className="mb-12 sm:mb-16">
-            <div className="flex items-end justify-between mb-4 sm:mb-5 border-b border-white/5 pb-3">
+            <div className="flex items-end justify-between mb-4 sm:mb-5 border-b border-white/[0.06] pb-3">
               <div>
-                <div className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">Popular_Tracks</div>
-                <div className="text-[9px] font-mono text-white/15 uppercase tracking-widest mt-1">High-frequency signals</div>
+                <div className="text-[10px] font-mono text-shift5-orange/80 uppercase tracking-[0.2em]">Popular_Tracks</div>
+                <div className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-wider mt-1">High-frequency signals</div>
               </div>
-              <span className="text-[9px] font-mono text-white/20 uppercase tracking-widest">
+              <span className="text-[9px] font-mono text-shift5-subtle uppercase tracking-widest">
                 {Math.min(primaryDisco.topTracks.length, 5).toString().padStart(2, '0')}_Tracks
               </span>
             </div>
 
-            <div className="divide-y divide-white/[0.03]">
+            <div className="divide-y divide-white/[0.04]">
               {primaryDisco.topTracks.slice(0, 5).map((t, i) => {
                 const isThisPlaying = playingUrl === t.preview;
                 const mins = Math.floor(t.duration / 60);
@@ -1423,10 +1423,10 @@ export default function ArtistPage({
                   <div
                     key={t.id}
                     onClick={() => isThisPlaying ? handleStop() : handlePlay(t.preview, t.title, artistName, artistInfo?.image, t.videoId || undefined)}
-                    className={`group/row grid grid-cols-[28px_48px_1fr_auto] sm:grid-cols-[36px_56px_1fr_auto_60px] items-center gap-3 sm:gap-4 px-2 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-colors hover:bg-white/[0.04] active:bg-white/[0.06] touch-manipulation ${isThisPlaying ? 'bg-white/[0.04]' : ''}`}
+                    className={`group/row grid grid-cols-[28px_48px_1fr_auto] sm:grid-cols-[36px_56px_1fr_auto_60px] items-center gap-3 sm:gap-4 px-2 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-colors hover:bg-shift5-elevated active:bg-shift5-elevated touch-manipulation ${isThisPlaying ? 'bg-shift5-elevated' : ''}`}
                   >
                     {/* Index / Play indicator */}
-                    <div className="flex items-center justify-center text-[12px] font-mono text-white/30 group-hover/row:text-white">
+                    <div className="flex items-center justify-center text-[12px] font-mono text-shift5-muted group-hover/row:text-white">
                       {isThisPlaying ? (
                         <span className="w-2 h-2 rounded-full bg-shift5-orange animate-pulse" />
                       ) : (
@@ -1440,7 +1440,7 @@ export default function ArtistPage({
                     </div>
 
                     {/* Cover */}
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/5 border border-white/10 overflow-hidden shrink-0 relative">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-shift5-elevated border border-white/[0.08] overflow-hidden shrink-0 relative">
                       {artistInfo?.image ? (
                         <Image
                           src={artistInfo.image}
@@ -1451,7 +1451,7 @@ export default function ArtistPage({
                           unoptimized
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white/20 text-[8px] font-mono">N/A</div>
+                        <div className="w-full h-full flex items-center justify-center text-shift5-subtle text-[8px] font-mono">N/A</div>
                       )}
                     </div>
 
@@ -1460,7 +1460,7 @@ export default function ArtistPage({
                       <div className={`text-[12px] sm:text-[13px] font-mono font-bold uppercase tracking-tight truncate transition-colors ${isThisPlaying ? 'text-shift5-orange' : 'text-white'}`}>
                         {t.title}
                       </div>
-                      <div className="text-[9px] sm:text-[10px] font-mono text-white/40 uppercase tracking-wider truncate mt-0.5">
+                      <div className="text-[9px] sm:text-[10px] font-mono text-shift5-muted uppercase tracking-wider truncate mt-0.5">
                         {artistName}
                       </div>
                     </div>
@@ -1472,14 +1472,14 @@ export default function ArtistPage({
                           e.stopPropagation();
                           handleToggleBookmark(artistInfo?.deezerId?.toString() || artistName, artistName, artistInfo?.image, artistInfo?.genres);
                         }}
-                        className={`opacity-0 group-hover/row:opacity-100 transition-opacity p-1 ${bookmarkedArtists.has(artistName) ? 'text-shift5-orange' : 'text-white/40 hover:text-white'}`}
+                        className={`opacity-0 group-hover/row:opacity-100 transition-opacity p-1 ${bookmarkedArtists.has(artistName) ? 'text-shift5-orange' : 'text-shift5-muted hover:text-white'}`}
                         aria-label="Save artist"
                       >
                         <Heart size={14} className={bookmarkedArtists.has(artistName) ? 'fill-current' : ''} />
                       </button>
                     </div>
 
-                    <div className="text-right text-[10px] sm:text-[11px] font-mono text-white/40 tabular-nums tracking-wider shrink-0">
+                    <div className="text-right text-[10px] sm:text-[11px] font-mono text-shift5-muted tabular-nums tracking-wider shrink-0">
                       {mins}:{secs}
                     </div>
                   </div>

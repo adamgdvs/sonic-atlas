@@ -1,12 +1,19 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-shift5-gray: #1a1a1a;
-  --color-shift5-orange: #ff5841;
-  --color-shift5-accent: #444444;
-  --color-shift5-dark: #0d0d0d;
-  --color-shift5-light: #dcdcdc;
-  /* For the 'light' sections seen on shift5.io */
+  /* ═══ Palette — Spotify-style warm dark ═══ */
+  --color-shift5-orange: #ff5841;      /* Signature accent (plays the role of Spotify green) */
+
+  --color-shift5-dark: #121212;        /* Base page bg (warmer charcoal, not pure black) */
+  --color-shift5-surface: #181818;     /* Card / section background (1st elevation) */
+  --color-shift5-elevated: #242424;    /* Hover / active card background (2nd elevation) */
+  --color-shift5-overlay: #2a2a2a;     /* Inline chips, subtle overlays */
+  --color-shift5-gray: #1a1a1a;        /* Legacy alias for surface-ish */
+  --color-shift5-accent: #3a3a3a;      /* Subtle borders, dividers */
+
+  --color-shift5-muted: #b3b3b3;       /* Readable secondary text (Spotify-style) */
+  --color-shift5-subtle: #7a7a7a;      /* Tertiary / disabled text */
+  --color-shift5-light: #dcdcdc;       /* Light sections on light backgrounds */
 
   --color-background: var(--color-shift5-dark);
   --color-foreground: #ffffff;
@@ -45,7 +52,7 @@ body {
 }
 
 input::placeholder {
-  color: #666;
+  color: var(--color-shift5-subtle);
 }
 
 /* Technical operational scrollbar */
@@ -55,12 +62,12 @@ input::placeholder {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-shift5-dark);
-  border-left: 1px solid var(--color-shift5-accent);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-shift5-accent);
+  background: var(--color-shift5-elevated);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {

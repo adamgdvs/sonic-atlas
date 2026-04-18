@@ -84,7 +84,7 @@ export default function Home() {
           Discover similar artists & sonic neighborhoods.
         </h1>
         <p
-          className="text-sm sm:text-base text-white/40 mb-10 sm:mb-16 font-mono text-center max-w-xl"
+          className="text-sm sm:text-base text-shift5-muted mb-10 sm:mb-16 font-mono text-center max-w-xl"
           style={{ letterSpacing: "-0.01em" }}
         >
           Operational reconnaissance for music discovery. <br className="hidden sm:block" />
@@ -123,15 +123,15 @@ export default function Home() {
         {/* Trending Genres */}
         {trendingGenres.length > 0 && (
           <div className="mt-20 sm:mt-24 w-full max-w-[800px]">
-            <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-2">
+            <div className="flex items-center justify-between mb-8 border-b border-white/[0.06] pb-2">
               <div
-                className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]"
+                className="text-[10px] font-mono text-shift5-orange/80 uppercase tracking-[0.2em]"
               >
                 Hot_Genre_Signals
               </div>
               <Link
                 href="/genres"
-                className="text-[10px] font-mono text-shift5-orange/50 hover:text-shift5-orange transition-colors no-underline uppercase tracking-[0.1em]"
+                className="text-[10px] font-mono text-shift5-muted hover:text-shift5-orange transition-colors no-underline uppercase tracking-[0.1em]"
               >
                 Full_Nexus →
               </Link>
