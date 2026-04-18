@@ -9,6 +9,9 @@ import DiscoverFeed from "@/components/DiscoverFeed";
 import RotatingBanners from "@/components/RotatingBanners";
 import YourAtlasRotation from "@/components/YourAtlasRotation";
 import GenreCards from "@/components/GenreCards";
+import CuratedMoodsRow from "@/components/CuratedMoodsRow";
+import ChartsRow from "@/components/ChartsRow";
+import GenreSpotlightsRow from "@/components/GenreSpotlightsRow";
 import { getTopGenres, type GenreInfo } from "@/lib/api";
 import Footer from "@/components/Footer";
 
@@ -84,6 +87,15 @@ export default function Home() {
 
         {/* Your Atlas — On Rotation (bookmarks shuffled; trending fallback) */}
         <YourAtlasRotation />
+
+        {/* Curated Moods — YT Music bridge playlists */}
+        <CuratedMoodsRow />
+
+        {/* Charts — current region motion */}
+        <ChartsRow />
+
+        {/* Genre Spotlights — curated scene lanes */}
+        <GenreSpotlightsRow />
 
         {/* Personalized Discovery — Because You Saved X */}
         <DiscoverFeed />

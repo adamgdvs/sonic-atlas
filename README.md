@@ -20,6 +20,19 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Curated Playlists Bridge
+
+The Discovery page can surface curated mood playlists from YouTube Music through a lightweight Python bridge.
+
+Setup:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install ytmusicapi
+```
+
+The bridge entrypoint is `scripts/ytmusic_bridge.py`. If `ytmusicapi` is not installed, curated rows fail soft and remain hidden.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
