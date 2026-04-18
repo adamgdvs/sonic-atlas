@@ -138,7 +138,13 @@ export async function buildGeneratedDiscoveryMix(
     );
 
     for (const artist of rankedArtists.slice(0, 6)) {
-      const previewData = await lookupArtistTracks(artist.name);
+      let previewData: TrackLookupResult | null = null;
+      try {
+        previewData = await lookupArtistTracks(artist.name);
+      } catch {
+        continue; // single-artist failure shouldn't abort the whole mix
+      }
+      if (!previewData) continue;
       const playable = previewData.tracks.find((track) => track.videoId || track.preview);
       if (!playable) continue;
 

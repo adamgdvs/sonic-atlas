@@ -262,6 +262,7 @@ export default function DiscoverFeed() {
   const [isStarting, setIsStarting] = useState(false);
   const [isSavingMix, setIsSavingMix] = useState(false);
   const [mixSaveState, setMixSaveState] = useState<"idle" | "saved" | "error">("idle");
+  const [isAutoGeneratingMix, setIsAutoGeneratingMix] = useState(false);
   const [rotationKey, setRotationKey] = useState(0);
 
   const tasteSignature = useMemo(() => {
@@ -452,6 +453,7 @@ export default function DiscoverFeed() {
 
     let cancelled = false;
     async function autoGen() {
+      setIsAutoGeneratingMix(true);
       try {
         const mix = await buildGeneratedDiscoveryMix(
           {
@@ -477,6 +479,8 @@ export default function DiscoverFeed() {
         }
       } catch {
         // non-critical — user can still click START_MIX to retry
+      } finally {
+        if (!cancelled) setIsAutoGeneratingMix(false);
       }
     }
     autoGen();
@@ -653,6 +657,20 @@ export default function DiscoverFeed() {
         onStart={handleStartMix}
         isStarting={isStarting}
       />
+
+      {!generatedMix && isAutoGeneratingMix && (
+        <div className="border border-white/[0.08] bg-white/[0.02] mb-8 sm:mb-10 px-4 sm:px-5 py-5 flex items-center gap-3">
+          <span className="w-3 h-3 border-2 border-shift5-orange border-t-transparent rounded-full animate-spin" />
+          <div className="min-w-0">
+            <div className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em]">
+              Calibrating_Playlist
+            </div>
+            <div className="text-[10px] sm:text-[11px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
+              Threading your atlas + reco pool into a sequenced mix...
+            </div>
+          </div>
+        </div>
+      )}
 
       {generatedMix && (
         <div className="border border-white/[0.08] bg-white/[0.02] mb-8 sm:mb-10">
