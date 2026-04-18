@@ -442,22 +442,8 @@ export default function ArtistDrawer({
 
     const isEmbedded = !!className;
 
-    return (
-        <motion.div
-            initial={isEmbedded ? false : { x: "100%" }}
-            animate={isEmbedded ? undefined : { x: 0 }}
-            exit={isEmbedded ? undefined : { x: "100%" }}
-            transition={isEmbedded ? undefined : { type: "spring", damping: 28, stiffness: 300 }}
-            drag={isEmbedded ? false : "x"}
-            dragConstraints={isEmbedded ? undefined : { left: 0, right: 0 }}
-            dragElastic={isEmbedded ? undefined : { left: 0, right: 0.3 }}
-            onDragEnd={isEmbedded ? undefined : (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
-                if (info.offset.x > 100 || info.velocity.x > 500) {
-                    onClose();
-                }
-            }}
-            className={className || "fixed inset-y-0 right-0 w-full sm:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col touch-manipulation"}
-        >
+    const drawerBody = (
+        <>
             {/* Drag handle — mobile only, floating mode only */}
             {!isEmbedded && <div className="sm:hidden absolute left-2 top-1/2 -translate-y-1/2 w-1 h-12 rounded-full bg-white/10" />}
 
@@ -673,6 +659,30 @@ export default function ArtistDrawer({
                     to { opacity: 1; transform: translateY(0); }
                 }
             `}</style>
+        </>
+    );
+
+    if (isEmbedded) {
+        return <div className={className}>{drawerBody}</div>;
+    }
+
+    return (
+        <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={{ left: 0, right: 0.3 }}
+            onDragEnd={(_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
+                if (info.offset.x > 100 || info.velocity.x > 500) {
+                    onClose();
+                }
+            }}
+            className="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-shift5-dark border-l border-white/5 shadow-[inset_1px_0_0_0_rgba(255,255,255,0.05)] z-50 flex flex-col touch-manipulation"
+        >
+            {drawerBody}
         </motion.div>
     );
 }
