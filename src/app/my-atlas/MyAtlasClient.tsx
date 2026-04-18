@@ -593,7 +593,7 @@ export default function MyAtlasClient({
                     </div>
 
                     {currentView ? (
-                        <div className="flex-1 flex flex-col bg-shift5-dark z-10 relative">
+                        <div className="flex-1 flex flex-col bg-shift5-dark z-10 relative min-h-0 overflow-hidden">
                             <ErrorBoundary>
                                 {currentView.type === 'artist' ? (
                                     <ArtistDrawer
@@ -603,7 +603,7 @@ export default function MyAtlasClient({
                                         onSelectArtist={handleSelectArtist}
                                         onSelectGenre={handleSelectGenre}
                                         onBookmarksChange={fetchBookmarks}
-                                        className="flex-1 w-full bg-shift5-dark flex flex-col z-10 relative overflow-hidden"
+                                        className="flex-1 w-full bg-shift5-dark flex flex-col z-10 relative overflow-hidden min-h-0"
                                     />
                                 ) : (
                                     <GenreDrawer
@@ -612,7 +612,7 @@ export default function MyAtlasClient({
                                         showCloseAsBack={viewStack.length > 1}
                                         onSelectArtist={handleSelectArtist}
                                         onBookmarksChange={fetchBookmarks}
-                                        className="flex-1 w-full bg-shift5-dark flex flex-col z-10 relative overflow-hidden"
+                                        className="flex-1 w-full bg-shift5-dark flex flex-col z-10 relative overflow-hidden min-h-0"
                                     />
                                 )}
                             </ErrorBoundary>
