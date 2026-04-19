@@ -35,6 +35,57 @@ export interface YouTubeMusicTrack {
   thumbnailUrl: string | null;
 }
 
+export interface YouTubeMusicPlaylistSummary {
+  id: string;
+  title: string;
+  description: string;
+  coverUrl: string | null;
+  trackCount?: number | null;
+}
+
+export interface YouTubeMusicPlaylistDetails extends YouTubeMusicPlaylistSummary {
+  tracks: Array<{
+    title: string;
+    artist: string;
+    videoId: string;
+    coverUrl: string | null;
+  }>;
+}
+
+function readText(value: unknown): string {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && value !== null && "toString" in value) {
+    try {
+      const rendered = String(value);
+      return rendered === "[object Object]" ? "" : rendered;
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
+function getBestThumbnail(
+  thumbnails: Array<{ url?: string | undefined }> | null | undefined
+): string | null {
+  if (!Array.isArray(thumbnails) || thumbnails.length === 0) return null;
+  for (let index = thumbnails.length - 1; index >= 0; index -= 1) {
+    const url = thumbnails[index]?.url;
+    if (typeof url === "string" && url.trim()) return url;
+  }
+  return null;
+}
+
+function parseTrackCount(value: string | number | null | undefined): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+  const digits = value.replace(/[^\d]/g, "");
+  if (!digits) return null;
+  const parsed = Number.parseInt(digits, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 /**
  * Search YouTube Music for tracks by artist name.
  */
@@ -117,6 +168,125 @@ export async function findYouTubeVideoId(
     return tracks[0]?.videoId || null;
   } catch (error) {
     console.error("YouTube videoId lookup failed:", error);
+    return null;
+  }
+}
+
+export async function searchYouTubeMusicPlaylists(
+  query: string,
+  limit = 12
+): Promise<YouTubeMusicPlaylistSummary[]> {
+  try {
+    const yt = await getInnertube();
+    const results = await yt.music.search(query, { type: "playlist" });
+    const items = results.playlists?.contents || [];
+
+    return items
+      .filter((item) => item.item_type === "playlist" && typeof item.id === "string" && item.id.trim())
+      .slice(0, limit)
+      .map((item) => ({
+        id: item.id!,
+        title: readText(item.title) || "Untitled Playlist",
+        description: item.author?.name || readText(item.subtitle) || "",
+        coverUrl: getBestThumbnail(item.thumbnails),
+        trackCount: parseTrackCount(item.item_count),
+      }));
+  } catch (error) {
+    console.error("YouTube Music playlist search failed:", error);
+    return [];
+  }
+}
+
+function normalizePlaylistTrack(
+  item: {
+    id?: string | null;
+    title?: unknown;
+    artists?: Array<{ name?: string | undefined }> | null;
+    authors?: Array<{ name?: string | undefined }> | null;
+    author?: { name?: string | undefined } | null;
+    thumbnails?: Array<{ url?: string | undefined }> | null;
+  }
+) {
+  const videoId = item.id;
+  if (!videoId) return null;
+
+  const artistNames = [
+    ...(item.artists || []).map((artist) => artist.name || "").filter(Boolean),
+    ...(item.authors || []).map((author) => author.name || "").filter(Boolean),
+  ];
+  const artist =
+    artistNames.join(", ") ||
+    item.author?.name ||
+    "Unknown Artist";
+
+  return {
+    title: readText(item.title) || "Untitled Track",
+    artist,
+    videoId,
+    coverUrl: getBestThumbnail(item.thumbnails),
+  };
+}
+
+function readHeaderField(
+  header: unknown,
+  key: string
+): unknown {
+  if (!header || typeof header !== "object") return undefined;
+  return (header as Record<string, unknown>)[key];
+}
+
+export async function getYouTubeMusicPlaylist(
+  playlistId: string,
+  limit = 100
+): Promise<YouTubeMusicPlaylistDetails | null> {
+  try {
+    const yt = await getInnertube();
+    let playlist = await yt.music.getPlaylist(playlistId);
+    const tracks: YouTubeMusicPlaylistDetails["tracks"] = [];
+
+    const pushTracks = (items: typeof playlist.items) => {
+      for (const item of items) {
+        const normalized = normalizePlaylistTrack(
+          item as Parameters<typeof normalizePlaylistTrack>[0]
+        );
+        if (normalized) tracks.push(normalized);
+        if (tracks.length >= limit) break;
+      }
+    };
+
+    pushTracks(playlist.items);
+
+    while (playlist.has_continuation && tracks.length < limit) {
+      playlist = await playlist.getContinuation();
+      pushTracks(playlist.items);
+    }
+
+    const header = playlist.header;
+    const title = readText(readHeaderField(header, "title"));
+    const description =
+      readText(readHeaderField(header, "description")) ||
+      readText(readHeaderField(header, "subtitle"));
+    const coverUrl =
+      getBestThumbnail(
+        readHeaderField(header, "thumbnails") as Array<{ url?: string | undefined }> | null | undefined
+      ) ||
+      getBestThumbnail(
+        readHeaderField(readHeaderField(header, "thumbnail"), "contents") as
+          | Array<{ url?: string | undefined }>
+          | null
+          | undefined
+      );
+
+    return {
+      id: playlistId,
+      title: title || "Untitled Playlist",
+      description,
+      coverUrl,
+      trackCount: tracks.length,
+      tracks,
+    };
+  } catch (error) {
+    console.error("YouTube Music playlist load failed:", error);
     return null;
   }
 }

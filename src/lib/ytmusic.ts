@@ -2,6 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { dbCache } from "@/lib/dbCache";
+import {
+  getYouTubeMusicPlaylist,
+  searchYouTubeMusicPlaylists,
+} from "@/lib/youtube";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -112,6 +116,31 @@ function runBridge<T>(args: string[]): Promise<T> {
   });
 }
 
+function shouldUseNodeFallback(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error || "");
+  return [
+    "ytmusicapi not installed",
+    "No module named 'ytmusicapi'",
+    "can't open file",
+    "not found",
+    "no such file or directory",
+  ].some((needle) => message.toLowerCase().includes(needle.toLowerCase()));
+}
+
+async function runBridgeWithFallback<T>(
+  args: string[],
+  fallback: () => Promise<T>
+): Promise<T> {
+  try {
+    return await runBridge<T>(args);
+  } catch (error) {
+    if (!shouldUseNodeFallback(error)) {
+      throw error;
+    }
+    return fallback();
+  }
+}
+
 export async function getMoodCategories() {
   return dbCache<MoodCategory[]>(
     "ytmusic:moods",
@@ -166,7 +195,38 @@ export async function getCuratedPlaylistTracks(playlistId: string) {
   return dbCache<CuratedPlaylist>(
     `ytmusic:playlist:${playlistId}`,
     CuratedCacheTTL.PLAYLIST_TRACKS,
-    () => runBridge<CuratedPlaylist>(["playlist_tracks", playlistId])
+    async () => {
+      const playlist = await runBridgeWithFallback<CuratedPlaylist | null>(
+        ["playlist_tracks", playlistId],
+        async () => {
+          const fallback = await getYouTubeMusicPlaylist(playlistId);
+          if (!fallback) return null;
+          return {
+            id: fallback.id,
+            title: fallback.title,
+            description: fallback.description,
+            coverUrl: fallback.coverUrl,
+            source: "ytmusic",
+            category: "curated",
+            trackCount: fallback.trackCount,
+            tracks: fallback.tracks,
+          } satisfies CuratedPlaylist;
+        }
+      );
+
+      if (playlist) return playlist;
+
+      return {
+        id: playlistId,
+        title: "",
+        description: "",
+        coverUrl: null,
+        source: "ytmusic",
+        category: "curated",
+        trackCount: 0,
+        tracks: [],
+      } satisfies CuratedPlaylist;
+    }
   );
 }
 
@@ -174,6 +234,21 @@ export async function searchCuratedPlaylists(query: string) {
   return dbCache<CuratedPlaylist[]>(
     `ytmusic:search:${query.toLowerCase()}`,
     CuratedCacheTTL.SEARCH,
-    () => runBridge<CuratedPlaylist[]>(["search_playlists", query])
+    () =>
+      runBridgeWithFallback<CuratedPlaylist[]>(
+        ["search_playlists", query],
+        async () => {
+          const playlists = await searchYouTubeMusicPlaylists(query);
+          return playlists.map((playlist) => ({
+            id: playlist.id,
+            title: playlist.title,
+            description: playlist.description,
+            coverUrl: playlist.coverUrl,
+            source: "ytmusic",
+            category: "curated",
+            trackCount: playlist.trackCount,
+          }));
+        }
+      )
   );
 }
