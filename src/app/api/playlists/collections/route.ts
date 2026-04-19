@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_MIN_CURATED_TRACKS } from "@/lib/playlist-ranking";
 import { buildResolverEntry, resolveCuratedPlaylist } from "@/lib/curated-resolver";
+import { buildVirtualCuratedPlaylist } from "@/lib/virtual-curated";
 
 type Preset = {
   label: string;
@@ -78,12 +79,27 @@ export async function GET(req: Request) {
           });
           return {
             ...preset,
-            playlist: selected,
+            playlist: buildVirtualCuratedPlaylist({
+              title: preset.label,
+              description: preset.tone,
+              category: rankingEntry.category,
+              query: preset.query,
+              coverUrl: selected?.coverUrl || null,
+              trackCount: selected?.trackCount ?? null,
+            }),
           };
         } catch {
           return {
             ...preset,
-            playlist: null,
+            playlist: buildVirtualCuratedPlaylist({
+              title: preset.label,
+              description: preset.tone,
+              category:
+                preset.category === "activity" || preset.category === "featured"
+                  ? "vibe"
+                  : preset.category,
+              query: preset.query,
+            }),
           };
         }
       })
@@ -91,7 +107,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       collection,
-      collections: results.filter((item) => item.playlist),
+      collections: results,
       availableCollections: ["featured", "genre", "mood", "activity", "era"],
     });
   } catch (error) {

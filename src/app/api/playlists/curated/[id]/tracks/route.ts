@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { getCuratedPlaylistTracks } from "@/lib/ytmusic";
+import {
+  isVirtualCuratedId,
+  parseVirtualCuratedId,
+  resolveVirtualCuratedPlaylist,
+} from "@/lib/virtual-curated";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +15,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const playlist = await getCuratedPlaylistTracks(decodeURIComponent(id));
+    const decodedId = decodeURIComponent(id);
+    const playlist = isVirtualCuratedId(decodedId)
+      ? await resolveVirtualCuratedPlaylist(parseVirtualCuratedId(decodedId)!)
+      : await getCuratedPlaylistTracks(decodedId);
     return NextResponse.json(playlist);
   } catch (error) {
     console.error("Failed to load curated playlist tracks:", error);

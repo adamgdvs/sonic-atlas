@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { searchCuratedPlaylists } from "@/lib/ytmusic";
+import { buildVirtualCuratedPlaylist } from "@/lib/virtual-curated";
 
 const DEFAULT_QUERIES = [
   "shoegaze essentials playlist",
@@ -25,21 +26,34 @@ export async function GET() {
       DEFAULT_QUERIES.map(async (query) => {
         try {
           const playlists = await searchCuratedPlaylists(query);
+          const selected = playlists.find((playlist) => Boolean(playlist.id)) || null;
           return {
             query,
-            playlist: playlists.find((playlist) => Boolean(playlist.id)) || null,
+            playlist: buildVirtualCuratedPlaylist({
+              title: query.replace(/\bplaylist\b/gi, "").trim(),
+              description: `Genre spotlight for ${query.replace(/\bplaylist\b/gi, "").trim()}`,
+              category: "genre",
+              query,
+              coverUrl: selected?.coverUrl || null,
+              trackCount: selected?.trackCount ?? null,
+            }),
           };
         } catch {
           return {
             query,
-            playlist: null,
+            playlist: buildVirtualCuratedPlaylist({
+              title: query.replace(/\bplaylist\b/gi, "").trim(),
+              description: `Genre spotlight for ${query.replace(/\bplaylist\b/gi, "").trim()}`,
+              category: "genre",
+              query,
+            }),
           };
         }
       })
     );
 
     return NextResponse.json({
-      spotlights: results.filter((item) => item.playlist),
+      spotlights: results,
     });
   } catch (error) {
     console.error("Failed to load genre spotlights:", error);

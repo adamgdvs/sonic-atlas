@@ -133,7 +133,7 @@ export default function GenreSpotlightsRow() {
     try {
       setRadioMode(false);
       playQueue(
-        selectedPlaylist.tracks.slice(0, 12).map((track, index) => ({
+        selectedPlaylist.tracks.map((track, index) => ({
           id: `spotlight-${selectedPlaylist.id}-${track.videoId}-${index}`,
           url: "",
           title: track.title,

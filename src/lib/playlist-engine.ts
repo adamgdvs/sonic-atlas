@@ -119,7 +119,7 @@ export async function buildGeneratedDiscoveryMix(
   input: BuildMixInput,
   lookupArtistTracks: (artistName: string) => Promise<TrackLookupResult>
 ): Promise<GeneratedDiscoveryMix> {
-  const maxTracks = input.maxTracks ?? 12;
+  const maxTracks = input.maxTracks ?? 24;
   const pools = [...input.candidatePools].sort((a, b) => {
     const aPeak = Math.max(...a.artists.map((artist) => artist.score ?? 0), 0);
     const bPeak = Math.max(...b.artists.map((artist) => artist.score ?? 0), 0);
@@ -137,7 +137,7 @@ export async function buildGeneratedDiscoveryMix(
           ((a.score ?? 0) + scoreGenreOverlap(a.genres, input.tasteSeeds.genres))
     );
 
-    for (const artist of rankedArtists.slice(0, 6)) {
+    for (const artist of rankedArtists.slice(0, 10)) {
       let previewData: TrackLookupResult | null = null;
       try {
         previewData = await lookupArtistTracks(artist.name);
@@ -169,10 +169,10 @@ export async function buildGeneratedDiscoveryMix(
         reason: buildReason(pool.sourceType, pool.source, candidateGenres),
       });
 
-      if (candidates.length >= maxTracks * 2) break;
+      if (candidates.length >= maxTracks * 4) break;
     }
 
-    if (candidates.length >= maxTracks * 2) break;
+    if (candidates.length >= maxTracks * 4) break;
   }
 
   const tracks = sequenceTracks(candidates, input.tasteSeeds.genres, maxTracks);

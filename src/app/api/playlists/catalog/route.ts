@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { type CuratedPlaylist } from "@/lib/ytmusic";
 import { CURATED_CATALOG, MIN_TRACKS, type CatalogEntry } from "@/lib/curated-catalog";
 import { resolveCuratedPlaylist } from "@/lib/curated-resolver";
+import { buildVirtualCuratedPlaylist } from "@/lib/virtual-curated";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,16 +28,16 @@ async function resolveEntry(entry: CatalogEntry): Promise<ResolvedCatalogItem> {
     });
     const playlist = selected;
 
-    if (!playlist) return { entry, playlist: null };
-
     return {
       entry,
-      playlist: {
-        ...playlist,
+      playlist: buildVirtualCuratedPlaylist({
+        title: entry.title,
+        description: entry.subtitle,
         category: entry.category,
-        title: playlist.title || entry.title,
-        description: playlist.description || entry.subtitle,
-      },
+        query: entry.searchQuery,
+        coverUrl: playlist?.coverUrl || null,
+        trackCount: playlist?.trackCount ?? null,
+      }),
       ...(process.env.NODE_ENV !== "production"
         ? {
             debug: {

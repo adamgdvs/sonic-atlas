@@ -211,7 +211,7 @@ export default function CuratedPlaylistsHub() {
     try {
       setRadioMode(false);
       playQueue(
-        selectedPlaylist.tracks.slice(0, 16).map((track, index) => ({
+        selectedPlaylist.tracks.map((track, index) => ({
           id: `curated-hub-${selectedPlaylist.id}-${track.videoId}-${index}`,
           url: "",
           title: track.title,

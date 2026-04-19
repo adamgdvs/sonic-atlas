@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_MIN_CURATED_TRACKS } from "@/lib/playlist-ranking";
 import { buildResolverEntry, resolveCuratedPlaylist } from "@/lib/curated-resolver";
+import { buildVirtualCuratedPlaylist } from "@/lib/virtual-curated";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,21 +30,56 @@ export async function GET(req: Request) {
       minimumConfidence: 0,
       includeAllRanked: true,
     });
-    return NextResponse.json({
-      query,
-      playlists: ranked
+
+    const playlists = [
+      buildVirtualCuratedPlaylist({
+        title: query,
+        description: `Curated search mix for ${query}`,
+        category: "genre",
+        query,
+      }),
+      ...ranked
         .filter((candidate) => {
           const tc = candidate.playlist.trackCount;
-          // Unknown trackCount is accepted (YT Music rarely exposes it in
-          // search results); only reject when we know it's below the floor.
           if (typeof tc === "number" && tc > 0 && tc < DEFAULT_MIN_CURATED_TRACKS) return false;
           return true;
         })
-        .map((candidate) => candidate.playlist)
+        .map((candidate) =>
+          buildVirtualCuratedPlaylist({
+            title: candidate.playlist.title || query,
+            description: candidate.playlist.description || `Curated search mix for ${query}`,
+            category: "genre",
+            query: candidate.playlist.title || query,
+            coverUrl: candidate.playlist.coverUrl,
+            trackCount: candidate.playlist.trackCount ?? null,
+          })
+        ),
+    ];
+
+    const seen = new Set<string>();
+    return NextResponse.json({
+      query,
+      playlists: playlists
+        .filter((playlist) => {
+          const normalized = playlist.title.trim().toLowerCase();
+          if (seen.has(normalized)) return false;
+          seen.add(normalized);
+          return true;
+        })
         .slice(0, 10),
     });
   } catch (error) {
     console.error("Failed to search curated playlists:", error);
-    return NextResponse.json({ query, playlists: [] });
+    return NextResponse.json({
+      query,
+      playlists: [
+        buildVirtualCuratedPlaylist({
+          title: query,
+          description: `Curated search mix for ${query}`,
+          category: "genre",
+          query,
+        }),
+      ],
+    });
   }
 }
