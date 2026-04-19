@@ -5,6 +5,10 @@ import {
   searchYouTubeMusicPlaylists,
   type YouTubeMusicPlaylistSummary,
 } from "@/lib/youtube";
+import {
+  matchSpotifyTrackWithFeatures,
+  type SpotifyAudioFeatures,
+} from "@/lib/spotify";
 import type { CuratedPlaylist, CuratedPlaylistTrack } from "@/lib/ytmusic";
 
 const VIRTUAL_CURATED_PREFIX = "atlas-curated";
@@ -29,17 +33,20 @@ type LaneSeedProfile = {
   seedTracks: SeedTrack[];
   preferredTrackTerms?: string[];
   excludedTrackTerms?: string[];
+  targetAudio?: Partial<SpotifyAudioFeatures>;
 };
 
 type DerivedLaneProfile = {
   preferredTrackTerms: string[];
   excludedTrackTerms: string[];
+  targetAudio?: Partial<SpotifyAudioFeatures>;
 };
 
 type RankedTrack = CuratedPlaylistTrack & {
   score: number;
   sourceLabel: string;
   seed: boolean;
+  spotifyAudio?: SpotifyAudioFeatures | null;
 };
 
 const SEEDED_LANES: Record<string, LaneSeedProfile> = {
@@ -278,9 +285,19 @@ function deriveLaneProfile(entry: CatalogEntry | null, descriptor: VirtualCurate
   const normalized = normalizeText(haystack);
   const preferredTrackTerms: string[] = [];
   const excludedTrackTerms: string[] = [];
+  let targetAudio: Partial<SpotifyAudioFeatures> | undefined;
 
   if (entry?.category === "mood") {
     preferredTrackTerms.push(...tokenize(descriptor.title), ...tokenize(entry.title));
+    if (normalized.includes("happy") || normalized.includes("sunrise")) {
+      targetAudio = { energy: 0.8, danceability: 0.72, valence: 0.84 };
+    } else if (normalized.includes("sad") || normalized.includes("heartbreak")) {
+      targetAudio = { energy: 0.4, danceability: 0.44, valence: 0.2, acousticness: 0.32 };
+    } else if (normalized.includes("focus") || normalized.includes("study")) {
+      targetAudio = { energy: 0.34, danceability: 0.56, valence: 0.42, instrumentalness: 0.46 };
+    } else if (normalized.includes("chill") || normalized.includes("rain")) {
+      targetAudio = { energy: 0.3, danceability: 0.44, valence: 0.36, acousticness: 0.38 };
+    }
   }
 
   if (entry?.category === "era") {
@@ -294,18 +311,41 @@ function deriveLaneProfile(entry: CatalogEntry | null, descriptor: VirtualCurate
     if (normalized.includes("study") || normalized.includes("focus")) preferredTrackTerms.push("focus", "instrumental", "study");
     if (normalized.includes("party")) preferredTrackTerms.push("party", "dance", "hits");
     if (normalized.includes("coffee") || normalized.includes("cafe")) preferredTrackTerms.push("acoustic", "indie", "folk");
+    if (normalized.includes("night") || normalized.includes("midnight")) {
+      targetAudio = { energy: 0.64, danceability: 0.62, valence: 0.42 };
+    } else if (normalized.includes("drive") || normalized.includes("road")) {
+      targetAudio = { energy: 0.68, danceability: 0.58, valence: 0.48 };
+    } else if (normalized.includes("party")) {
+      targetAudio = { energy: 0.88, danceability: 0.82, valence: 0.76 };
+    } else if (normalized.includes("coffee") || normalized.includes("cafe")) {
+      targetAudio = { energy: 0.34, danceability: 0.42, valence: 0.52, acousticness: 0.56 };
+    }
   }
 
   for (const rule of GENRE_FAMILY_RULES) {
     if (rule.match.some((term) => normalized.includes(normalizeText(term)))) {
       preferredTrackTerms.push(...rule.preferred);
       excludedTrackTerms.push(...rule.excluded);
+      if (!targetAudio) {
+        if (rule.match.includes("house")) {
+          targetAudio = { energy: 0.76, danceability: 0.8, valence: 0.62 };
+        } else if (rule.match.includes("ambient") || rule.match.includes("drone")) {
+          targetAudio = { energy: 0.22, danceability: 0.2, valence: 0.32, instrumentalness: 0.74 };
+        } else if (rule.match.includes("rap") || rule.match.includes("hip hop")) {
+          targetAudio = { energy: 0.74, danceability: 0.84, valence: 0.56 };
+        } else if (rule.match.includes("dream pop") || rule.match.includes("shoegaze")) {
+          targetAudio = { energy: 0.44, danceability: 0.46, valence: 0.38, acousticness: 0.24 };
+        } else if (rule.match.includes("country") || rule.match.includes("americana")) {
+          targetAudio = { energy: 0.46, danceability: 0.44, valence: 0.48, acousticness: 0.42 };
+        }
+      }
     }
   }
 
   return {
     preferredTrackTerms: unique(preferredTrackTerms),
     excludedTrackTerms: unique(excludedTrackTerms),
+    targetAudio,
   };
 }
 
@@ -538,6 +578,76 @@ function scoreTrack(
   return score;
 }
 
+function audioFeatureDistance(value: number | undefined, target: number | undefined, weight: number) {
+  if (typeof value !== "number" || typeof target !== "number") return 0;
+  return Math.abs(value - target) * weight;
+}
+
+function scoreAudioAlignment(
+  features: SpotifyAudioFeatures,
+  target: Partial<SpotifyAudioFeatures> | undefined
+) {
+  if (!target) return 0;
+
+  const distance =
+    audioFeatureDistance(features.energy, target.energy, 2.2) +
+    audioFeatureDistance(features.danceability, target.danceability, 2.2) +
+    audioFeatureDistance(features.valence, target.valence, 2.4) +
+    audioFeatureDistance(features.acousticness, target.acousticness, 1.4) +
+    audioFeatureDistance(features.instrumentalness, target.instrumentalness, 1.4);
+
+  return Math.max(-2.5, 4.5 - distance * 2.5);
+}
+
+async function rerankWithSpotify(
+  rankedTracks: RankedTrack[],
+  descriptor: VirtualCuratedDescriptor,
+  entry: CatalogEntry | null,
+  laneSeeds: LaneSeedProfile | null,
+  limit: number
+) {
+  const derived = deriveLaneProfile(entry, descriptor);
+  const targetAudio = laneSeeds?.targetAudio || derived.targetAudio;
+  if (!targetAudio) return rankedTracks;
+
+  const enrichmentWindow = rankedTracks
+    .slice()
+    .sort((left, right) => right.score - left.score)
+    .slice(0, Math.min(Math.max(limit * 2, 24), 48));
+
+  const enrichments = await Promise.all(
+    enrichmentWindow.map(async (track) => {
+      try {
+        const spotify = await matchSpotifyTrackWithFeatures(track.title, track.artist);
+        if (!spotify?.features) return null;
+        return {
+          key: normalizeTrackKey(track),
+          features: spotify.features,
+          bonus: scoreAudioAlignment(spotify.features, targetAudio),
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  const audioMap = new Map(
+    enrichments
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .map((item) => [item.key, item])
+  );
+
+  return rankedTracks.map((track) => {
+    const enrichment = audioMap.get(normalizeTrackKey(track));
+    if (!enrichment) return track;
+    return {
+      ...track,
+      score: track.score + enrichment.bonus,
+      spotifyAudio: enrichment.features,
+    };
+  });
+}
+
 function sequenceTracks(tracks: RankedTrack[], limit: number) {
   const remaining = [...tracks].sort((left, right) => right.score - left.score);
   const sequenced: RankedTrack[] = [];
@@ -706,7 +816,15 @@ export async function resolveVirtualCuratedPlaylist(
     }
   }
 
-  const tracks = sequenceTracks(rankedTracks, limit).map((track) => ({
+  const spotifyRankedTracks = await rerankWithSpotify(
+    rankedTracks,
+    descriptor,
+    entry,
+    laneSeeds,
+    limit
+  );
+
+  const tracks = sequenceTracks(spotifyRankedTracks, limit).map((track) => ({
     title: track.title,
     artist: track.artist,
     videoId: track.videoId,
