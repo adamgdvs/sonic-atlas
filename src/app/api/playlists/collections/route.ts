@@ -41,6 +41,7 @@ export async function GET(req: Request) {
   const collection = (searchParams.get("collection") || "featured").toLowerCase();
   const limitParam = Number.parseInt(searchParams.get("limit") || "0", 10);
   const offsetParam = Number.parseInt(searchParams.get("offset") || "0", 10);
+  const titleQuery = (searchParams.get("q") || "").trim().toLowerCase();
   const availableCollections = ["featured", "genre", "mood", "activity", "era"];
 
   const pageSize = limitParam > 0 ? Math.min(limitParam, 100) : 60;
@@ -48,7 +49,13 @@ export async function GET(req: Request) {
 
   try {
     let entries;
-    if (collection === "all") {
+    // Title search always spans the full catalog regardless of collection tab
+    if (titleQuery.length >= 2) {
+      const terms = titleQuery.split(/\s+/).filter(Boolean);
+      entries = CURATED_CATALOG.filter((e) =>
+        terms.every((t) => e.title.toLowerCase().includes(t) || e.searchQuery.toLowerCase().includes(t))
+      );
+    } else if (collection === "all") {
       entries = CURATED_CATALOG;
     } else if (collection === "featured") {
       entries = selectFeatured(200);

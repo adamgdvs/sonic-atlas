@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useAudio } from "@/contexts/AudioContext";
 import SaveCuratedButton from "./SaveCuratedButton";
@@ -165,6 +165,7 @@ export default function CuratedPlaylistsHub() {
   const [selectedPlaylist, setSelectedPlaylist] = useState<CuratedPlaylist | null>(null);
   const [loadingSelection, setLoadingSelection] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const detailPanelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -224,7 +225,8 @@ export default function CuratedPlaylistsHub() {
   }
 
   useEffect(() => {
-    if (searchTerm.trim().length < 2) {
+    const q = searchTerm.trim();
+    if (q.length < 2) {
       setSearchResults([]);
       return;
     }
@@ -233,19 +235,15 @@ export default function CuratedPlaylistsHub() {
     const timer = window.setTimeout(async () => {
       setSearching(true);
       try {
-        const res = await fetch(`/api/playlists/search?q=${encodeURIComponent(searchTerm.trim())}`);
+        // Search all catalog entries by title — independent of active collection tab
+        const res = await fetch(`/api/playlists/collections?collection=all&q=${encodeURIComponent(q)}&limit=60&offset=0`);
         if (!res.ok) return;
         const data = await res.json();
-        if (!active || !Array.isArray(data.playlists)) return;
-        setSearchResults(data.playlists);
-        if (data.playlists[0]?.id) {
-          await openPlaylist(data.playlists[0], {
-            label: searchTerm.trim(),
-            query: searchTerm.trim(),
-            category: collection,
-            tone: "search result",
-            playlist: data.playlists[0],
-          });
+        if (!active || !Array.isArray(data.collections)) return;
+        const items: CollectionItem[] = data.collections.filter((item: CollectionItem) => item.playlist?.id);
+        setSearchResults(items.map((item) => item.playlist!));
+        if (items.length > 0) {
+          await openPlaylist(items[0].playlist!, items[0]);
         } else {
           setSelectedPlaylist(null);
         }
@@ -263,11 +261,16 @@ export default function CuratedPlaylistsHub() {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [collection, searchTerm]);
+  }, [searchTerm]);
 
   async function openPlaylist(playlist: CuratedPlaylist, sourceItem?: CollectionItem | null) {
     if (!playlist.id) return;
     setLoadingSelection(true);
+    if (sourceItem) setSelectedItem(sourceItem);
+    // On mobile, scroll to the detail panel immediately so user sees loading state
+    if (window.innerWidth < 1024 && detailPanelRef.current) {
+      detailPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
     try {
       const res = await fetch(`/api/playlists/curated/${encodeURIComponent(playlist.id)}/tracks`);
       if (!res.ok) return;
@@ -278,9 +281,6 @@ export default function CuratedPlaylistsHub() {
         ...playlist,
         tracks: data.tracks,
       });
-      if (sourceItem) {
-        setSelectedItem(sourceItem);
-      }
     } catch {
       // fail soft
     } finally {
@@ -313,17 +313,18 @@ export default function CuratedPlaylistsHub() {
   const displayItems = useMemo(() => {
     if (searchTerm.trim().length >= 2) {
       return searchResults.map((playlist) => ({
-        label: searchTerm.trim(),
-        query: searchTerm.trim(),
-        category: collection,
-        tone: "search result",
+        label: playlist.title,
+        query: playlist.title,
+        category: playlist.category as CollectionKey,
+        tone: playlist.description,
         playlist,
       }));
     }
     return collections;
-  }, [collection, collections, searchResults, searchTerm]);
+  }, [collections, searchResults, searchTerm]);
 
-  const panelTitle = searchTerm.trim().length >= 2
+  const isSearching = searchTerm.trim().length >= 2;
+  const panelTitle = isSearching
     ? `Search_Results // ${searchTerm.trim()}`
     : COLLECTION_LABELS[collection];
 
@@ -350,15 +351,13 @@ export default function CuratedPlaylistsHub() {
               {(Object.keys(COLLECTION_LABELS) as CollectionKey[]).map((key) => (
                 <button
                   key={key}
-                  onClick={() => {
-                    setCollection(key);
-                    setSearchTerm("");
-                    setSearchResults([]);
-                  }}
+                  onClick={() => setCollection(key)}
                   className={`px-3 py-2 border text-[10px] font-mono font-bold uppercase tracking-[0.16em] transition-colors ${
-                    collection === key && searchTerm.trim().length < 2
+                    collection === key && !isSearching
                       ? "border-shift5-orange text-shift5-orange bg-shift5-orange/10"
-                      : "border-white/10 text-white/60 hover:text-white hover:border-white/25"
+                      : isSearching
+                        ? "border-white/06 text-white/30"
+                        : "border-white/10 text-white/60 hover:text-white hover:border-white/25"
                   }`}
                 >
                   {COLLECTION_LABELS[key]}
@@ -378,9 +377,17 @@ export default function CuratedPlaylistsHub() {
                 className="bg-transparent border-0 outline-0 text-[12px] sm:text-[13px] text-white w-full min-w-[220px]"
               />
               {searching && (
-                <span className="text-[9px] font-mono uppercase tracking-widest text-white/35">
+                <span className="text-[9px] font-mono uppercase tracking-widest text-white/35 shrink-0">
                   searching
                 </span>
+              )}
+              {isSearching && !searching && (
+                <button
+                  onClick={() => { setSearchTerm(""); setSearchResults([]); }}
+                  className="text-[9px] font-mono uppercase tracking-widest text-white/35 hover:text-shift5-orange shrink-0"
+                >
+                  ✕
+                </button>
               )}
             </div>
           </div>
@@ -433,7 +440,7 @@ export default function CuratedPlaylistsHub() {
             )}
           </div>
 
-          <div className="border-t lg:border-t-0 lg:border-l border-white/[0.06] bg-white/[0.015]">
+          <div ref={detailPanelRef} className="border-t lg:border-t-0 lg:border-l border-white/[0.06] bg-white/[0.015]">
             <div className="px-4 sm:px-5 py-4 border-b border-white/[0.06]">
               <div className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em]">
                 Curated_Set
