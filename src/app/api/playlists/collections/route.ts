@@ -56,23 +56,23 @@ const PRESETS: Preset[] = [
 // Categories can be verified at: GET /browse/categories
 const COLLECTION_SPOTIFY_CATEGORIES: Record<string, string[]> = {
   featured: [], // uses getFeaturedPlaylists instead
-  mood: ["mood", "chill", "sleep"],
-  genre: ["pop", "rock", "hiphop", "indie_alt", "electronic", "rnb", "jazz", "country"],
+  mood:     ["mood", "chill", "sleep"],
+  genre:    ["pop", "rock", "hiphop", "indie_alt", "electronic", "rnb", "jazz", "country"],
   activity: ["workout", "focus", "party"],
-  era: ["decades"],
+  era:      ["decades"],
 };
 
 async function fetchSpotifyCollectionPlaylists(
   collection: string
 ): Promise<SpotifyPlaylistSummary[]> {
   if (collection === "featured") {
-    return getFeaturedPlaylists(24).catch(() => []);
+    return getFeaturedPlaylists(40).catch(() => []);
   }
   const categoryIds = COLLECTION_SPOTIFY_CATEGORIES[collection] || [];
   if (!categoryIds.length) return [];
 
   const batches = await Promise.allSettled(
-    categoryIds.map((id) => getCategoryPlaylists(id, 8))
+    categoryIds.map((id) => getCategoryPlaylists(id, 30))
   );
   const seen = new Set<string>();
   return batches

@@ -227,49 +227,114 @@ export async function searchSpotifyPlaylists(
 ): Promise<SpotifyPlaylistSummary[]> {
   if (!getCredentials()) return [];
 
-  return dbCache<SpotifyPlaylistSummary[]>(
-    `spotify:plsearch:${normalize(query)}`,
+  const cacheKey = `spotify:plsearch:${normalize(query)}:${limit}`;
+  const cached = await dbCache<SpotifyPlaylistSummary[] | null>(
+    cacheKey,
     DAY,
     async () => {
       const q = encodeURIComponent(query);
       const data = await spotifyFetch<{
         playlists?: { items?: SpotifyPlaylistItem[] };
       }>(`/search?q=${q}&type=playlist&limit=${limit}`);
-      return (data?.playlists?.items || [])
+      const results = (data?.playlists?.items || [])
         .map(mapPlaylistItem)
         .filter((item): item is SpotifyPlaylistSummary => item !== null);
+      // Return null for empty so dbCache stores null (short effective "miss"),
+      // not [] — avoids permanently caching a failed/empty result
+      return results.length > 0 ? results : null;
     }
   );
+  return cached ?? [];
 }
 
 // Spotify deprecated /browse/categories and /browse/featured-playlists (2024).
 // These replacements use /search?type=playlist which is still supported.
 
 const CATEGORY_SEARCH_QUERIES: Record<string, string[]> = {
-  mood:      ["mood booster playlist", "feel good playlist", "happy vibes playlist"],
-  chill:     ["chill vibes playlist", "lofi chill playlist", "relaxing music playlist"],
-  sleep:     ["sleep music playlist", "calm sleep playlist", "peaceful sleep playlist"],
-  focus:     ["focus study playlist", "deep focus music", "concentration playlist"],
-  workout:   ["workout playlist", "gym music playlist", "high energy workout"],
-  party:     ["party hits playlist", "dance party playlist", "club hits playlist"],
-  pop:       ["pop hits playlist", "top pop songs", "popular music playlist"],
-  rock:      ["rock classics playlist", "rock hits", "best rock songs playlist"],
-  hiphop:    ["hip hop playlist", "rap hits playlist", "best rap songs"],
-  indie_alt: ["indie playlist", "indie rock playlist", "alternative playlist"],
-  electronic:["electronic playlist", "edm playlist", "dance music playlist"],
-  rnb:       ["r&b playlist", "soul r&b playlist", "best r&b songs"],
-  jazz:      ["jazz playlist", "smooth jazz playlist", "jazz classics"],
-  country:   ["country playlist", "country hits", "best country songs"],
-  decades:   ["80s hits playlist", "90s playlist", "2000s hits", "70s classic rock"],
+  mood: [
+    "mood booster playlist", "feel good playlist", "happy vibes playlist",
+    "sad songs playlist", "emotional playlist", "positive energy playlist",
+    "uplifting songs", "chill mood playlist", "good vibes playlist",
+    "melancholy playlist", "heartfelt songs playlist", "sentimental playlist",
+  ],
+  chill: [
+    "chill vibes playlist", "lofi chill playlist", "relaxing music playlist",
+    "laid back playlist", "afternoon chill playlist", "easy listening playlist",
+    "soft background music", "mellow playlist", "calm playlist",
+  ],
+  sleep: [
+    "sleep music playlist", "calm sleep playlist", "peaceful sleep playlist",
+    "bedtime songs playlist", "sleep sounds playlist", "ambient sleep playlist",
+    "relaxing sleep music", "soft piano sleep",
+  ],
+  focus: [
+    "focus study playlist", "deep focus music", "concentration playlist",
+    "study music playlist", "work focus playlist", "instrumental focus",
+    "productivity playlist", "lofi study beats", "focus flow playlist",
+  ],
+  workout: [
+    "workout playlist", "gym music playlist", "high energy workout",
+    "running playlist", "cardio music playlist", "powerlifting playlist",
+    "hype music workout", "beast mode playlist", "training playlist",
+  ],
+  party: [
+    "party hits playlist", "dance party playlist", "club hits playlist",
+    "party anthems", "dance floor playlist", "banger playlist",
+    "house party music", "night out playlist",
+  ],
+  pop: [
+    "pop hits playlist", "top pop songs", "popular music playlist",
+    "pop bops playlist", "mainstream pop", "pop anthems",
+    "best pop songs", "pop classics playlist",
+  ],
+  rock: [
+    "rock classics playlist", "rock hits", "best rock songs playlist",
+    "classic rock playlist", "rock anthems", "hard rock playlist",
+    "alternative rock", "rock essentials",
+  ],
+  hiphop: [
+    "hip hop playlist", "rap hits playlist", "best rap songs",
+    "hip hop classics", "rap essentials", "boom bap playlist",
+    "trap playlist", "golden era hip hop", "gangsta rap classics",
+  ],
+  indie_alt: [
+    "indie playlist", "indie rock playlist", "alternative playlist",
+    "indie pop playlist", "indie folk playlist", "alt rock essentials",
+    "indie hits", "indie essentials",
+  ],
+  electronic: [
+    "electronic playlist", "edm playlist", "dance music playlist",
+    "house music playlist", "techno playlist", "electronic essentials",
+    "rave playlist", "deep house playlist", "electronic bangers",
+  ],
+  rnb: [
+    "r&b playlist", "soul r&b playlist", "best r&b songs",
+    "neo soul playlist", "smooth r&b", "r&b classics",
+    "modern r&b playlist", "soul music playlist",
+  ],
+  jazz: [
+    "jazz playlist", "smooth jazz playlist", "jazz classics",
+    "jazz essentials", "late night jazz", "jazz standards",
+    "cool jazz playlist", "jazz vibes",
+  ],
+  country: [
+    "country playlist", "country hits", "best country songs",
+    "country classics", "modern country", "country road playlist",
+    "country anthems", "americana playlist",
+  ],
+  decades: [
+    "80s hits playlist", "90s playlist", "2000s hits",
+    "70s classic rock", "60s soul playlist", "80s new wave",
+    "90s alternative", "2000s pop hits", "90s r&b", "80s pop",
+    "classic hits decade", "retro playlist",
+  ],
 };
 
 const FEATURED_SEARCH_QUERIES = [
-  "today's top hits playlist",
-  "viral hits playlist",
-  "new music friday playlist",
-  "trending songs playlist",
-  "global top songs playlist",
-  "hot hits playlist",
+  "today's top hits", "viral hits playlist", "new music friday",
+  "trending songs", "global top songs", "hot hits playlist",
+  "chart hits playlist", "popular songs now", "most streamed songs",
+  "hit songs playlist", "top 40 playlist", "best songs playlist",
 ];
 
 async function searchPlaylistBatch(
@@ -291,21 +356,20 @@ async function searchPlaylistBatch(
 
 export async function getCategoryPlaylists(
   categoryId: string,
-  limit = 20
+  limit = 30
 ): Promise<SpotifyPlaylistSummary[]> {
   if (!getCredentials()) return [];
   const queries = CATEGORY_SEARCH_QUERIES[categoryId] || [`${categoryId} playlist`];
-  const perQuery = Math.ceil(limit / queries.length) + 2;
-  const results = await searchPlaylistBatch(queries, perQuery);
+  // Run all queries in parallel, take 8 per query to maximise variety
+  const results = await searchPlaylistBatch(queries, 8);
   return results.slice(0, limit);
 }
 
 export async function getFeaturedPlaylists(
-  limit = 24
+  limit = 40
 ): Promise<SpotifyPlaylistSummary[]> {
   if (!getCredentials()) return [];
-  const perQuery = Math.ceil(limit / FEATURED_SEARCH_QUERIES.length) + 2;
-  const results = await searchPlaylistBatch(FEATURED_SEARCH_QUERIES, perQuery);
+  const results = await searchPlaylistBatch(FEATURED_SEARCH_QUERIES, 8);
   return results.slice(0, limit);
 }
 
