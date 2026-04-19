@@ -174,38 +174,153 @@ Build a native React Native app that talks to the existing Sonic Atlas backend. 
 - Listening history
 
 ### Now Playing (Persistent mini-player + full-screen modal)
-- Album art, title, artist
-- Scrubber / progress bar
-- Controls: prev, play/pause, next, shuffle, repeat
-- Queue panel (swipe up)
-- Radio mode toggle
-- "Add to playlist" button
+
+#### Mini-Player (always visible at bottom)
+- Spinning vinyl thumbnail — album art cropped to circle, rotates at 8 RPM while playing, eases to a stop on pause
+- Vinyl groove overlay rendered on top of the art (radial gradient rings)
+- Center spindle dot
+- Track title + artist, animated slide-in on track change
+- Play/Pause button
+- Skip forward button
+- Progress bar at top edge (3px orange fill)
+- **Swipe left** → skip to next track
+- **Swipe right** → go to previous track
+- **Tap** → expands to full-screen player
+
+#### Full-Screen Player (slides up from bottom)
+- Drag handle at top — drag down to collapse
+- Blurred album art background (80px blur, 40% opacity, covers entire screen)
+- Dark gradient overlay over blur
+- **Vinyl record assembly** (the centrepiece):
+  - Outer vinyl disc: `radial-gradient` with layered groove rings (dark concentric bands), extends 12% beyond the art circle
+  - Orange center label with inner spindle hole
+  - Three white hairline groove rings at 15%, 25%, 35% inset
+  - Light reflection shimmer: `linear-gradient(135deg, rgba(255,255,255,0.06)...)`
+  - Album art on top: circular clip, full rotation at 12 RPM while playing
+  - Vinyl groove overlay on the art itself (radial gradient rings at 38–42%)
+  - Center spindle: dark circle, white inner dot, `backdrop-blur`
+  - Loading spinner overlay when fetching next track
+  - **Pulsing orange glow ring** when playing: `box-shadow: 0 0 40px rgba(255,88,65,0.15), 0 0 80px rgba(255,88,65,0.08)`, oscillates opacity 0.3→0.6→0.3 over 3 seconds
+- Track title + artist (animated fade+slide on change), artist name links to artist page
+- Seekbar: 5px height, orange fill, white thumb dot, touch-draggable
+- Time elapsed / time remaining (countdown)
+- Transport controls: Shuffle | Prev | Play/Pause (64px orange circle) | Next | Repeat
+- Bottom icon row: Queue (badge with count) | History | Radio | Surge ⚡ | Save to playlist
+- Safe area inset padding (notch/home bar aware)
 
 ### Constellation Graph *(Phase 2)*
-- Interactive artist relationship graph
-- React Native Skia or `react-native-svg` for D3 recreation
-- Pinch-to-zoom, tap node to navigate to artist
+- Interactive artist relationship graph — D3 force-directed simulation (web) needs a full rewrite in React Native
+- **Web implementation**: `d3-force`, SVG `<circle>` nodes, `<line>` edges, drag + zoom behaviours
+- **Mobile rewrite options**: `react-native-skia` (GPU-accelerated canvas, recommended) or `react-native-svg` (simpler, slower at scale)
+- Node types: primary (tapped artist, large orange), similar (smaller white), genre cluster nodes
+- Edges weighted by Last.fm similarity score — stroke opacity maps to weight
+- Pinch-to-zoom, pan, tap node → push Artist Detail screen
+- Depth controlled by the Niche Depth Slider (0 = mainstream neighbours, 100 = deep cuts)
+- Data: existing `/api/artist/[name]/similar` endpoint — no backend changes needed
+
+### Frequency Hub
+- Global real-time activity feed — "who is scanning what right now"
+- Events logged on every artist scan/play: `{ userId, artistName, genres, timestamp }`
+- Mobile: flat scrollable list (same data as web `/api/feed`)
+- Live updates via polling (every 30s) or WebSocket (Phase 2)
+- Each event card shows: artist image, name, genre chips, time ago, user avatar
+
+### Surge ⚡
+- The ⚡ button in the Now Playing screen (web and mobile)
+- One tap randomly picks a track from a **related genre** of the current artist — instant discovery
+- Algorithm: takes current artist's top tags → picks a random tag → fetches top tracks for that genre → picks randomly weighted by Last.fm play count
+- API: hits existing `/api/genre/[name]/tracks` or similar — no new endpoint needed
+- Mobile: same button visible in full-screen player bottom row, triggers haptic feedback on fire
+
+### Radio Mode
+- Activated via the Radio icon in the Now Playing bottom row
+- Auto-queues tracks endlessly based on current artist
+- Algorithm: when queue drops below 3 tracks, calls `/api/artist/[name]/similar` → picks top similar artist → fetches their top tracks → appends to queue
+- Chains through similar artists so the station drifts naturally over time
+- On mobile: `react-native-track-player`'s `PlaybackQueueEnded` event triggers the next-batch fetch
+- Visual indicator: Radio icon glows orange when active; queue panel shows "Radio" badge on auto-added tracks
+
+### Queue & History Panels
+- **Queue**: Slide-up bottom sheet (`@gorhom/bottom-sheet`) — draggable list of upcoming tracks, remove/reorder by long-press drag
+- **History**: Same sheet, tab-switched — list of previously played tracks, tap to re-queue
+- Both persist in Zustand store (cleared on app restart unless user is logged in, where history also writes to DB)
 
 ---
 
 ## 5. Audio Playback on Mobile
 
-This is the most critical and complex piece. The current web app uses two systems:
+### How Streaming Works Today (Web)
 
-| Source | Web | Mobile equivalent |
+Sonic Atlas does not use the YouTube Data API v3 for playback — it uses YouTube Music's internal **Innertube API** directly, which is the same protocol the official YouTube Music app uses.
+
+```
+User taps Play
+       │
+       ▼
+POST /api/stream/[videoId]
+       │
+       ▼
+Node.js API route
+  ├─ Calls yt-dlp (or Innertube.js) to extract audio stream URL
+  ├─ Gets a direct CDN URL to the audio (opus/webm or m4a, 128–256kbps)
+  └─ Pipes it through as an HTTP audio stream
+       │
+       ▼
+Browser HTML5 <audio> plays the proxied stream
+```
+
+**Why proxy it?** YouTube's extracted stream URLs are signed and IP-locked — they must be fetched server-side and proxied to the client. The `/api/stream/[videoId]` route handles this entirely.
+
+**Track metadata** (title, artist, thumbnail) comes from the YouTube Music search that resolves each playlist entry — also via Innertube, not the Data API v3. No YouTube API key is required for any of this.
+
+**Deezer previews** (30-second clips) are a fallback when a YouTube Music match isn't found. These are direct CDN URLs — no proxy needed.
+
+---
+
+### Mobile: Background Playback (Screen Off)
+
+This is a hard requirement and the most important audio consideration for mobile. When the screen turns off or the user switches apps, music must keep playing. The web app's HTML5 `<audio>` tag handles this automatically in browsers, but React Native requires explicit setup.
+
+**Solution: `react-native-track-player`**
+
+This library runs audio in a **native foreground service** (Android) and **AVAudioSession** (iOS), which are the same mechanisms Spotify and Apple Music use. Key guarantees:
+
+| Behaviour | How it works |
+|---|---|
+| Screen turns off | Audio continues — native service keeps running |
+| User switches apps | Audio continues — foreground service survives backgrounding |
+| User pulls down notification shade | Playback controls appear (Android Media Session) |
+| Lock screen | Album art + controls show on lock screen |
+| Headphone unplugged | Auto-pauses (standard Android/iOS behaviour) |
+| Bluetooth connects | Auto-routes audio to headset |
+| Phone call interrupts | Auto-pauses, resumes after call |
+
+**Setup required:**
+```
+android/app/src/main/AndroidManifest.xml
+  → <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  → <service android:name="com.doublesymmetry.trackplayer.service.HeadlessJsMediaService" ... />
+```
+
+The existing `/api/stream/[videoId]` proxy URL is passed directly to `react-native-track-player` — the library handles the HTTP streaming, buffering, and OS integration. No backend changes needed.
+
+**Vinyl animation while screen is off:** The spinning vinyl is a UI element only — it will naturally stop rendering when the screen is off (the OS suspends the UI thread). Music continues in the native layer. When the user wakes the screen, the vinyl resumes spinning if the track is still playing.
+
+---
+
+### Full Audio Stack Comparison
+
+| Feature | Web (current) | Mobile (React Native) |
 |---|---|---|
-| YouTube Music (full tracks) | yt-dlp + Node.js proxy → HTML5 `<audio>` | Stream URL from `/api/stream/[videoId]` → `expo-av` or `react-native-track-player` |
-| Deezer previews (30 sec) | HTML5 `<audio>` | Direct URL → `expo-av` |
-
-### Recommended: `react-native-track-player`
-The most battle-tested audio library for React Native. Features:
-- **Background playback** — keeps playing when screen is off or app is backgrounded
-- **Lock screen controls** — Android media session + iOS Control Centre
-- **Notification controls** — playback controls in the notification drawer
-- **Queue management** — built-in, mirrors the web app's queue system
-- **Gapless playback** — smooth transitions between tracks
-
-The existing `/api/stream/[videoId]` endpoint already returns an audio stream URL. The mobile app points `react-native-track-player` at that URL — no backend changes needed.
+| Full tracks | yt-dlp → `/api/stream` proxy → `<audio>` | `/api/stream` proxy → `react-native-track-player` |
+| Previews | Deezer CDN → `<audio>` | Deezer CDN → `react-native-track-player` |
+| Background play | Browser handles it | `react-native-track-player` native service |
+| Lock screen controls | Not applicable | Android Media Session / iOS Now Playing |
+| Notification controls | Not applicable | Auto — provided by the library |
+| Queue management | Custom `AudioContext` hook | `react-native-track-player` built-in queue |
+| Vinyl animation | Framer Motion CSS rotation | `react-native-reanimated` continuous rotation |
+| Seek scrubbing | Mouse/touch on custom div | `react-native-track-player` seek API |
+| Gapless playback | Manual pre-load logic | Built into `react-native-track-player` |
 
 ---
 
