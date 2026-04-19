@@ -236,12 +236,14 @@ export default function CuratedPlaylistsHub() {
       setSearching(true);
       try {
         // Search all catalog entries by title — independent of active collection tab
-        const res = await fetch(`/api/playlists/collections?collection=all&q=${encodeURIComponent(q)}&limit=60&offset=0`);
+        // Use a high limit so all matching results come back in one page (catalog is static)
+        const res = await fetch(`/api/playlists/collections?collection=all&q=${encodeURIComponent(q)}&limit=200&offset=0`);
         if (!res.ok) return;
         const data = await res.json();
         if (!active || !Array.isArray(data.collections)) return;
         const items: CollectionItem[] = data.collections.filter((item: CollectionItem) => item.playlist?.id);
         setSearchResults(items.map((item) => item.playlist!));
+        setTotalCount(data.total ?? items.length);
         if (items.length > 0) {
           await openPlaylist(items[0].playlist!, items[0]);
         } else {
@@ -416,28 +418,30 @@ export default function CuratedPlaylistsHub() {
               </div>
             </div>
 
-            <div className="p-4 sm:p-5 grid gap-4 sm:grid-cols-2">
-              {displayItems.map((item) => (
-                <CollectionCard
-                  key={`${item.category}-${item.playlist?.id || item.query}`}
-                  item={item}
-                  active={selectedPlaylist?.id === item.playlist?.id}
-                  onOpen={() => item.playlist && openPlaylist(item.playlist, item)}
-                />
-              ))}
-            </div>
-
-            {hasMore && searchTerm.trim().length < 2 && (
-              <div className="px-4 sm:px-5 pb-5">
-                <button
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  className="w-full py-3 border border-white/[0.12] text-[10px] font-mono uppercase tracking-[0.18em] text-white/50 hover:border-shift5-orange hover:text-shift5-orange transition-colors disabled:opacity-40"
-                >
-                  {loadingMore ? "Loading..." : `Load More — ${totalCount - collections.length} remaining`}
-                </button>
+            <div className="overflow-y-auto max-h-[640px]">
+              <div className="p-4 sm:p-5 grid gap-4 sm:grid-cols-2">
+                {displayItems.map((item) => (
+                  <CollectionCard
+                    key={`${item.category}-${item.playlist?.id || item.query}`}
+                    item={item}
+                    active={selectedPlaylist?.id === item.playlist?.id}
+                    onOpen={() => item.playlist && openPlaylist(item.playlist, item)}
+                  />
+                ))}
               </div>
-            )}
+
+              {hasMore && !isSearching && (
+                <div className="px-4 sm:px-5 pb-5">
+                  <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="w-full py-3 border border-white/[0.12] text-[10px] font-mono uppercase tracking-[0.18em] text-white/50 hover:border-shift5-orange hover:text-shift5-orange transition-colors disabled:opacity-40"
+                  >
+                    {loadingMore ? "Loading..." : `Load More — ${totalCount - collections.length} remaining`}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div ref={detailPanelRef} className="border-t lg:border-t-0 lg:border-l border-white/[0.06] bg-white/[0.015]">
