@@ -174,7 +174,7 @@ export default function CuratedPlaylistsHub() {
       setCollections([]);
       setHasMore(false);
       try {
-        const res = await fetch(`/api/playlists/collections?collection=${collection}&limit=60&offset=0`);
+        const res = await fetch(`/api/playlists/collections?collection=${collection}&limit=12&offset=0`);
         if (!res.ok) return;
         const data = await res.json();
         if (!active || !Array.isArray(data.collections)) return;
@@ -208,7 +208,7 @@ export default function CuratedPlaylistsHub() {
     setLoadingMore(true);
     try {
       const res = await fetch(
-        `/api/playlists/collections?collection=${collection}&limit=60&offset=${collections.length}`
+        `/api/playlists/collections?collection=${collection}&limit=12&offset=${collections.length}`
       );
       if (!res.ok) return;
       const data = await res.json();
