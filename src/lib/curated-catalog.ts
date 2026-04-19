@@ -1,4 +1,5 @@
 import { BASELINE_CURATED_CATALOG } from "@/lib/curated-catalog-baseline";
+import { GENERATED_CATALOG } from "@/lib/generated-catalog";
 
 // Hand-picked curated playlist themes. Each entry maps to a YouTube Music
 // search query whose top result is expected to be a large (>=40 track)
@@ -751,6 +752,7 @@ function dedupeCatalog(entries: CatalogEntry[]) {
 export const CURATED_CATALOG: CatalogEntry[] = dedupeCatalog([
   ...CORE_CURATED_CATALOG,
   ...BASELINE_CURATED_CATALOG,
+  ...GENERATED_CATALOG,
 ]);
 
 export const CURATED_CATALOG_COUNTS = CURATED_CATALOG.reduce(

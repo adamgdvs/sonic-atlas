@@ -159,6 +159,9 @@ export default function CuratedPlaylistsHub() {
   const [searchResults, setSearchResults] = useState<CuratedPlaylist[]>([]);
   const [searching, setSearching] = useState(false);
   const [loadingCollection, setLoadingCollection] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
   const [selectedPlaylist, setSelectedPlaylist] = useState<CuratedPlaylist | null>(null);
   const [loadingSelection, setLoadingSelection] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -168,13 +171,17 @@ export default function CuratedPlaylistsHub() {
 
     async function loadCollection() {
       setLoadingCollection(true);
+      setCollections([]);
+      setHasMore(false);
       try {
-        const res = await fetch(`/api/playlists/collections?collection=${collection}`);
+        const res = await fetch(`/api/playlists/collections?collection=${collection}&limit=60&offset=0`);
         if (!res.ok) return;
         const data = await res.json();
         if (!active || !Array.isArray(data.collections)) return;
         const nextItems = data.collections.filter((item: CollectionItem) => item.playlist?.id);
         setCollections(nextItems);
+        setHasMore(data.hasMore ?? false);
+        setTotalCount(data.total ?? nextItems.length);
         if (nextItems.length > 0) {
           await openPlaylist(nextItems[0].playlist!, nextItems[0]);
         } else {
@@ -193,10 +200,28 @@ export default function CuratedPlaylistsHub() {
     }
 
     loadCollection();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [collection]);
+
+  async function loadMore() {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(
+        `/api/playlists/collections?collection=${collection}&limit=60&offset=${collections.length}`
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!Array.isArray(data.collections)) return;
+      const nextItems = data.collections.filter((item: CollectionItem) => item.playlist?.id);
+      setCollections((prev) => [...prev, ...nextItems]);
+      setHasMore(data.hasMore ?? false);
+    } catch {
+      // non-critical
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     if (searchTerm.trim().length < 2) {
@@ -380,7 +405,7 @@ export default function CuratedPlaylistsHub() {
                 {panelTitle}
               </div>
               <div className="text-[10px] font-mono uppercase tracking-widest text-shift5-muted">
-                {displayItems.length} playlists
+                {displayItems.length}{totalCount > displayItems.length ? ` / ${totalCount}` : ""} playlists
               </div>
             </div>
 
@@ -394,6 +419,18 @@ export default function CuratedPlaylistsHub() {
                 />
               ))}
             </div>
+
+            {hasMore && searchTerm.trim().length < 2 && (
+              <div className="px-4 sm:px-5 pb-5">
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="w-full py-3 border border-white/[0.12] text-[10px] font-mono uppercase tracking-[0.18em] text-white/50 hover:border-shift5-orange hover:text-shift5-orange transition-colors disabled:opacity-40"
+                >
+                  {loadingMore ? "Loading..." : `Load More — ${totalCount - collections.length} remaining`}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="border-t lg:border-t-0 lg:border-l border-white/[0.06] bg-white/[0.015]">
