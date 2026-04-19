@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "Sonic Atlas",
+    "slug": "sonic-atlas-mobile",
+    "scheme": "sonicatlas",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "extra": {
+      "apiBaseUrl": "https://sonic-atlas.vercel.app"
+    },
+    "experiments": {
+      "typedRoutes": true
+    },
+    "android": {
+      "package": "com.outertune.sonicatlas",
+      "adaptiveIcon": {
+        "backgroundColor": "#121212"
+      }
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.outertune.sonicatlas"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-dev-client"
+    ]
+  }
+}
