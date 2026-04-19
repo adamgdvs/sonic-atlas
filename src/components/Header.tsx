@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Terminal, Menu, X, Search } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Terminal, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProtocolOverlay from "./ProtocolOverlay";
 import SearchBar from "./SearchBar";
@@ -19,11 +19,6 @@ export default function Header() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isHome = pathname === "/";
-
-  // Close mobile menu on navigation
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [pathname]);
 
   // Close mobile menu on outside click
   useEffect(() => {
@@ -81,32 +76,32 @@ export default function Header() {
           {session ? (
             <Link
               href="/my-atlas"
-              className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5"
+              className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5"
             >
               MY ATLAS
             </Link>
           ) : (
             <Link
               href="/genres"
-              className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5"
+              className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5"
             >
               GENRES
             </Link>
           )}
 
-          <Link href="/about" className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
+          <Link href="/about" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
             ABOUT
           </Link>
 
-          <Link href="/frequency" className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
+          <Link href="/frequency" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
             FREQUENCY
           </Link>
 
-          <Link href="/playlists" className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
+          <Link href="/playlists" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
             PLAYLISTS
           </Link>
 
-          <Link href="/help" className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
+          <Link href="/help" className="cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
             HELP
           </Link>
 

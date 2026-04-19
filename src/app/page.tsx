@@ -11,7 +11,7 @@ import YourAtlasRotation from "@/components/YourAtlasRotation";
 import GenreCards from "@/components/GenreCards";
 import CuratedMoodsRow from "@/components/CuratedMoodsRow";
 import ChartsRow from "@/components/ChartsRow";
-import CuratedCatalogRow from "@/components/CuratedCatalogRow";
+import CuratedPlaylistsHub from "@/components/CuratedPlaylistsHub";
 import { getTopGenres, type GenreInfo } from "@/lib/api";
 import Footer from "@/components/Footer";
 
@@ -153,8 +153,8 @@ export default function Home() {
         {/* Charts — current region motion */}
         <ChartsRow />
 
-        {/* Curated Catalog — featured themed playlists, link to full /playlists browse */}
-        <CuratedCatalogRow />
+        {/* Curated Playlists — recognizable named mixes + search */}
+        <CuratedPlaylistsHub />
 
         {/* Personalized Discovery — Because You Saved X */}
         <DiscoverFeed />

@@ -13,6 +13,21 @@ import {
   type CatalogEntry,
 } from "@/lib/curated-catalog";
 
+const QUICK_THEMES = [
+  "90's HipHop",
+  "Midnight Roadtrip",
+  "Indie Rock",
+  "Garage Bands",
+  "Happy Days",
+  "Focus Flow",
+  "Rainy Day",
+  "House Party",
+  "Dream Pop",
+  "Bossa Nights",
+  "Soul Revival",
+  "Afro House",
+];
+
 interface CuratedPlaylistTrack {
   title: string;
   artist: string;
@@ -162,7 +177,7 @@ export default function PlaylistsPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="search themes, tags, vibes…"
+            placeholder="search playlists, moods, eras, genres..."
             className="flex-1 bg-white/[0.03] border border-white/10 focus:border-shift5-orange/70 outline-none px-4 py-3 text-[12px] font-mono uppercase tracking-wider placeholder:text-white/25 text-white transition-colors"
           />
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
@@ -176,6 +191,18 @@ export default function PlaylistsPage() {
               />
             ))}
           </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mb-8">
+          {QUICK_THEMES.map((theme) => (
+            <button
+              key={theme}
+              onClick={() => setQuery(theme)}
+              className="px-2.5 py-1 border border-white/10 text-[9px] font-mono uppercase tracking-widest text-white/45 hover:text-white hover:border-white/25 transition-colors cursor-pointer"
+            >
+              {theme}
+            </button>
+          ))}
         </div>
 
         {loading ? (

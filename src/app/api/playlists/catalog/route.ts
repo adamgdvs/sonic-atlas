@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
-import { searchCuratedPlaylists, type CuratedPlaylist } from "@/lib/ytmusic";
-import {
-  CURATED_CATALOG,
-  MIN_TRACKS,
-  type CatalogEntry,
-} from "@/lib/curated-catalog";
+import { type CuratedPlaylist } from "@/lib/ytmusic";
+import { CURATED_CATALOG, MIN_TRACKS, type CatalogEntry } from "@/lib/curated-catalog";
+import { resolveCuratedPlaylist } from "@/lib/curated-resolver";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,18 +9,23 @@ export const dynamic = "force-dynamic";
 export interface ResolvedCatalogItem {
   entry: CatalogEntry;
   playlist: CuratedPlaylist | null;
+  debug?: {
+    topCandidates: Array<{
+      title: string;
+      score: number;
+      trackCount: number | null | undefined;
+      reasons: string[];
+    }>;
+  };
 }
 
 async function resolveEntry(entry: CatalogEntry): Promise<ResolvedCatalogItem> {
   try {
-    const candidates = await searchCuratedPlaylists(entry.searchQuery);
-    const qualifying = candidates.find(
-      (p) => p.id && typeof p.trackCount === "number" && p.trackCount >= MIN_TRACKS
-    );
-    const fallback = !qualifying
-      ? candidates.find((p) => p.id && (p.trackCount ?? 0) >= 20)
-      : null;
-    const playlist = qualifying || fallback || null;
+    const { ranked, selected } = await resolveCuratedPlaylist(entry, {
+      minimumTracks: MIN_TRACKS,
+      includeAllRanked: true,
+    });
+    const playlist = selected;
 
     if (!playlist) return { entry, playlist: null };
 
@@ -35,6 +37,18 @@ async function resolveEntry(entry: CatalogEntry): Promise<ResolvedCatalogItem> {
         title: playlist.title || entry.title,
         description: playlist.description || entry.subtitle,
       },
+      ...(process.env.NODE_ENV !== "production"
+        ? {
+            debug: {
+              topCandidates: ranked.slice(0, 3).map((candidate) => ({
+                title: candidate.playlist.title,
+                score: Number(candidate.score.toFixed(2)),
+                trackCount: candidate.playlist.trackCount,
+                reasons: candidate.reasons,
+              })),
+            },
+          }
+        : {}),
     };
   } catch {
     return { entry, playlist: null };
