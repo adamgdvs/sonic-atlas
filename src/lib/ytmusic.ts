@@ -28,6 +28,7 @@ export interface CuratedPlaylist {
   coverUrl: string | null;
   source: "ytmusic" | "atlas";
   category: string;
+  trackCount?: number | null;
   tracks?: CuratedPlaylistTrack[];
 }
 

@@ -14,6 +14,27 @@ def first_thumbnail(item):
     return None
 
 
+def extract_track_count(item):
+    # YT Music search results expose the playlist size in a few shapes:
+    #   "count": "42 songs"
+    #   "itemCount": 42
+    #   "trackCount": 42
+    for key in ("trackCount", "itemCount", "count"):
+        value = item.get(key)
+        if value is None:
+            continue
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str):
+            digits = "".join(ch for ch in value if ch.isdigit())
+            if digits:
+                try:
+                    return int(digits)
+                except ValueError:
+                    pass
+    return None
+
+
 def normalize_playlist(item, category=None):
     playlist_id = item.get("playlistId") or item.get("browseId")
     if not playlist_id:
@@ -34,6 +55,7 @@ def normalize_playlist(item, category=None):
         "coverUrl": first_thumbnail(item),
         "source": "ytmusic",
         "category": category or "curated",
+        "trackCount": extract_track_count(item),
     }
 
 
@@ -125,7 +147,7 @@ def charts(country):
 
 def playlist_tracks(playlist_id):
     ytmusic = build_client()
-    playlist = ytmusic.get_playlist(playlist_id, limit=50)
+    playlist = ytmusic.get_playlist(playlist_id, limit=100)
     tracks = []
     for item in playlist.get("tracks") or []:
         track = normalize_track(item)
@@ -139,6 +161,7 @@ def playlist_tracks(playlist_id):
         "coverUrl": first_thumbnail(playlist),
         "source": "ytmusic",
         "category": "curated",
+        "trackCount": len(tracks),
         "tracks": tracks,
     }
 

@@ -102,6 +102,10 @@ export default function Header() {
             FREQUENCY
           </Link>
 
+          <Link href="/playlists" className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
+            PLAYLISTS
+          </Link>
+
           <Link href="/help" className="lg:hidden cursor-pointer text-white/70 hover:text-white transition-colors no-underline border border-transparent hover:border-shift5-orange/50 px-2 py-0.5 text-nowrap">
             HELP
           </Link>
@@ -231,6 +235,7 @@ export default function Header() {
                 { href: "/", label: "HOME" },
                 ...(session ? [{ href: "/my-atlas", label: "MY ATLAS" }] : []),
                 { href: "/genres", label: "GENRES" },
+                { href: "/playlists", label: "PLAYLISTS" },
                 { href: "/about", label: "ABOUT" },
                 { href: "/frequency", label: "FREQUENCY" },
                 { href: "/help", label: "HELP" },
