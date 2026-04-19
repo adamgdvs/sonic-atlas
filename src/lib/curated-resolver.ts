@@ -55,11 +55,15 @@ export async function resolveCuratedPlaylist(
   const candidates = await searchCuratedPlaylists(entry.searchQuery);
   const ranked = rankPlaylistCandidates(entry, candidates, minimumTracks);
 
-  const qualifying = ranked.filter(
-    (candidate) =>
-      candidate.score >= minimumConfidence &&
-      (candidate.playlist.trackCount ?? 0) >= minimumTracks
-  );
+  // YT Music playlist search results often omit trackCount. Only hard-reject
+  // when we know the count is below the floor; unknown counts pass through
+  // (the rank model already penalizes them softly via scoreTrackCount).
+  const qualifying = ranked.filter((candidate) => {
+    if (candidate.score < minimumConfidence) return false;
+    const tc = candidate.playlist.trackCount;
+    if (typeof tc === "number" && tc > 0 && tc < minimumTracks) return false;
+    return true;
+  });
 
   return {
     ranked: options.includeAllRanked ? ranked : qualifying,

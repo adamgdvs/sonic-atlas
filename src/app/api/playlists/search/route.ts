@@ -32,7 +32,13 @@ export async function GET(req: Request) {
     return NextResponse.json({
       query,
       playlists: ranked
-        .filter((candidate) => (candidate.playlist.trackCount ?? 0) >= DEFAULT_MIN_CURATED_TRACKS)
+        .filter((candidate) => {
+          const tc = candidate.playlist.trackCount;
+          // Unknown trackCount is accepted (YT Music rarely exposes it in
+          // search results); only reject when we know it's below the floor.
+          if (typeof tc === "number" && tc > 0 && tc < DEFAULT_MIN_CURATED_TRACKS) return false;
+          return true;
+        })
         .map((candidate) => candidate.playlist)
         .slice(0, 10),
     });

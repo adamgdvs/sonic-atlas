@@ -253,7 +253,7 @@ export default function CuratedPlaylistsHub() {
           Curated_Playlists
         </div>
         <div className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
-          Searchable playlists built to feel closer to Pandora and Spotify discovery
+          Searchable curated sets — mood, era, scene, activity
         </div>
       </div>
 

@@ -11,7 +11,7 @@ interface Banner {
   label: string;
   title: string;
   subtitle: string;
-  seedGenre: string;
+  playlistQuery: string;
   gradient: string;
   accent: string;
 }
@@ -23,7 +23,7 @@ const BANNERS: Banner[] = [
     label: "Late_Night_Transmissions",
     title: "After Midnight",
     subtitle: "Downtempo signals for 2AM minds. Drift with ambient, trip-hop, and shoegaze.",
-    seedGenre: "ambient",
+    playlistQuery: "after hours",
     gradient: "from-indigo-950 via-purple-950 to-shift5-dark",
     accent: "#8b5cf6",
   },
@@ -33,7 +33,7 @@ const BANNERS: Banner[] = [
     label: "Morning_Calibration",
     title: "Bright Commute",
     subtitle: "Indie-pop and sunbeam guitars. Start your scan strong.",
-    seedGenre: "indie pop",
+    playlistQuery: "morning coffee",
     gradient: "from-amber-900 via-orange-900 to-shift5-dark",
     accent: "#fb923c",
   },
@@ -43,7 +43,7 @@ const BANNERS: Banner[] = [
     label: "1980_Neon_Archive",
     title: "Synthwave / Neon Grid",
     subtitle: "Analog synths, pulsing basslines, cassette haze.",
-    seedGenre: "synthwave",
+    playlistQuery: "80s new wave",
     gradient: "from-fuchsia-900 via-pink-900 to-shift5-dark",
     accent: "#f472b6",
   },
@@ -53,7 +53,7 @@ const BANNERS: Banner[] = [
     label: "1990_Underground",
     title: "90s Basement",
     subtitle: "Grunge, trip-hop, shoegaze — the static-warm decade.",
-    seedGenre: "shoegaze",
+    playlistQuery: "90s alternative",
     gradient: "from-teal-900 via-slate-900 to-shift5-dark",
     accent: "#2dd4bf",
   },
@@ -63,7 +63,7 @@ const BANNERS: Banner[] = [
     label: "Genre_Frontier",
     title: "Hyperpop Nexus",
     subtitle: "Glitched vocals, pitched chaos, hyper-saturated signals.",
-    seedGenre: "hyperpop",
+    playlistQuery: "hyperpop",
     gradient: "from-pink-900 via-rose-900 to-shift5-dark",
     accent: "#f472b6",
   },
@@ -73,7 +73,7 @@ const BANNERS: Banner[] = [
     label: "Genre_Deep_Field",
     title: "Ambient Drift",
     subtitle: "Atmosphere-first signal. Long-form, slow-motion.",
-    seedGenre: "ambient",
+    playlistQuery: "ambient",
     gradient: "from-sky-950 via-cyan-950 to-shift5-dark",
     accent: "#38bdf8",
   },
@@ -83,7 +83,7 @@ const BANNERS: Banner[] = [
     label: "Region_Scan // Nordic",
     title: "Nordic Noir",
     subtitle: "Icelandic post-rock, Scandinavian electronica, cold clarity.",
-    seedGenre: "nordic",
+    playlistQuery: "nordic post rock",
     gradient: "from-slate-900 via-blue-950 to-shift5-dark",
     accent: "#60a5fa",
   },
@@ -93,7 +93,7 @@ const BANNERS: Banner[] = [
     label: "Region_Scan // Seoul",
     title: "K-Wave Frequencies",
     subtitle: "K-indie, dream pop, hyperpop crossovers from Seoul.",
-    seedGenre: "k-pop",
+    playlistQuery: "kpop hits",
     gradient: "from-rose-900 via-red-900 to-shift5-dark",
     accent: "#fb7185",
   },
@@ -132,7 +132,7 @@ export default function RotatingBanners() {
   const active = ordered[index];
 
   const go = (banner: Banner) => {
-    router.push(`/genre/${encodeURIComponent(banner.seedGenre)}`);
+    router.push(`/playlists?q=${encodeURIComponent(banner.playlistQuery)}`);
   };
 
   return (
@@ -239,7 +239,7 @@ export default function RotatingBanners() {
               className="mt-3 sm:mt-4 inline-flex items-center gap-2 text-[10px] sm:text-[11px] uppercase tracking-[0.16em] text-white/80 group-hover:text-shift5-orange transition-colors"
               style={{ fontFamily: "var(--font-editorial-mono)" }}
             >
-              enter_channel <span className="group-hover:translate-x-1 transition-transform">→</span>
+              open_playlists <span className="group-hover:translate-x-1 transition-transform">→</span>
             </div>
           </div>
         </div>

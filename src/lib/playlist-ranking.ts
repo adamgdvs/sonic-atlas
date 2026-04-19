@@ -42,8 +42,11 @@ function scoreTrackCount(
   idealTrackRange?: [number, number],
   minTracks = DEFAULT_MIN_CURATED_TRACKS
 ) {
-  const count = playlist.trackCount ?? 0;
-  if (count <= 0) return -2;
+  const rawCount = playlist.trackCount;
+  // Unknown trackCount (YT Music search rarely populates it) — neutral score.
+  if (rawCount == null) return 0;
+  const count = rawCount;
+  if (count <= 0) return 0;
   if (count < minTracks) return -8;
 
   const [minIdeal, maxIdeal] = idealTrackRange || DEFAULT_IDEAL_TRACK_RANGE;

@@ -1,6 +1,6 @@
 # Playlist Curation Work
 
-This document summarizes the playlist-focused work implemented around Sonic Atlas's Discovery and playlist surfaces. The goal of this pass was to improve playlist quality, make curated collections easier to find, and move result selection closer to a Spotify/Pandora-style experience without changing the existing UI design language.
+This document summarizes the playlist-focused work implemented around Sonic Atlas's Discovery and playlist surfaces. The goal of this pass was to improve playlist quality, make curated collections easier to find, and make result selection feel like a real curated-playlist product without changing the existing UI design language.
 
 ## Core Curation Improvements
 

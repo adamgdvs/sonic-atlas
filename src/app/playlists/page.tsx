@@ -59,6 +59,46 @@ export default function PlaylistsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<CuratedPlaylist[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  // Hydrate ?q= from the URL once on mount — avoids Suspense deopt from
+  // useSearchParams while still letting banners / deep links pre-fill search.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setQuery(q);
+  }, []);
+
+  // Debounced live YT Music search when the query looks meaningful. Backs
+  // deep-links from banners and queries that aren't covered by the catalog.
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+    let active = true;
+    setSearching(true);
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/playlists/search?q=${encodeURIComponent(q)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!active || !Array.isArray(data.playlists)) return;
+        setSearchResults(data.playlists);
+      } catch {
+        if (active) setSearchResults([]);
+      } finally {
+        if (active) setSearching(false);
+      }
+    }, 300);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [query]);
   const [selected, setSelected] = useState<CatalogItem | null>(null);
   const [tracks, setTracks] = useState<CuratedPlaylistTrack[] | null>(null);
   const [tracksLoading, setTracksLoading] = useState(false);
@@ -86,7 +126,7 @@ export default function PlaylistsPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return items.filter((item) => {
+    const catalogMatches = items.filter((item) => {
       if (!item.playlist) return false;
       if (filter !== "all" && item.entry.category !== filter) return false;
       if (!q) return true;
@@ -100,7 +140,29 @@ export default function PlaylistsPage() {
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [items, filter, query]);
+
+    // When the user is actively searching, merge live YT Music results in so
+    // queries that don't map to a catalog slug still return playlists. Dedupe
+    // by playlist id and drop results that don't fit the active category chip.
+    if (q.length < 2 || searchResults.length === 0) return catalogMatches;
+
+    const seen = new Set(catalogMatches.map((i) => i.playlist?.id).filter(Boolean));
+    const synthetic: CatalogItem[] = searchResults
+      .filter((p) => p.id && !seen.has(p.id))
+      .map((p) => ({
+        entry: {
+          slug: `search-${p.id}`,
+          title: p.title,
+          subtitle: p.description || "Live result from YouTube Music",
+          category: (filter === "all" ? "genre" : filter) as CatalogCategory,
+          searchQuery: query.trim(),
+          tags: [query.trim().toLowerCase()],
+        },
+        playlist: p,
+      }));
+
+    return [...catalogMatches, ...synthetic];
+  }, [items, filter, query, searchResults]);
 
   async function handleOpen(item: CatalogItem) {
     if (!item.playlist?.id) return;
@@ -211,7 +273,7 @@ export default function PlaylistsPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-20 text-center text-[11px] font-mono text-shift5-muted uppercase tracking-widest">
-            No matches. Try a different keyword or category.
+            {searching ? "Searching…" : "No matches. Try a different keyword or category."}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
