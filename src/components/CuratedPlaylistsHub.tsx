@@ -122,6 +122,7 @@ export default function CuratedPlaylistsHub() {
   const [searching, setSearching] = useState(false);
   const [loadingCollection, setLoadingCollection] = useState(true);
   const [selectedPlaylist, setSelectedPlaylist] = useState<CuratedPlaylist | null>(null);
+  const [loadingSelection, setLoadingSelection] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
@@ -137,14 +138,16 @@ export default function CuratedPlaylistsHub() {
         const nextItems = data.collections.filter((item: CollectionItem) => item.playlist?.id);
         setCollections(nextItems);
         if (nextItems.length > 0) {
-          setSelectedItem(nextItems[0]);
+          await openPlaylist(nextItems[0].playlist!, nextItems[0]);
         } else {
           setSelectedItem(null);
+          setSelectedPlaylist(null);
         }
       } catch {
         if (active) {
           setCollections([]);
           setSelectedItem(null);
+          setSelectedPlaylist(null);
         }
       } finally {
         if (active) setLoadingCollection(false);
@@ -172,8 +175,22 @@ export default function CuratedPlaylistsHub() {
         const data = await res.json();
         if (!active || !Array.isArray(data.playlists)) return;
         setSearchResults(data.playlists);
+        if (data.playlists[0]?.id) {
+          await openPlaylist(data.playlists[0], {
+            label: searchTerm.trim(),
+            query: searchTerm.trim(),
+            category: collection,
+            tone: "search result",
+            playlist: data.playlists[0],
+          });
+        } else {
+          setSelectedPlaylist(null);
+        }
       } catch {
-        if (active) setSearchResults([]);
+        if (active) {
+          setSearchResults([]);
+          setSelectedPlaylist(null);
+        }
       } finally {
         if (active) setSearching(false);
       }
@@ -183,10 +200,11 @@ export default function CuratedPlaylistsHub() {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [searchTerm]);
+  }, [collection, searchTerm]);
 
   async function openPlaylist(playlist: CuratedPlaylist, sourceItem?: CollectionItem | null) {
     if (!playlist.id) return;
+    setLoadingSelection(true);
     try {
       const res = await fetch(`/api/playlists/curated/${encodeURIComponent(playlist.id)}/tracks`);
       if (!res.ok) return;
@@ -202,6 +220,8 @@ export default function CuratedPlaylistsHub() {
       }
     } catch {
       // fail soft
+    } finally {
+      setLoadingSelection(false);
     }
   }
 
@@ -243,6 +263,9 @@ export default function CuratedPlaylistsHub() {
   const panelTitle = searchTerm.trim().length >= 2
     ? `Search_Results // ${searchTerm.trim()}`
     : COLLECTION_LABELS[collection];
+
+  const selectionTitle = selectedItem?.label || selectedPlaylist?.title || "Curated Set";
+  const selectionTone = selectedItem?.tone || selectedPlaylist?.description || "Curated signal";
 
   if (loadingCollection && collections.length === 0) return null;
 
@@ -312,108 +335,128 @@ export default function CuratedPlaylistsHub() {
           </div>
         </div>
 
-        <div className="px-4 sm:px-5 py-4 border-b border-white/[0.06] flex items-center justify-between gap-3">
-          <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-white/45">
-            {panelTitle}
-          </div>
-          <div className="text-[10px] font-mono uppercase tracking-widest text-shift5-muted">
-            {displayItems.length} playlists
-          </div>
-        </div>
+        <div className="lg:grid lg:grid-cols-[minmax(0,1.15fr)_380px]">
+          <div className="min-w-0">
+            <div className="px-4 sm:px-5 py-4 border-b border-white/[0.06] flex items-center justify-between gap-3">
+              <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-white/45">
+                {panelTitle}
+              </div>
+              <div className="text-[10px] font-mono uppercase tracking-widest text-shift5-muted">
+                {displayItems.length} playlists
+              </div>
+            </div>
 
-        <div className="p-4 sm:p-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {displayItems.map((item) => (
-            <CollectionCard
-              key={`${item.category}-${item.playlist?.id || item.query}`}
-              item={item}
-              active={selectedPlaylist?.id === item.playlist?.id}
-              onOpen={() => item.playlist && openPlaylist(item.playlist, item)}
-            />
-          ))}
-        </div>
-      </div>
+            <div className="p-4 sm:p-5 grid gap-4 sm:grid-cols-2">
+              {displayItems.map((item) => (
+                <CollectionCard
+                  key={`${item.category}-${item.playlist?.id || item.query}`}
+                  item={item}
+                  active={selectedPlaylist?.id === item.playlist?.id}
+                  onOpen={() => item.playlist && openPlaylist(item.playlist, item)}
+                />
+              ))}
+            </div>
+          </div>
 
-      {selectedPlaylist && selectedPlaylist.tracks && selectedPlaylist.tracks.length > 0 && (
-        <div className="border border-white/[0.08] bg-white/[0.02]">
-          <div className="px-4 sm:px-5 py-4 border-b border-white/[0.06] flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-            <div className="min-w-0">
+          <div className="border-t lg:border-t-0 lg:border-l border-white/[0.06] bg-white/[0.015]">
+            <div className="px-4 sm:px-5 py-4 border-b border-white/[0.06]">
               <div className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em]">
                 Curated_Set
               </div>
               <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tighter text-white mt-1 truncate">
-                {selectedPlaylist.title}
+                {selectionTitle}
               </h3>
               <p className="text-[10px] sm:text-[11px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
-                {selectedPlaylist.tracks.length} playable tracks
-                {selectedItem ? ` · ${selectedItem.label}` : ""}
+                {loadingSelection
+                  ? "Resolving playable set..."
+                  : selectedPlaylist?.tracks?.length
+                    ? `${selectedPlaylist.tracks.length} playable tracks`
+                    : "Choose a playlist to inspect"}
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={handlePlaySelected}
-                disabled={isPlaying}
-                className="px-5 py-3 bg-shift5-orange text-white border-2 border-shift5-orange font-mono text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-shift5-orange active:bg-white active:text-shift5-orange transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isPlaying ? "Loading..." : "Play_Curated_Set"}
-              </button>
-              <SaveCuratedButton
-                name={selectedPlaylist.title}
-                description={selectedPlaylist.description || "Curated playlist from Sonic Atlas"}
-                coverUrl={selectedPlaylist.coverUrl}
-                tracks={selectedPlaylist.tracks}
-              />
-            </div>
-          </div>
+            <div className="px-4 sm:px-5 py-4">
+              {selectedPlaylist?.coverUrl ? (
+                <div className="relative aspect-[1.3/1] overflow-hidden bg-white/[0.04] border border-white/[0.06] mb-4">
+                  <Image
+                    src={selectedPlaylist.coverUrl}
+                    alt={selectedPlaylist.title}
+                    fill
+                    sizes="380px"
+                    className="object-cover opacity-80"
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-shift5-dark via-shift5-dark/30 to-transparent" />
+                </div>
+              ) : null}
 
-          <div className="px-4 sm:px-5 py-4 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-            <div>
-              <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mb-2">
-                Why_This_Fits
-              </div>
-              <div className="space-y-2">
-                <p className="text-[11px] sm:text-[12px] font-mono uppercase tracking-wide text-shift5-muted">
-                  Searchable by scene, era, mood, and activity rather than hidden behind one recommendation lane.
-                </p>
-                <p className="text-[11px] sm:text-[12px] font-mono uppercase tracking-wide text-shift5-muted">
-                  Designed to surface recognizable listener intents like roadtrip, indie rock, happy songs, and 90s rap.
-                </p>
-                {selectedItem && (
-                  <p className="text-[11px] sm:text-[12px] font-mono uppercase tracking-wide text-shift5-muted">
-                    Signal: {selectedItem.tone}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mb-2">
-                Track_Run
-              </div>
-              <div className="space-y-2">
-                {selectedPlaylist.tracks.slice(0, 10).map((track, index) => (
-                  <div
-                    key={`${track.videoId}-${index}`}
-                    className="flex items-start justify-between gap-3 border-b border-white/[0.04] pb-2 last:border-b-0 last:pb-0"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-[11px] sm:text-[12px] font-mono uppercase tracking-wide text-white truncate">
-                        {index + 1}. {track.title}
-                      </div>
-                      <div className="text-[10px] font-mono uppercase tracking-wider text-shift5-muted truncate mt-1">
-                        {track.artist}
-                      </div>
-                    </div>
-                    <div className="shrink-0 text-[9px] font-mono uppercase tracking-widest text-white/30">
-                      YT
-                    </div>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-[10px] font-mono text-white/35 uppercase tracking-widest mb-2">
+                    Why_This_Set
                   </div>
-                ))}
+                  <div className="space-y-2">
+                    <p className="text-[11px] sm:text-[12px] font-mono uppercase tracking-wide text-shift5-muted">
+                      {selectedPlaylist?.description || "Curated around a recognizable mood, era, scene, or activity."}
+                    </p>
+                    <p className="text-[11px] sm:text-[12px] font-mono uppercase tracking-wide text-shift5-muted">
+                      Signal: {selectionTone}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handlePlaySelected}
+                    disabled={!selectedPlaylist?.tracks?.length || isPlaying || loadingSelection}
+                    className="px-5 py-3 bg-shift5-orange text-white border-2 border-shift5-orange font-mono text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-shift5-orange active:bg-white active:text-shift5-orange transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPlaying ? "Loading..." : "Play_Curated_Set"}
+                  </button>
+                  <SaveCuratedButton
+                    name={selectedPlaylist?.title || selectionTitle}
+                    description={selectedPlaylist?.description || "Curated playlist from Sonic Atlas"}
+                    coverUrl={selectedPlaylist?.coverUrl || null}
+                    tracks={selectedPlaylist?.tracks || []}
+                  />
+                </div>
+
+                <div>
+                  <div className="text-[10px] font-mono text-white/35 uppercase tracking-widest mb-2">
+                    Queue_Preview
+                  </div>
+                  {!selectedPlaylist?.tracks?.length ? (
+                    <div className="text-[11px] font-mono uppercase tracking-wide text-white/35">
+                      {loadingSelection ? "Building the set..." : "Select a playlist to preview the run."}
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                      {selectedPlaylist.tracks.slice(0, 12).map((track, index) => (
+                        <div
+                          key={`${track.videoId}-${index}`}
+                          className="flex items-start justify-between gap-3 border-b border-white/[0.04] pb-2 last:border-b-0 last:pb-0"
+                        >
+                          <div className="min-w-0">
+                            <div className="text-[11px] sm:text-[12px] font-mono uppercase tracking-wide text-white truncate">
+                              {index + 1}. {track.title}
+                            </div>
+                            <div className="text-[10px] font-mono uppercase tracking-wider text-shift5-muted truncate mt-1">
+                              {track.artist}
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-[9px] font-mono uppercase tracking-widest text-white/30">
+                            YT
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

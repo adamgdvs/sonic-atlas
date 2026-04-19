@@ -1,3 +1,5 @@
+import { BASELINE_CURATED_CATALOG } from "@/lib/curated-catalog-baseline";
+
 // Hand-picked curated playlist themes. Each entry maps to a YouTube Music
 // search query whose top result is expected to be a large (>=40 track)
 // editorial or community playlist. The resolver in /api/playlists/catalog
@@ -24,7 +26,7 @@ export interface CatalogEntry {
   idealTrackRange?: [number, number];
 }
 
-export const CURATED_CATALOG: CatalogEntry[] = [
+const CORE_CURATED_CATALOG: CatalogEntry[] = [
   // ═══ Mood ═══
   {
     slug: "happy-days",
@@ -734,6 +736,71 @@ export const CURATED_CATALOG: CatalogEntry[] = [
     excludedTerms: ["metal", "country", "drill"],
     idealTrackRange: [40, 85],
   },
+];
+
+function dedupeCatalog(entries: CatalogEntry[]) {
+  const seen = new Set<string>();
+  return entries.filter((entry) => {
+    const key = entry.slug;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+export const CURATED_CATALOG: CatalogEntry[] = dedupeCatalog([
+  ...CORE_CURATED_CATALOG,
+  ...BASELINE_CURATED_CATALOG,
+]);
+
+export const CURATED_CATALOG_COUNTS = CURATED_CATALOG.reduce(
+  (acc, entry) => {
+    acc.total += 1;
+    acc.byCategory[entry.category] += 1;
+    return acc;
+  },
+  {
+    total: 0,
+    byCategory: {
+      mood: 0,
+      era: 0,
+      vibe: 0,
+      genre: 0,
+    } as Record<CatalogCategory, number>,
+  }
+);
+
+export const PRIORITY_CURATED_SLUGS = [
+  "midnight-roadtrip",
+  "90s-hiphop",
+  "indie-rock",
+  "happy-days",
+  "dream-pop",
+  "afro-house",
+  "shoegaze-signals",
+  "post-punk-wire",
+  "ambient-drift",
+  "bossa-nights",
+  "soul-revival",
+  "jazz-house",
+  "study-session",
+  "coffee-shop",
+  "moonlit-disco",
+  "window-seat",
+  "classic-rock",
+  "indie-folk",
+  "garage-rock",
+  "80s-new-wave",
+  "90s-rnb",
+  "blog-era-indie",
+  "city-pop",
+  "synthpop",
+  "trip-hop",
+  "deep-house",
+  "drum-and-bass",
+  "jungle",
+  "darkwave",
+  "post-rock",
 ];
 
 export const CATALOG_CATEGORIES: Array<{ id: CatalogCategory; label: string }> = [

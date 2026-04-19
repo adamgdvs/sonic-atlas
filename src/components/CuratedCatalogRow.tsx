@@ -28,6 +28,7 @@ interface CuratedPlaylist {
 interface CatalogItem {
   entry: CatalogEntry;
   playlist: CuratedPlaylist | null;
+  isPriority?: boolean;
 }
 
 function CatalogCard({
@@ -65,7 +66,7 @@ function CatalogCard({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-shift5-dark via-shift5-dark/40 to-transparent" />
         <div className="absolute left-3 top-3 text-[8px] font-mono font-bold uppercase tracking-[0.24em] text-shift5-orange">
-          {item.entry.category}
+          {item.isPriority ? "priority" : item.entry.category}
         </div>
         {item.playlist.trackCount ? (
           <div className="absolute right-3 top-3 text-[8px] font-mono font-bold uppercase tracking-[0.2em] text-white/80 bg-black/50 px-2 py-1">
@@ -97,7 +98,7 @@ export default function CuratedCatalogRow() {
     let active = true;
     (async () => {
       try {
-        const res = await fetch("/api/playlists/catalog?featured=1");
+        const res = await fetch("/api/playlists/catalog?priority=1&limit=12");
         if (!res.ok) return;
         const data = await res.json();
         if (!active || !Array.isArray(data.catalog)) return;
@@ -158,10 +159,10 @@ export default function CuratedCatalogRow() {
       <div className="mb-5 sm:mb-6 border-b border-white/[0.06] pb-3 flex items-end justify-between gap-4">
         <div>
           <div className="text-[10px] font-mono text-shift5-orange/80 uppercase tracking-[0.2em]">
-            Curated_Catalog
+            Editorial_Picks
           </div>
           <div className="text-[11px] sm:text-[12px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
-            Hand-picked sets — mood, era, vibe, genre
+            Highest-priority curated lanes — first stop for deep listening
           </div>
         </div>
         <Link

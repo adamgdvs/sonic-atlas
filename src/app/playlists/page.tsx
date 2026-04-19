@@ -49,6 +49,7 @@ interface CuratedPlaylist {
 interface CatalogItem {
   entry: CatalogEntry;
   playlist: CuratedPlaylist | null;
+  isPriority?: boolean;
 }
 
 type Filter = "all" | CatalogCategory;
@@ -161,7 +162,13 @@ export default function PlaylistsPage() {
         playlist: p,
       }));
 
-    return [...catalogMatches, ...synthetic];
+    const merged = [...catalogMatches, ...synthetic];
+    return merged.sort((left, right) => {
+      const leftPriority = left.isPriority ? 1 : 0;
+      const rightPriority = right.isPriority ? 1 : 0;
+      if (leftPriority !== rightPriority) return rightPriority - leftPriority;
+      return left.entry.title.localeCompare(right.entry.title);
+    });
   }, [items, filter, query, searchResults]);
 
   async function handleOpen(item: CatalogItem) {
@@ -233,6 +240,9 @@ export default function PlaylistsPage() {
             Mood, era, vibe, and genre — every set is {MIN_TRACKS}+ tracks sourced from YouTube Music.
             Play inline or save into My_Atlas.
           </p>
+          <p className="mt-2 text-[10px] font-mono text-white/35 uppercase tracking-widest">
+            Editorial priority lanes surface first, followed by the broader baseline catalog.
+          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
@@ -266,6 +276,17 @@ export default function PlaylistsPage() {
             </button>
           ))}
         </div>
+
+        {filter === "all" && query.trim().length < 2 && items.some((item) => item.isPriority) && (
+          <div className="mb-6 border border-white/[0.08] bg-white/[0.02] px-4 py-4">
+            <div className="text-[10px] font-mono text-shift5-orange uppercase tracking-[0.2em]">
+              Editorial_First
+            </div>
+            <div className="text-[11px] font-mono text-shift5-muted uppercase tracking-wider mt-1">
+              The first row of results is weighted toward the top 30 editorial lanes.
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="py-20 text-center text-[11px] font-mono text-shift5-muted uppercase tracking-widest">
@@ -429,7 +450,7 @@ function CatalogCard({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-shift5-dark via-shift5-dark/40 to-transparent" />
         <div className="absolute left-3 top-3 text-[8px] font-mono font-bold uppercase tracking-[0.24em] text-shift5-orange">
-          {item.entry.category}
+          {item.isPriority ? "priority" : item.entry.category}
         </div>
         {item.playlist.trackCount ? (
           <div className="absolute right-3 top-3 text-[8px] font-mono font-bold uppercase tracking-[0.2em] text-white/80 bg-black/50 px-2 py-1">
