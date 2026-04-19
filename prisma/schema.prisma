@@ -131,6 +131,59 @@ model PlaylistTrack {
   @@unique([playlistId, position])
 }
 
+// Imported public playlists sourced from external catalogs like Deezer
+model ImportedPlaylist {
+  id               String                @id @default(cuid())
+  source           String
+  sourcePlaylistId String
+  title            String
+  description      String?
+  creator          String?
+  coverUrl         String?
+  sourceUrl        String?
+  checksum         String?
+  trackCount       Int?
+  matchedCoverage  Float?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  tracks           ImportedPlaylistTrack[]
+
+  @@unique([source, sourcePlaylistId])
+  @@index([source, sourcePlaylistId])
+  @@index([title])
+}
+
+model ImportedPlaylistTrack {
+  id                 String           @id @default(cuid())
+  importedPlaylistId String
+  sourceTrackId      String
+  title              String
+  artist             String
+  album              String?
+  duration           Int?
+  explicit           Boolean          @default(false)
+  previewUrl         String?
+  sourceUrl          String?
+  coverUrl           String?
+  isrc               String?
+  position           Int
+  matchStatus        String
+  matchConfidence    Float?
+  videoId            String?
+  matchedTitle       String?
+  matchedArtist      String?
+  matchedThumbnailUrl String?
+  createdAt          DateTime         @default(now())
+
+  importedPlaylist   ImportedPlaylist @relation(fields: [importedPlaylistId], references: [id], onDelete: Cascade)
+
+  @@index([importedPlaylistId])
+  @@index([videoId])
+  @@index([artist])
+  @@unique([importedPlaylistId, position])
+}
+
 // Global scan event tracking for Frequency Hub
 model ScanEvent {
   id         String   @id @default(cuid())

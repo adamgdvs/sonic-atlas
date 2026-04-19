@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_MIN_CURATED_TRACKS } from "@/lib/playlist-ranking";
 import { buildResolverEntry, resolveCuratedPlaylist } from "@/lib/curated-resolver";
+import { searchImportedPlaylists } from "@/lib/imported-playlists";
 import { buildVirtualCuratedPlaylist } from "@/lib/virtual-curated";
 
 export const runtime = "nodejs";
@@ -15,6 +16,7 @@ export async function GET(req: Request) {
   }
 
   try {
+    const imported = await searchImportedPlaylists(query, 6).catch(() => []);
     const rankingEntry = buildResolverEntry({
       title: query,
       subtitle: `search for ${query}`,
@@ -32,6 +34,7 @@ export async function GET(req: Request) {
     });
 
     const playlists = [
+      ...imported,
       buildVirtualCuratedPlaylist({
         title: query,
         description: `Curated search mix for ${query}`,
@@ -61,7 +64,7 @@ export async function GET(req: Request) {
       query,
       playlists: playlists
         .filter((playlist) => {
-          const normalized = playlist.title.trim().toLowerCase();
+          const normalized = `${playlist.source}:${playlist.title.trim().toLowerCase()}`;
           if (seen.has(normalized)) return false;
           seen.add(normalized);
           return true;

@@ -323,8 +323,8 @@ export default function PlaylistsPage() {
                   {selected.entry.subtitle}
                 </p>
                 {selected.playlist.trackCount ? (
-                  <p className="mt-1 text-[10px] font-mono text-white/40 uppercase tracking-wider">
-                    {selected.playlist.trackCount} tracks · source: {selected.playlist.title}
+              <p className="mt-1 text-[10px] font-mono text-white/40 uppercase tracking-wider">
+                    {selected.playlist.trackCount} tracks · source: {selected.playlist.source === "atlas" ? "atlas import" : selected.playlist.title}
                   </p>
                 ) : null}
               </div>

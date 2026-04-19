@@ -33,6 +33,46 @@ python3 -m venv .venv
 
 The bridge entrypoint is `scripts/ytmusic_bridge.py`. If `ytmusicapi` is not installed, curated rows fail soft and remain hidden.
 
+## Deezer Acquisition
+
+`sonic_atlas` now includes a standalone Deezer acquisition pipeline that saves:
+
+- raw Deezer playlist metadata
+- raw Deezer track pages
+- normalized local playlist JSON
+- optional YouTube-matched playlist output
+
+Run it with:
+
+```bash
+npm run deezer:acquire -- --playlist 760160361 --match-youtube
+```
+
+Useful modes:
+
+```bash
+# crawl playlists from a Deezer user
+npm run deezer:acquire -- --user 2529 --limit-playlists 100
+
+# search Deezer playlists by query and ingest the results
+npm run deezer:acquire -- --search "indie rock" --search shoegaze --match-youtube
+
+# ingest a local bundle shaped as { "playlist": {...}, "trackPages": [...] }
+npm run deezer:acquire -- --bundle-json ./fixtures/indie-rock-now.bundle.json --match-youtube
+```
+
+Artifacts are written under `data/deezer/`:
+
+- `raw/users/*.playlists.json`
+- `raw/search/*.json`
+- `raw/playlists/{id}.json`
+- `raw/playlists/{id}.tracks.json`
+- `normalized/playlists/{id}.json`
+- `matched/playlists/{id}.json`
+- `index/playlists.json`
+
+The acquisition script follows Deezer pagination automatically by using the `next` URL returned in playlist and track payloads. It also short-circuits rebuilds when the playlist `checksum` is unchanged unless `--force` is provided.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
