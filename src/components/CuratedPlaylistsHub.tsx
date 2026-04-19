@@ -4,6 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useAudio } from "@/contexts/AudioContext";
 import SaveCuratedButton from "./SaveCuratedButton";
+import { getGenreColor } from "@/lib/utils";
+
+function hexToRgb(hex: string) {
+  const clean = hex.replace("#", "");
+  const n = parseInt(clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
 
 type CollectionKey = "featured" | "genre" | "mood" | "activity" | "era";
 
@@ -21,6 +28,7 @@ interface CuratedPlaylist {
   coverUrl: string | null;
   source: "ytmusic" | "atlas";
   category: string;
+  trackCount?: number | null;
   tracks?: CuratedPlaylistTrack[];
 }
 
@@ -66,46 +74,76 @@ function CollectionCard({
 }) {
   if (!item.playlist) return null;
 
+  const color = getGenreColor(item.playlist.title);
+  const { r, g, b } = hexToRgb(color);
+  const trackCount = item.playlist.trackCount;
+
   return (
     <button
       onClick={onOpen}
-      className={`group border text-left transition-all duration-300 ${
-        active
-          ? "border-shift5-orange bg-white/[0.04]"
-          : "border-white/10 bg-white/[0.02] hover:border-white/25 active:border-shift5-orange"
-      }`}
+      className="group relative aspect-[4/3] overflow-hidden cursor-pointer border text-left transition-all duration-300 w-full"
+      style={{
+        background: item.playlist.coverUrl
+          ? undefined
+          : `linear-gradient(135deg, rgba(${r},${g},${b},0.72) 0%, rgba(${r},${g},${b},0.28) 55%, rgba(18,18,18,1) 100%)`,
+        borderColor: active ? "#ff5841" : "rgba(255,255,255,0.08)",
+        borderRadius: "2px",
+        outline: active ? "1px solid #ff5841" : undefined,
+      }}
     >
-      <div className="relative aspect-[1.25/1] overflow-hidden bg-white/[0.04]">
-        {item.playlist.coverUrl ? (
+      {/* Cover art or gradient background */}
+      {item.playlist.coverUrl ? (
+        <>
           <Image
             src={item.playlist.coverUrl}
             alt={item.playlist.title}
             fill
             sizes="(max-width: 640px) 50vw, 25vw"
-            className="object-cover opacity-75 group-hover:opacity-90 transition-opacity duration-300"
+            className="object-cover opacity-70 group-hover:opacity-85 transition-opacity duration-300"
             unoptimized
           />
-        ) : (
-          <div className="w-full h-full bg-white/[0.04]" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-shift5-dark via-shift5-dark/40 to-transparent" />
-        <div className="absolute top-3 left-3 text-[8px] font-mono font-bold uppercase tracking-[0.2em] text-shift5-orange">
-          {item.label}
+          {/* Color tint over cover art */}
+          <div
+            className="absolute inset-0 mix-blend-multiply opacity-50"
+            style={{ background: `linear-gradient(135deg, rgba(${r},${g},${b},0.6) 0%, transparent 60%)` }}
+          />
+        </>
+      ) : null}
+
+      {/* Halftone texture */}
+      <div
+        className="absolute inset-0 opacity-[0.07] mix-blend-overlay"
+        style={{ backgroundImage: "radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)", backgroundSize: "12px 12px" }}
+      />
+
+      {/* Bottom scrim */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+      {/* Corner accent bracket */}
+      <div
+        className="absolute top-2.5 right-2.5 w-3 h-3 border-t-2 border-r-2 transition-all duration-300 group-hover:w-4 group-hover:h-4"
+        style={{ borderColor: color }}
+      />
+
+      {/* Top-left meta */}
+      <div className="absolute top-2.5 left-3 z-10">
+        <div className="text-[8px] font-mono uppercase tracking-[0.18em]" style={{ color }}>
+          PLAYLIST
         </div>
-        <div className="absolute bottom-3 right-3 text-[8px] font-mono uppercase tracking-widest text-white/70">
-          {item.category}
-        </div>
+        {trackCount ? (
+          <div className="text-[8px] font-mono text-white/50 uppercase tracking-wider mt-0.5">
+            {trackCount} tracks
+          </div>
+        ) : null}
       </div>
 
-      <div className="p-3 sm:p-4">
-        <div className="text-[13px] sm:text-[14px] font-mono font-bold uppercase tracking-tight text-white truncate">
+      {/* Bottom content */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 p-3">
+        <div className="text-[13px] sm:text-[15px] font-mono font-bold uppercase tracking-tight text-white leading-tight">
           {item.playlist.title}
         </div>
-        <div className="text-[10px] font-mono uppercase tracking-wider text-shift5-muted truncate mt-1">
+        <div className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider mt-1 truncate" style={{ color: `rgba(${r},${g},${b},0.9)` }}>
           {item.tone}
-        </div>
-        <div className="text-[10px] text-white/45 mt-3 line-clamp-2 min-h-[2.5rem]">
-          {item.playlist.description || "Curated playlist routed through the Sonic Atlas player"}
         </div>
       </div>
     </button>
@@ -430,8 +468,8 @@ export default function CuratedPlaylistsHub() {
                       {loadingSelection ? "Building the set..." : "Select a playlist to preview the run."}
                     </div>
                   ) : (
-                    <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-                      {selectedPlaylist.tracks.slice(0, 12).map((track, index) => (
+                    <div className="space-y-2 max-h-[560px] overflow-y-auto pr-1">
+                      {selectedPlaylist.tracks.map((track, index) => (
                         <div
                           key={`${track.videoId}-${index}`}
                           className="flex items-start justify-between gap-3 border-b border-white/[0.04] pb-2 last:border-b-0 last:pb-0"
