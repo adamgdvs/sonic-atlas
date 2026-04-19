@@ -7,7 +7,10 @@ import {
 } from "@/lib/youtube";
 import {
   matchSpotifyTrackWithFeatures,
+  searchSpotifyPlaylists,
+  getSpotifyPlaylistTracks,
   type SpotifyAudioFeatures,
+  type SpotifyPlaylistSummary,
 } from "@/lib/spotify";
 import type { CuratedPlaylist, CuratedPlaylistTrack } from "@/lib/ytmusic";
 
@@ -727,6 +730,88 @@ export function parseVirtualCuratedId(id: string): VirtualCuratedDescriptor | nu
   };
 }
 
+// ─── Spotify-sourced resolution ───────────────────────────────────────────────
+
+async function resolveTrackToYT(
+  title: string,
+  artist: string
+): Promise<CuratedPlaylistTrack | null> {
+  const results = await searchYouTubeMusic(`${artist} ${title}`, 5);
+  const match =
+    results.find((r) => overlapScore(r.title, title) >= 2 && overlapScore(r.artist, artist) >= 1) ||
+    results[0];
+  if (!match?.videoId) return null;
+  return {
+    title,
+    artist,
+    videoId: match.videoId,
+    coverUrl: match.thumbnailUrl,
+  };
+}
+
+function scoreSpotifyPlaylist(
+  playlist: SpotifyPlaylistSummary,
+  descriptor: VirtualCuratedDescriptor
+) {
+  let score = 0;
+  score += overlapScore(playlist.name, descriptor.title) * 2.5;
+  score += overlapScore(playlist.name, descriptor.query) * 2.0;
+  score += overlapScore(playlist.description, descriptor.title) * 1.0;
+  if (playlist.owner.toLowerCase() === "spotify") score += 6;
+
+  const tc = playlist.trackCount ?? 0;
+  if (tc >= 40 && tc <= 120) score += 4;
+  else if (tc >= 20 && tc < 40) score += 1;
+  else if (tc > 120 && tc <= 300) score += 2;
+  else if (tc > 0 && tc < 20) score -= 3;
+
+  return score;
+}
+
+async function resolveViaSpotify(
+  descriptor: VirtualCuratedDescriptor,
+  entry: CatalogEntry | null,
+  limit: number
+): Promise<CuratedPlaylistTrack[] | null> {
+  const query = entry?.searchQuery || descriptor.query;
+  const playlists = await searchSpotifyPlaylists(query, 10);
+  if (!playlists.length) return null;
+
+  const ranked = playlists
+    .map((p) => ({ playlist: p, score: scoreSpotifyPlaylist(p, descriptor) }))
+    .sort((a, b) => b.score - a.score);
+
+  for (const { playlist } of ranked) {
+    if (playlist.trackCount !== null && playlist.trackCount < 20) continue;
+
+    const spotifyTracks = await getSpotifyPlaylistTracks(playlist.id, limit + 20);
+    if (spotifyTracks.length < 20) continue;
+
+    // Resolve tracks to YouTube IDs in batches of 8 concurrent
+    const resolved: CuratedPlaylistTrack[] = [];
+    const seen = new Set<string>();
+
+    for (let i = 0; i < spotifyTracks.length && resolved.length < limit; i += 8) {
+      const batch = spotifyTracks.slice(i, i + 8);
+      const results = await Promise.all(batch.map((t) => resolveTrackToYT(t.title, t.artist)));
+      for (const track of results) {
+        if (!track) continue;
+        const key = normalizeTrackKey(track);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        resolved.push(track);
+        if (resolved.length >= limit) break;
+      }
+    }
+
+    if (resolved.length >= 30) return resolved;
+  }
+
+  return null;
+}
+
+// ─── Main resolver ────────────────────────────────────────────────────────────
+
 export async function resolveVirtualCuratedPlaylist(
   descriptor: VirtualCuratedDescriptor,
   limit = DEFAULT_VIRTUAL_TRACK_LIMIT
@@ -734,6 +819,16 @@ export async function resolveVirtualCuratedPlaylist(
   const entry = getCatalogEntry(descriptor);
   const laneSeeds = getLaneSeedProfile(entry);
   const queries = buildTrackQueries(descriptor);
+
+  // Try Spotify editorial playlists first — highest quality track sourcing
+  const spotifyTracks = await resolveViaSpotify(descriptor, entry, limit).catch(() => null);
+  if (spotifyTracks && spotifyTracks.length >= 30) {
+    const coverUrl = descriptor.coverUrl || spotifyTracks[0]?.coverUrl || null;
+    return {
+      ...buildVirtualCuratedPlaylist({ ...descriptor, coverUrl, trackCount: spotifyTracks.length }),
+      tracks: spotifyTracks,
+    };
+  }
 
   const playlistCandidates = await Promise.all(
     queries.map(async (query) => searchYouTubeMusicPlaylists(query, 8))

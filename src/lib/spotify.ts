@@ -182,3 +182,107 @@ export async function matchSpotifyTrackWithFeatures(title: string, artist: strin
   if (!features) return null;
   return { match, features };
 }
+
+// ─── Playlist sourcing ────────────────────────────────────────────────────────
+
+export interface SpotifyPlaylistSummary {
+  id: string;
+  name: string;
+  description: string;
+  coverUrl: string | null;
+  trackCount: number | null;
+  owner: string;
+}
+
+export interface SpotifyPlaylistTrack {
+  title: string;
+  artist: string;
+  spotifyId: string;
+}
+
+export async function searchSpotifyPlaylists(
+  query: string,
+  limit = 10
+): Promise<SpotifyPlaylistSummary[]> {
+  if (!getCredentials()) return [];
+
+  return dbCache<SpotifyPlaylistSummary[]>(
+    `spotify:plsearch:${normalize(query)}`,
+    DAY,
+    async () => {
+      const q = encodeURIComponent(query);
+      const data = await spotifyFetch<{
+        playlists?: {
+          items?: Array<{
+            id: string;
+            name: string;
+            description: string | null;
+            images?: Array<{ url: string }>;
+            tracks?: { total: number };
+            owner?: { display_name: string };
+          } | null>;
+        };
+      }>(`/search?q=${q}&type=playlist&limit=${limit}`);
+
+      return (data?.playlists?.items || [])
+        .filter((item): item is NonNullable<typeof item> => Boolean(item?.id && item?.name))
+        .map((item) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description || "",
+          coverUrl: item.images?.[0]?.url || null,
+          trackCount: item.tracks?.total ?? null,
+          owner: item.owner?.display_name || "",
+        }));
+    }
+  );
+}
+
+export async function getSpotifyPlaylistTracks(
+  playlistId: string,
+  limit = 100
+): Promise<SpotifyPlaylistTrack[]> {
+  if (!getCredentials()) return [];
+
+  return dbCache<SpotifyPlaylistTrack[]>(
+    `spotify:pltracks:${playlistId}`,
+    DAY,
+    async () => {
+      const tracks: SpotifyPlaylistTrack[] = [];
+      let nextPath: string | null =
+        `/playlists/${playlistId}/tracks?limit=50&fields=next,items(track(id,name,artists(name)))`;
+
+      type TrackPage = {
+        next: string | null;
+        items?: Array<{
+          track: {
+            id: string;
+            name: string;
+            artists: Array<{ name: string }>;
+          } | null;
+        }>;
+      };
+
+      while (nextPath && tracks.length < limit) {
+        const data: TrackPage | null = await spotifyFetch<TrackPage>(nextPath);
+
+        if (!data) break;
+
+        for (const item of data.items || []) {
+          const track = item.track;
+          if (!track?.id || !track.name) continue;
+          tracks.push({
+            title: track.name,
+            artist: track.artists?.[0]?.name || "Unknown Artist",
+            spotifyId: track.id,
+          });
+          if (tracks.length >= limit) break;
+        }
+
+        nextPath = data.next ? data.next.replace(SPOTIFY_API_BASE, "") : null;
+      }
+
+      return tracks;
+    }
+  );
+}
