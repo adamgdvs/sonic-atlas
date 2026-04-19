@@ -14,68 +14,68 @@ function entry(
   return { slug: slug(title), title, subtitle, category, searchQuery, tags };
 }
 
-// ─── Moods ────────────────────────────────────────────────────────────────────
+// ─── Moods (artist-anchored queries for real track resolution) ────────────────
 
 const MOODS: CatalogEntry[] = [
-  entry("Happy Days", "Bright, easy serotonin", "mood", "happy feel good playlist", ["happy", "upbeat", "feel good"]),
-  entry("Good Vibes Only", "Pure positivity, zero filler", "mood", "good vibes only playlist", ["positive", "happy"]),
-  entry("Euphoria", "Peak energy, peak joy", "mood", "euphoria happy songs playlist", ["euphoric", "uplifting"]),
-  entry("Sunshine Hits", "Songs that feel like sunlight", "mood", "sunshine uplifting songs playlist", ["sunny", "bright"]),
-  entry("Feel Good Friday", "End-of-week energy drop", "mood", "feel good friday playlist", ["feel good", "weekend"]),
-  entry("Instant Mood Lift", "Fast-acting sonic serotonin", "mood", "instant mood booster playlist", ["upbeat", "energetic"]),
+  entry("Happy Days", "Bright, easy serotonin", "mood", "Pharrell Williams happy feel good upbeat hits playlist", ["happy", "upbeat", "feel good"]),
+  entry("Good Vibes Only", "Pure positivity, zero filler", "mood", "Justin Timberlake Bruno Mars good vibes happy songs", ["positive", "happy"]),
+  entry("Euphoria", "Peak energy, peak joy", "mood", "Dua Lipa Harry Styles euphoric feel good pop songs", ["euphoric", "uplifting"]),
+  entry("Sunshine Hits", "Songs that feel like sunlight", "mood", "Kacey Musgraves Jack Johnson sunshine bright uplifting songs", ["sunny", "bright"]),
+  entry("Feel Good Friday", "End-of-week energy drop", "mood", "Mark Ronson Cardi B Lizzo feel good Friday songs", ["feel good", "weekend"]),
+  entry("Instant Mood Lift", "Fast-acting sonic serotonin", "mood", "Beyonce Taylor Swift instant mood boost pop anthems", ["upbeat", "energetic"]),
 
-  entry("Sad Hours", "Songs for the hard nights", "mood", "sad songs playlist", ["sad", "emotional"]),
-  entry("Heartbreak Hotel", "Post-breakup listening ward", "mood", "heartbreak songs playlist", ["heartbreak", "sad love"]),
-  entry("Blue Midnight", "Quiet pain, slow tempo", "mood", "blue sad midnight playlist", ["melancholy", "slow"]),
-  entry("Crying in the Car", "Let it all out", "mood", "crying songs emotional playlist", ["emotional", "sad"]),
-  entry("Melancholy Signal", "Bittersweet and beautiful", "mood", "melancholy bittersweet songs", ["melancholy", "introspective"]),
-  entry("Rainy Window", "Grey skies, warm feelings", "mood", "rainy day sad songs playlist", ["rainy", "contemplative"]),
+  entry("Sad Hours", "Songs for the hard nights", "mood", "Phoebe Bridgers Bon Iver sad emotional indie songs", ["sad", "emotional"]),
+  entry("Heartbreak Hotel", "Post-breakup listening ward", "mood", "Olivia Rodrigo Adele heartbreak breakup songs playlist", ["heartbreak", "sad love"]),
+  entry("Blue Midnight", "Quiet pain, slow tempo", "mood", "Sufjan Stevens Grouper blue sad slow songs", ["melancholy", "slow"]),
+  entry("Crying in the Car", "Let it all out", "mood", "Sam Smith Lewis Capaldi crying emotional ballads", ["emotional", "sad"]),
+  entry("Melancholy Signal", "Bittersweet and beautiful", "mood", "Radiohead Daughter melancholy bittersweet songs", ["melancholy", "introspective"]),
+  entry("Rainy Window", "Grey skies, warm feelings", "mood", "Nick Drake Elliott Smith rainy day sad introspective songs", ["rainy", "contemplative"]),
 
-  entry("Chill Mode", "Zero stress, full drift", "mood", "chill vibes playlist", ["chill", "relaxed"]),
-  entry("Sunday Slow Down", "Gentle pace, no rush", "mood", "sunday chill playlist", ["chill", "sunday"]),
-  entry("Afternoon Drift", "Lazy afternoon energy", "mood", "afternoon chill playlist", ["chill", "lazy"]),
-  entry("Mellow Gold", "Soft and golden", "mood", "mellow chill playlist", ["mellow", "soft"]),
-  entry("Low Key Flex", "Laid back but still cool", "mood", "low key chill playlist", ["chill", "smooth"]),
+  entry("Chill Mode", "Zero stress, full drift", "mood", "Frank Ocean Daniel Caesar SZA chill R&B vibes", ["chill", "relaxed"]),
+  entry("Sunday Slow Down", "Gentle pace, no rush", "mood", "Leon Bridges H.E.R. Sunday chill soul songs", ["chill", "sunday"]),
+  entry("Afternoon Drift", "Lazy afternoon energy", "mood", "Mac DeMarco Mild High Club afternoon chill indie", ["chill", "lazy"]),
+  entry("Mellow Gold", "Soft and golden", "mood", "Big Thief Angel Olsen mellow soft indie folk", ["mellow", "soft"]),
+  entry("Low Key Flex", "Laid back but still cool", "mood", "Tyler the Creator Steve Lacy low key smooth grooves", ["chill", "smooth"]),
 
-  entry("Hype Mode", "Maximum energy activation", "mood", "hype high energy playlist", ["hype", "energetic", "pump up"]),
-  entry("Pump Up", "Pre-game fuel injection", "mood", "pump up songs playlist", ["pump up", "motivational"]),
-  entry("Adrenaline Rush", "Unstoppable momentum", "mood", "adrenaline rush high energy playlist", ["adrenaline", "intense"]),
-  entry("Beast Mode", "Train like you mean it", "mood", "beast mode workout playlist", ["beast mode", "intense"]),
+  entry("Hype Mode", "Maximum energy activation", "mood", "Travis Scott Drake Future hype trap energy playlist", ["hype", "energetic", "pump up"]),
+  entry("Pump Up", "Pre-game fuel injection", "mood", "Kendrick Lamar Jay-Z pump up motivational rap songs", ["pump up", "motivational"]),
+  entry("Adrenaline Rush", "Unstoppable momentum", "mood", "Eminem Linkin Park adrenaline rush high energy songs", ["adrenaline", "intense"]),
+  entry("Beast Mode", "Train like you mean it", "mood", "DMX Lil Jon beast mode gym workout songs", ["beast mode", "intense"]),
 
-  entry("Romantic Evening", "Candlelight and close harmony", "mood", "romantic evening songs playlist", ["romantic", "love"]),
-  entry("Love Songs", "All the feelings, all the time", "mood", "love songs playlist", ["love", "romance"]),
-  entry("Slow Dance", "Pull someone close", "mood", "slow dance songs playlist", ["slow dance", "romantic"]),
-  entry("Late Night Romance", "Dim lights, soft music", "mood", "late night romantic playlist", ["romantic", "late night"]),
+  entry("Romantic Evening", "Candlelight and close harmony", "mood", "John Legend Al Green romantic evening love songs", ["romantic", "love"]),
+  entry("Love Songs", "All the feelings, all the time", "mood", "Ed Sheeran Beyonce love songs playlist classics", ["love", "romance"]),
+  entry("Slow Dance", "Pull someone close", "mood", "Usher Luther Vandross slow dance R&B songs", ["slow dance", "romantic"]),
+  entry("Late Night Romance", "Dim lights, soft music", "mood", "The Weeknd Miguel late night R&B romance songs", ["romantic", "late night"]),
 
-  entry("Deep Nostalgia", "Memories in audio form", "mood", "nostalgia throwback playlist", ["nostalgic", "memories"]),
-  entry("Throwback Feels", "Takes you straight back", "mood", "throwback hits playlist", ["throwback", "nostalgic"]),
-  entry("Old School Vibes", "When music felt different", "mood", "old school vibes playlist", ["old school", "retro"]),
+  entry("Deep Nostalgia", "Memories in audio form", "mood", "Fleetwood Mac Elton John deep nostalgia classic hits", ["nostalgic", "memories"]),
+  entry("Throwback Feels", "Takes you straight back", "mood", "90s 2000s throwback pop hits Backstreet Boys NSYNC", ["throwback", "nostalgic"]),
+  entry("Old School Vibes", "When music felt different", "mood", "Marvin Gaye Curtis Mayfield old school soul R&B", ["old school", "retro"]),
 
-  entry("Angry Hours", "Channeled frustration", "mood", "angry songs playlist", ["angry", "intense", "aggressive"]),
-  entry("Catharsis", "Feel it all and release", "mood", "cathartic emotional songs", ["cathartic", "release"]),
-  entry("Rage Fuel", "Maximum intensity output", "mood", "rage fuel angry songs", ["rage", "intense"]),
+  entry("Angry Hours", "Channeled frustration", "mood", "Rage Against the Machine System of a Down angry rock songs", ["angry", "intense", "aggressive"]),
+  entry("Catharsis", "Feel it all and release", "mood", "Alanis Morissette Fiona Apple cathartic emotional songs", ["cathartic", "release"]),
+  entry("Rage Fuel", "Maximum intensity output", "mood", "Slipknot Korn Pantera rage metal intensity", ["rage", "intense"]),
 
-  entry("Dark Frequencies", "Brooding, low-lit energy", "mood", "dark moody songs playlist", ["dark", "brooding"]),
-  entry("Midnight Thoughts", "Late night introspection", "mood", "midnight thoughts playlist", ["midnight", "introspective"]),
-  entry("Noir Signal", "Shadows and slow tempos", "mood", "dark noir songs playlist", ["dark", "noir", "moody"]),
+  entry("Dark Frequencies", "Brooding, low-lit energy", "mood", "The Weeknd Billie Eilish dark moody atmospheric songs", ["dark", "brooding"]),
+  entry("Midnight Thoughts", "Late night introspection", "mood", "Bon Iver Sufjan Stevens midnight introspective songs", ["midnight", "introspective"]),
+  entry("Noir Signal", "Shadows and slow tempos", "mood", "Tom Waits Nick Cave dark noir noir songs", ["dark", "noir", "moody"]),
 
-  entry("Hopeful", "Light at the end", "mood", "hopeful uplifting songs playlist", ["hopeful", "optimistic"]),
-  entry("New Beginnings", "Fresh start energy", "mood", "new beginnings songs playlist", ["hopeful", "new start"]),
-  entry("Determined", "Eyes forward, no doubt", "mood", "determined motivational songs", ["determined", "motivated"]),
-  entry("Confidence Boost", "Walk taller with this on", "mood", "confidence boost songs playlist", ["confident", "empowering"]),
+  entry("Hopeful", "Light at the end", "mood", "Chance the Rapper Janelle Monae hopeful uplifting songs", ["hopeful", "optimistic"]),
+  entry("New Beginnings", "Fresh start energy", "mood", "Florence and the Machine Sigur Ros new beginnings songs", ["hopeful", "new start"]),
+  entry("Determined", "Eyes forward, no doubt", "mood", "Kendrick Lamar J. Cole determined motivational rap", ["determined", "motivated"]),
+  entry("Confidence Boost", "Walk taller with this on", "mood", "Lizzo Cardi B Beyonce confidence empowerment anthems", ["confident", "empowering"]),
 
-  entry("Dreamy State", "Half-awake and floating", "mood", "dreamy songs playlist", ["dreamy", "ethereal"]),
-  entry("Daydream", "Soft focus, soft sound", "mood", "daydream songs playlist", ["dreamy", "soft"]),
-  entry("Hazy Afternoon", "Warm and unfocused", "mood", "hazy afternoon songs playlist", ["hazy", "mellow"]),
+  entry("Dreamy State", "Half-awake and floating", "mood", "Beach House Mazzy Star dreamy shoegaze ethereal songs", ["dreamy", "ethereal"]),
+  entry("Daydream", "Soft focus, soft sound", "mood", "Tame Impala Washed Out daydream psychedelic indie", ["dreamy", "soft"]),
+  entry("Hazy Afternoon", "Warm and unfocused", "mood", "Khruangbin Real Estate hazy warm afternoon indie", ["hazy", "mellow"]),
 
-  entry("Peaceful Mind", "Still water, clear air", "mood", "peaceful calming songs playlist", ["peaceful", "calm"]),
-  entry("Zen State", "Presence over urgency", "mood", "zen calm meditation music", ["zen", "calm"]),
-  entry("Gratitude", "Slow appreciation", "mood", "gratitude thankful songs playlist", ["gratitude", "positive"]),
+  entry("Peaceful Mind", "Still water, clear air", "mood", "Brian Eno Nils Frahm peaceful calming ambient piano", ["peaceful", "calm"]),
+  entry("Zen State", "Presence over urgency", "mood", "Satie Arvo Pärt zen calm meditation classical", ["zen", "calm"]),
+  entry("Gratitude", "Slow appreciation", "mood", "Bill Withers Van Morrison gratitude soulful warm songs", ["gratitude", "positive"]),
 
-  entry("Mysterious", "Something just under the surface", "mood", "mysterious dark songs playlist", ["mysterious", "eerie"]),
-  entry("Tense Atmosphere", "Edge-of-seat sound design", "mood", "tense atmospheric songs", ["tense", "suspense"]),
-  entry("Introspective", "Turn inward, sit with it", "mood", "introspective songs playlist", ["introspective", "thoughtful"]),
-  entry("Spiritual", "Something larger than self", "mood", "spiritual songs playlist", ["spiritual", "soulful"]),
+  entry("Mysterious", "Something just under the surface", "mood", "Portishead Massive Attack mysterious dark atmospheric", ["mysterious", "eerie"]),
+  entry("Tense Atmosphere", "Edge-of-seat sound design", "mood", "Thom Yorke Ennio Morricone tense atmospheric cinematic", ["tense", "suspense"]),
+  entry("Introspective", "Turn inward, sit with it", "mood", "James Blake Daughter introspective emotional indie", ["introspective", "thoughtful"]),
+  entry("Spiritual", "Something larger than self", "mood", "John Coltrane Alice Coltrane spiritual jazz devotional", ["spiritual", "soulful"]),
 ];
 
 // ─── Genres ───────────────────────────────────────────────────────────────────
@@ -169,7 +169,6 @@ const GENRES: CatalogEntry[] = [
   entry("Bossa Nova", "Brazilian sway and whisper", "genre", "bossa nova playlist", ["bossa nova"]),
 
   entry("Pop", "Melodic hooks for everyone", "genre", "pop hits playlist", ["pop"]),
-  entry("Indie Pop", "Pop with an independent edge", "genre", "indie pop playlist", ["indie pop"]),
   entry("Art Pop", "Experimental and melodic", "genre", "art pop playlist", ["art pop"]),
   entry("Synth Pop", "Polished electronic melodies", "genre", "synth pop playlist", ["synth pop"]),
   entry("Baroque Pop", "Orchestral and ornate", "genre", "baroque pop playlist", ["baroque pop"]),
@@ -332,7 +331,133 @@ const SCENES: CatalogEntry[] = [
   entry("Neon Nights", "Candy-colored darkness", "vibe", "neon night songs playlist", ["neon", "night"]),
 ];
 
-// ─── Regional / Scene ─────────────────────────────────────────────────────────
+// ─── African Music ────────────────────────────────────────────────────────────
+
+const AFRICAN: CatalogEntry[] = [
+  // West Africa – Nigeria
+  entry("Naija Afrobeats", "Burna Boy, Wizkid, Davido — the Lagos sound", "genre", "Burna Boy Wizkid Davido afrobeats Nigeria playlist", ["afrobeats", "nigeria"]),
+  entry("Afrobeats Classics", "Early Fela Kuti era — the origin point", "genre", "Fela Kuti afrobeats classics Nigeria playlist", ["afrobeats", "fela kuti", "classic"]),
+  entry("Afropop Wave", "Rema, Asake, Fireboy — new generation Lagos", "genre", "Rema Asake Fireboy DML afropop Nigeria 2020s", ["afropop", "new gen"]),
+  entry("Jùjú Music", "King Sunny Ade — talking drums and guitars", "genre", "King Sunny Ade Ebenezer Obey juju music Nigeria", ["juju", "nigeria"]),
+  entry("Afrobeats x Dancehall", "Lagos meets Kingston riddim", "genre", "afrobeats dancehall fusion playlist", ["afrobeats", "dancehall"]),
+  entry("Afro-Fusion", "Genre-defying pan-African sounds", "genre", "Burna Boy afro-fusion world music playlist", ["afro-fusion"]),
+
+  // West Africa – Ghana
+  entry("Ghana Highlife", "E.T. Mensah era brass and guitar swing", "genre", "Ghana highlife E.T. Mensah classic playlist", ["highlife", "ghana"]),
+  entry("Hiplife", "Ghanaian hip hop meets highlife", "genre", "hiplife Ghana Reggie Rockstone playlist", ["hiplife", "ghana"]),
+  entry("Azonto", "Ghanaian street dance and party music", "genre", "azonto Ghana party dance music playlist", ["azonto", "ghana"]),
+  entry("Ghana Modern", "Stonebwoy, Sarkodie, Shatta Wale — Accra now", "genre", "Stonebwoy Sarkodie Shatta Wale Ghana music 2020s", ["ghana", "modern"]),
+
+  // West Africa – Senegal & Mali
+  entry("Mbalax", "Youssou N'Dour — Sabar drums and Wolof soul", "genre", "Youssou NDour Baaba Maal mbalax Senegal playlist", ["mbalax", "senegal"]),
+  entry("Griot Tradition", "West African praise singers — kora and balafon", "genre", "Toumani Diabate kora Mali griot music playlist", ["griot", "mali", "kora"]),
+  entry("Mali Blues", "Tinariwen, Ali Farka Touré — desert guitar", "genre", "Ali Farka Toure Tinariwen Mali blues desert guitar", ["mali blues", "desert blues"]),
+
+  // East Africa
+  entry("Ethiopian Jazz", "Mulatu Astatke — Ethio-jazz from Addis", "genre", "Mulatu Astatke Ethiopian jazz Ethio-jazz Addis Ababa", ["ethio-jazz", "ethiopia"]),
+  entry("Ethiopian Pop", "Modern Habesha melodies and beats", "genre", "Ethiopian pop music modern playlist Teddy Afro", ["ethiopia", "pop"]),
+  entry("Bongo Flava", "Tanzanian hip hop meets taarab", "genre", "Bongo Flava Tanzania Diamond Platnumz playlist", ["bongo flava", "tanzania"]),
+  entry("Gengetone", "Nairobi street rap — sheng and bass", "genre", "Gengetone Kenya Nairobi hip hop playlist 2020s", ["gengetone", "kenya"]),
+  entry("Benga", "Kenyan electric folk — guitar and luo rhythm", "genre", "Benga Kenya D.O. Misiani guitar folk playlist", ["benga", "kenya"]),
+  entry("Taarab", "Swahili coast Arabic-influenced song", "genre", "Taarab Zanzibar Swahili coast music playlist", ["taarab", "swahili"]),
+
+  // Central Africa
+  entry("Soukous", "Congolese rumba and guitar — dance of the Congo", "genre", "Soukous Congolese rumba Papa Wemba playlist", ["soukous", "congo"]),
+  entry("Ndombolo", "Congo Brazzaville fast-paced dance groove", "genre", "Ndombolo Congo dance music Koffi Olomide playlist", ["ndombolo", "congo"]),
+
+  // North Africa
+  entry("Gnawa", "Moroccan trance ritual — guembri and krakebs", "genre", "Gnawa Morocco trance ritual music Maalem playlist", ["gnawa", "morocco"]),
+  entry("Chaabi", "North African street folk — Algerian and Moroccan", "genre", "Chaabi Algeria Morocco folk music playlist", ["chaabi", "north africa"]),
+  entry("Rai", "Algerian rebel pop — from Oran to Paris", "genre", "Rai Algeria Khaled Cheb Mami rebel pop playlist", ["rai", "algeria"]),
+  entry("Egyptian Pop", "Cairo love songs — Amr Diab and golden era", "genre", "Amr Diab Nancy Ajram Egyptian Arabic pop playlist", ["egypt", "arabic pop"]),
+
+  // Southern Africa
+  entry("Amapiano Now", "Log drum takeover — South Africa 2020s", "genre", "Amapiano South Africa DJ Maphorisa Kabza De Small playlist", ["amapiano", "south africa"]),
+  entry("Kwaito", "South African township house — 90s golden age", "genre", "Kwaito South Africa TKZee Boom Shaka 90s playlist", ["kwaito", "south africa"]),
+  entry("South African Jazz", "Cape jazz and township sound", "genre", "South African jazz Abdullah Ibrahim Cape Town playlist", ["south african jazz"]),
+  entry("Maskandi", "Zulu guitar folk — izigqi zasokhozini", "genre", "Maskandi Zulu folk guitar South Africa playlist", ["maskandi", "zulu"]),
+  entry("Zimbabwe Sungura", "Guitar-driven Zimbabwean dance music", "genre", "Sungura Zimbabwe Thomas Mapfumo chimurenga playlist", ["sungura", "zimbabwe"]),
+
+  // Pan-African
+  entry("Pan-African Sounds", "Continent-wide showcase", "genre", "pan-African music best playlist Africa 2020s", ["pan-african"]),
+  entry("African Electronic", "Club music from Lagos to Cape Town", "genre", "African electronic club music DJ playlist 2020s", ["african electronic"]),
+  entry("Afrobeats Global", "When Lagos met London, Paris, Toronto", "genre", "afrobeats global diaspora playlist UK US 2020s", ["afrobeats", "global"]),
+];
+
+// ─── British Music ─────────────────────────────────────────────────────────────
+
+const BRITISH: CatalogEntry[] = [
+  entry("UK Rap", "Stormzy, Dave, Little Simz — British bars", "genre", "Stormzy Dave Little Simz UK rap playlist 2020s", ["uk rap", "british hip hop"]),
+  entry("Grime Origins", "Skepta, Dizzee Rascal — garage's angry offspring", "genre", "Skepta Dizzee Rascal Wiley grime classics playlist", ["grime", "uk"]),
+  entry("South London Sound", "Dave, Ghetts, AJ Tracey — south London streets", "genre", "Dave Ghetts AJ Tracey south London rap playlist", ["south london", "uk rap"]),
+  entry("British Soul", "Amy Winehouse, Adele, Sam Smith — UK soul gold", "genre", "Amy Winehouse Adele Sam Smith British soul playlist", ["british soul", "uk"]),
+  entry("Bristol Sound", "Massive Attack, Portishead, Tricky — trip-hop city", "genre", "Massive Attack Portishead Tricky Bristol trip-hop playlist", ["bristol", "trip-hop"]),
+  entry("Madchester", "Stone Roses, Happy Mondays — baggy and blissed", "genre", "Stone Roses Happy Mondays Madchester playlist 90s", ["madchester", "manchester"]),
+  entry("Britpop Golden Era", "Oasis, Blur, Pulp, Elastica — peak 90s UK", "genre", "Oasis Blur Pulp Elastica Britpop 1990s playlist", ["britpop", "90s uk"]),
+  entry("British Indie", "Arctic Monkeys, The Libertines, Bloc Party", "genre", "Arctic Monkeys Libertines Bloc Party British indie playlist", ["british indie"]),
+  entry("Scottish Indie", "Frightened Rabbit, Biffy Clyro, Belle & Sebastian", "genre", "Frightened Rabbit Belle Sebastian Scottish indie playlist", ["scottish", "indie"]),
+  entry("Northern Soul", "Wigan Casino — 60s American soul on UK dancefloors", "genre", "Northern Soul Wigan Casino rare soul 60s 70s playlist", ["northern soul", "uk"]),
+  entry("UK Folk", "Nick Drake, Pentangle, Fairport Convention — pastoral", "genre", "Nick Drake Fairport Convention UK folk pastoral playlist", ["uk folk", "british folk"]),
+  entry("British Electronic", "Aphex Twin, Boards of Canada, Autechre", "genre", "Aphex Twin Boards of Canada British electronic IDM playlist", ["british electronic", "idm"]),
+  entry("UK Jazz", "Ezra Collective, Nubya Garcia, Moses Boyd — new wave", "genre", "Ezra Collective Nubya Garcia Moses Boyd UK jazz playlist", ["uk jazz", "british jazz"]),
+  entry("British Post-Punk", "Joy Division, The Cure, Gang of Four", "genre", "Joy Division The Cure Gang of Four post-punk British playlist", ["british post-punk"]),
+  entry("Shoegaze UK", "My Bloody Valentine, Slowdive, Ride — the dream", "genre", "My Bloody Valentine Slowdive Ride shoegaze UK playlist", ["shoegaze", "uk"]),
+  entry("British Punk", "Sex Pistols, The Clash, The Damned — 1977", "genre", "Sex Pistols The Clash Damned British punk 1977 playlist", ["british punk"]),
+  entry("London Club", "Fabric, Ministry of Sound — UK dance institution", "genre", "London club music UK dance house techno playlist", ["london club", "uk dance"]),
+  entry("UK Bass Music", "Burial, FKA Twigs, James Blake — post-dubstep", "genre", "Burial James Blake FKA Twigs UK bass music playlist", ["uk bass", "post-dubstep"]),
+  entry("Britpop Now", "Wet Leg, Yard Act, Dry Cleaning — 2020s revival", "genre", "Wet Leg Yard Act Dry Cleaning British indie 2020s playlist", ["britpop revival", "modern uk"]),
+];
+
+// ─── World Music ──────────────────────────────────────────────────────────────
+
+const WORLD: CatalogEntry[] = [
+  // South Asia
+  entry("Bollywood Classics", "Hindi film music — golden era melodrama", "genre", "Bollywood classic Hindi film songs golden era playlist", ["bollywood", "hindi"]),
+  entry("Bollywood Now", "A.R. Rahman era and 2020s Hindi hits", "genre", "AR Rahman Bollywood modern Hindi film songs playlist", ["bollywood", "modern"]),
+  entry("Punjabi Bhangra", "Dhol and dholak — wedding and harvest energy", "genre", "Punjabi Bhangra dholak wedding dance music playlist", ["bhangra", "punjabi"]),
+  entry("Desi Hip-Hop", "Badshah, Divine, Raftaar — Indian rap", "genre", "Badshah Divine Raftaar Indian hip hop desi rap playlist", ["desi hip hop", "india"]),
+  entry("Qawwali", "Nusrat Fateh Ali Khan — Sufi devotional power", "genre", "Nusrat Fateh Ali Khan Qawwali Sufi devotional playlist", ["qawwali", "sufi"]),
+  entry("Indian Classical", "Raga and rhythm — Hindustani tradition", "genre", "Ravi Shankar Indian classical sitar Hindustani playlist", ["indian classical", "raga"]),
+
+  // Middle East & North Africa
+  entry("Arabic Pop", "Fairuz, Amr Diab, Nancy Ajram — pan-Arab melody", "genre", "Fairuz Amr Diab Nancy Ajram Arabic pop playlist", ["arabic pop", "arab"]),
+  entry("Turkish Pop", "Tarkan, Sezen Aksu — Istanbul chart sound", "genre", "Tarkan Sezen Aksu Turkish pop Istanbul playlist", ["turkish pop"]),
+  entry("Turkish Psychedelic", "70s Anatolian rock — Erkin Koray, Barış Manço", "genre", "Erkin Koray Baris Manco Anatolian psychedelic rock 70s", ["turkish psychedelic", "anatolian rock"]),
+  entry("Persian Pop", "Iranian diaspora pop — pre and post revolution", "genre", "Persian pop Iranian diaspora music playlist", ["persian pop", "iran"]),
+  entry("Israeli Music", "Mediterranean meets Middle East pop", "genre", "Israeli music Mizrahi pop Mediterranean playlist", ["israel", "mizrahi"]),
+
+  // Europe
+  entry("Flamenco", "Paco de Lucía — Andalusian soul and fury", "genre", "Flamenco Paco de Lucia Camarón de la Isla Spain playlist", ["flamenco", "spain"]),
+  entry("Spanish Pop", "Rosalía, C Tangana — nuevo canción español", "genre", "Rosalia C Tangana Spanish pop modern playlist", ["spanish pop"]),
+  entry("French Chanson", "Édith Piaf, Serge Gainsbourg — Parisian elegance", "genre", "Edith Piaf Serge Gainsbourg Jacques Brel chanson française", ["chanson", "french"]),
+  entry("Greek Laïkó", "Rebetiko and popular Greek song", "genre", "Greek laiko rebetiko Stelios Kazantzidis playlist", ["greek", "laiko"]),
+  entry("Fado", "Portuguese longing — saudade in song", "genre", "Fado Amalia Rodrigues Portugal saudade playlist", ["fado", "portugal"]),
+  entry("Balkan Beats", "Brass, accordion, and relentless energy", "genre", "Balkan beats brass band Emir Kusturica playlist", ["balkan", "brass"]),
+  entry("Scandinavian Pop", "ABBA lineage — Nordic pure pop craft", "genre", "Scandinavian pop Nordic ABBA heritage playlist", ["scandinavian", "nordic pop"]),
+  entry("German Electronic", "Kraftwerk, Tangerine Dream — kosmische musik", "genre", "Kraftwerk Tangerine Dream German electronic Krautrock", ["german electronic", "kosmische"]),
+  entry("Italian Classics", "Dean Martin era and cantautore", "genre", "Italian classics Ennio Morricone cantautore pop playlist", ["italian", "cantautore"]),
+
+  // Latin America
+  entry("Brazilian MPB", "Caetano Veloso, Gilberto Gil — tropical soul", "genre", "Caetano Veloso Gilberto Gil MPB Brazilian music playlist", ["mpb", "brazil"]),
+  entry("Baile Funk", "Favela bass — Rio Funk Carioca", "genre", "Baile Funk Funk Carioca Rio de Janeiro playlist", ["baile funk", "brazil"]),
+  entry("Forró", "Northeast Brazil accordion dance", "genre", "Forro Brazilian northeast accordion Luiz Gonzaga playlist", ["forro", "brazil"]),
+  entry("Cumbia Colombia", "Original Colombian coastal cumbia groove", "genre", "cumbia Colombia Carlos Vives traditional playlist", ["cumbia", "colombia"]),
+  entry("Vallenato", "Accordion and story — Carlos Vives heartland", "genre", "Vallenato Carlos Vives Carlos Negrete Colombia playlist", ["vallenato", "colombia"]),
+  entry("Mexican Norteño", "Border corrido and accordion narco ballad", "genre", "Norteno Mexico accordion corrido Los Tigres del Norte", ["norteño", "mexico"]),
+  entry("Mexican Rock", "Café Tacvba, Caifanes — Latin alt rock", "genre", "Cafe Tacvba Caifanes Mexican rock alternative playlist", ["mexican rock"]),
+  entry("Soca", "Trinidad carnival energy — jump and wave", "genre", "Soca Trinidad carnival Machel Montano playlist", ["soca", "trinidad"]),
+  entry("Calypso", "Calypsonian wit and political steel pan", "genre", "Calypso steel pan Caribbean Trinidad Lord Kitchener", ["calypso", "caribbean"]),
+
+  // East & Southeast Asia
+  entry("Mandopop", "Mandarin Chinese pop — Jay Chou era and beyond", "genre", "Jay Chou Mandopop Mandarin Chinese pop playlist", ["mandopop", "taiwan"]),
+  entry("Cantopop", "Hong Kong Cantonese pop golden age", "genre", "Cantopop Hong Kong Cantonese Leslie Cheung playlist", ["cantopop", "hong kong"]),
+  entry("Thai Pop", "T-Pop — Bangkok indie and mainstream", "genre", "Thai pop T-pop Bangkok playlist modern Thailand", ["thai pop", "thailand"]),
+  entry("Vietnamese Pop", "V-Pop — Hanoi and Ho Chi Minh City sound", "genre", "Vietnamese pop V-pop playlist modern Vietnam", ["v-pop", "vietnam"]),
+  entry("Indonesian Pop", "Indie Jakarta and pop Indonesia", "genre", "Indonesian pop indie Jakarta Isyana Sarasvati playlist", ["indonesian pop", "indonesia"]),
+  entry("OPM Philippines", "Original Pilipino Music — Manila soul", "genre", "OPM Philippines Filipino music Ben&Ben playlist", ["opm", "philippines"]),
+];
+
+// ─── Regional / City Scenes ───────────────────────────────────────────────────
 
 const REGIONAL: CatalogEntry[] = [
   entry("NYC Underground", "Brooklyn and Manhattan after hours", "vibe", "new york city music playlist", ["nyc", "new york"]),
@@ -345,16 +470,22 @@ const REGIONAL: CatalogEntry[] = [
   entry("French Electronic", "Daft Punk and Air legacy", "genre", "french electronic playlist", ["french electronic"]),
   entry("Tokyo City Pop", "Bubble-era Japanese glamour", "genre", "tokyo city pop playlist", ["tokyo", "city pop"]),
   entry("Seoul Indie", "Han River coffee shop sound", "vibe", "seoul indie kpop playlist", ["seoul", "korean"]),
-  entry("Lagos Afrobeats", "West African export", "genre", "lagos afrobeats playlist", ["lagos", "afrobeats"]),
+  entry("Lagos Afrobeats", "West African export capital", "genre", "lagos afrobeats playlist", ["lagos", "afrobeats"]),
   entry("Johannesburg Amapiano", "Log drum from Soweto", "genre", "johannesburg amapiano playlist", ["johannesburg", "amapiano"]),
-  entry("Rio Bossa Nova", "Copacabana sway", "genre", "rio bossa nova playlist", ["rio", "brazil"]),
-  entry("Kingston Reggae", "Root and riddim", "genre", "kingston reggae playlist", ["kingston", "jamaica"]),
+  entry("Cape Town Jazz", "Abdullah Ibrahim and the Cape sound", "genre", "Cape Town jazz Abdullah Ibrahim South Africa playlist", ["cape town", "jazz"]),
+  entry("Accra Bounce", "Ghana's new musical capital", "genre", "Accra Ghana music new wave playlist", ["accra", "ghana"]),
+  entry("Nairobi Gengetone", "East African street rap", "genre", "Nairobi Kenya gengetone street music playlist", ["nairobi", "kenya"]),
+  entry("Addis Ababa Jazz", "Ethiopian jazz from the source", "genre", "Addis Ababa Ethiopian jazz Ethio playlist", ["addis ababa", "ethiopia"]),
+  entry("Rio De Janeiro", "Samba, bossa nova, and baile funk", "vibe", "Rio de Janeiro music samba bossa playlist", ["rio", "brazil"]),
+  entry("Kingston Reggae", "Root and riddim from the source", "genre", "kingston reggae playlist", ["kingston", "jamaica"]),
   entry("Havana Salsa", "Cuban heat and brass", "genre", "havana salsa playlist", ["havana", "cuba"]),
   entry("Nordic Noir", "Icelandic post-rock and Scandinavian cold", "vibe", "nordic noir playlist", ["nordic", "scandinavia"]),
   entry("Australian Indie", "Sun-bleached and unpretentious", "genre", "australian indie playlist", ["australian", "indie"]),
-  entry("UK Bass", "From dubstep to grime to UKG", "genre", "uk bass music playlist", ["uk bass"]),
-  entry("Glasgow Sound", "Post-punk and shoegaze", "vibe", "glasgow indie playlist", ["glasgow", "uk indie"]),
+  entry("Glasgow Sound", "Post-punk and shoegaze — Scotland's best", "vibe", "glasgow indie playlist", ["glasgow", "uk indie"]),
   entry("Manchester Anthems", "Madchester to now", "vibe", "manchester music playlist", ["manchester", "uk"]),
+  entry("Mumbai Streets", "Bollywood meets street rap — Maximum City", "vibe", "Mumbai music Hindi street rap Bollywood playlist", ["mumbai", "india"]),
+  entry("Istanbul Crossroads", "East meets West — Turkish music capital", "vibe", "Istanbul Turkish music crossroads playlist", ["istanbul", "turkey"]),
+  entry("Buenos Aires Tango", "The original passion — Piazzolla and beyond", "genre", "Tango Buenos Aires Piazzolla Argentina playlist", ["tango", "argentina"]),
 ];
 
 // ─── Special Collections ──────────────────────────────────────────────────────
@@ -381,18 +512,18 @@ const SPECIAL: CatalogEntry[] = [
   entry("Guilty Pleasures", "Judgement-free listening", "vibe", "guilty pleasure songs playlist", ["guilty pleasure"]),
   entry("90s R&B", "Slow jams and harmony groups", "era", "90s r&b playlist", ["90s r&b"]),
   entry("2000s Emo", "Eyeliner and catharsis", "era", "2000s emo playlist", ["emo", "2000s"]),
-  entry("60s Soul", "Motown and Stax forever", "era", "60s soul playlist", ["60s soul"]),
-  entry("80s New Wave", "Cold synths and angular cool", "era", "80s new wave playlist", ["80s new wave"]),
   entry("Garage Bands", "Scrappy, raw, real", "genre", "garage bands rock playlist", ["garage rock"]),
   entry("Post-Punk Wire", "Tension and abstraction", "genre", "post punk essentials playlist", ["post punk"]),
   entry("Bossa Nights", "Brazilian soft-lit sway", "genre", "bossa nova nights playlist", ["bossa nova"]),
-  entry("Afro House", "Percussive elevation", "genre", "afro house playlist", ["afro house"]),
   entry("Shoegaze Signals", "Reverb wall transmissions", "genre", "shoegaze essentials playlist", ["shoegaze"]),
   entry("Ambient Drift", "Pure atmosphere, no destination", "genre", "ambient drift playlist", ["ambient"]),
   entry("Trip-Hop", "Bristol bass and broken beats", "genre", "trip hop playlist", ["trip hop"]),
   entry("Darkwave", "Gothic electronics and cold synths", "genre", "darkwave playlist", ["darkwave"]),
   entry("Lo-Fi Beats", "Dusty loops for work and study", "genre", "lofi beats study playlist", ["lofi"]),
-  entry("Jungle", "Amen breaks at speed", "genre", "jungle music playlist", ["jungle", "rave"]),
+  entry("Backyard Static", "Loose guitars and warm-weather fuzz", "genre", "indie rock summer backyard playlist", ["indie", "summer"]),
+  entry("World Music Essentials", "One playlist, every continent", "genre", "world music essential playlist global", ["world music"]),
+  entry("Diaspora Sounds", "Identity, distance, and home frequencies", "vibe", "diaspora music playlist immigrant songs identity", ["diaspora"]),
+  entry("Global Club", "Dancefloors from Lagos to Berlin to Tokyo", "vibe", "global club music international dance playlist", ["global", "club"]),
 ];
 
 // ─── Export ───────────────────────────────────────────────────────────────────
@@ -412,6 +543,9 @@ export const GENERATED_CATALOG: CatalogEntry[] = dedupe([
   ...ERAS,
   ...ACTIVITIES,
   ...SCENES,
+  ...AFRICAN,
+  ...BRITISH,
+  ...WORLD,
   ...REGIONAL,
   ...SPECIAL,
 ]);
