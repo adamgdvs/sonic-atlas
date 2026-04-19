@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useAudio } from "@/contexts/AudioContext";
+import SaveCuratedButton from "./SaveCuratedButton";
 
 interface ChartTrack {
   title: string;
@@ -78,6 +79,22 @@ export default function ChartsRow() {
     }
   }
 
+  const chartSaveTracks = useMemo(() => {
+    if (!charts) return [];
+    return charts.videos.slice(0, 10).map((track) => ({
+      title: track.title,
+      artist: track.artist,
+      videoId: track.videoId,
+      coverUrl: track.coverUrl,
+    }));
+  }, [charts]);
+
+  const chartPlaylistName = useMemo(() => {
+    if (!charts) return "";
+    const today = new Date().toISOString().slice(0, 10);
+    return `${charts.country} Charts · ${today}`;
+  }, [charts]);
+
   if (loading || !charts || charts.videos.length === 0) return null;
 
   const hero = charts.videos[0];
@@ -123,13 +140,21 @@ export default function ChartsRow() {
                 <div className="text-[11px] sm:text-[12px] font-mono uppercase tracking-wider text-shift5-muted mt-2 truncate">
                   {hero.artist}
                 </div>
-                <button
-                  onClick={handlePlayCharts}
-                  disabled={isPlaying}
-                  className="mt-4 px-5 py-3 bg-shift5-orange text-white border-2 border-shift5-orange font-mono text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-shift5-orange active:bg-white active:text-shift5-orange transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isPlaying ? "Loading..." : "Play_Charts_Set"}
-                </button>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    onClick={handlePlayCharts}
+                    disabled={isPlaying}
+                    className="px-5 py-3 bg-shift5-orange text-white border-2 border-shift5-orange font-mono text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-shift5-orange active:bg-white active:text-shift5-orange transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {isPlaying ? "Loading..." : "Play_Charts_Set"}
+                  </button>
+                  <SaveCuratedButton
+                    name={chartPlaylistName}
+                    description={`Top tracks captured from ${charts.country} charts`}
+                    coverUrl={hero.coverUrl}
+                    tracks={chartSaveTracks}
+                  />
+                </div>
               </div>
             </div>
           </div>

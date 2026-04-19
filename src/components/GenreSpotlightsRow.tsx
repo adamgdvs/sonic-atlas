@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useAudio } from "@/contexts/AudioContext";
+import SaveCuratedButton from "./SaveCuratedButton";
 
 interface CuratedPlaylistTrack {
   title: string;
@@ -187,13 +188,21 @@ export default function GenreSpotlightsRow() {
               </p>
             </div>
 
-            <button
-              onClick={handlePlay}
-              disabled={isPlaying}
-              className="px-5 py-3 bg-shift5-orange text-white border-2 border-shift5-orange font-mono text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-shift5-orange active:bg-white active:text-shift5-orange transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isPlaying ? "Loading..." : "Play_Spotlight"}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={handlePlay}
+                disabled={isPlaying}
+                className="px-5 py-3 bg-shift5-orange text-white border-2 border-shift5-orange font-mono text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-shift5-orange active:bg-white active:text-shift5-orange transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isPlaying ? "Loading..." : "Play_Spotlight"}
+              </button>
+              <SaveCuratedButton
+                name={selectedPlaylist.title}
+                description={selectedPlaylist.description || "Genre spotlight from Sonic Atlas"}
+                coverUrl={selectedPlaylist.coverUrl}
+                tracks={selectedPlaylist.tracks}
+              />
+            </div>
           </div>
 
           <div className="px-4 sm:px-5 py-4 grid gap-2">

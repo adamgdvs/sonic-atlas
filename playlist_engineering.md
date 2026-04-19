@@ -63,8 +63,10 @@ Add under `src/app/api/playlists/`:
 - `GET /api/playlists/moods` → list of mood categories with one representative playlist per category
 - `GET /api/playlists/mood/[category]` → playlists for a specific category
 - `GET /api/playlists/charts?country=US` → top songs / top artists for region
-- `GET /api/playlists/[ytPlaylistId]/tracks` → resolved track list (title, artist, videoId, coverUrl)
+- `GET /api/playlists/curated/[ytPlaylistId]/tracks` → resolved track list (title, artist, videoId, coverUrl)
+- `GET /api/playlists/genre-spotlights` → keyword-driven curated playlists
 - `GET /api/playlists/daily-discovery` → existing personalized mix (unchanged)
+- `POST /api/playlists/import-curated` → **save a curated playlist into the user's library.** Body: `{ name, description?, coverUrl?, tracks: [{ title, artist, videoId?, coverUrl? }] }`. Creates a `Playlist` row + bulk-inserts `PlaylistTrack` rows in a single transaction. Returns `{ id, name, trackCount }`.
 
 Responses are normalized to the existing track shape the player expects:
 
@@ -105,9 +107,18 @@ Add rows to the homepage (`src/app/page.tsx`) between `RotatingBanners` and `Dis
 
 1. **Curated Moods** — horizontal row of cards, one per `get_mood_categories` entry (Feel Good, Workout, Focus, Sleep, …). Click → opens playlist panel with track list.
 2. **Charts by Region** — small card row showing current top artists/songs for the user's country (default US, user-selectable later).
-3. **Genre Spotlights** — 3–6 hand-picked genre searches (e.g., "shoegaze playlist", "ambient", "hyperpop") passed through `search(filter="playlists")` and surfaced as cards.
+3. **Genre Spotlights** — ~12 hand-picked genre searches (shoegaze, ambient drone, hyperpop, jazz fusion, dream pop, afrobeats, lo-fi hip hop, city pop, post-rock, bossa nova, neo-soul, krautrock) passed through `search(filter="playlists")` and surfaced as cards.
+
+Every curated playlist detail panel exposes two primary actions:
+
+- **`Play_<set>`** — loads the tracks into the global player queue and starts streaming through yt-dlp.
+- **`Save_To_My_Atlas`** — imports the playlist into the user's library via `POST /api/playlists/import-curated`. If unauthenticated, redirects to `/login?callbackUrl=...`. After save, the button flips to `In_My_Atlas ✓ / View_Library →` so the user can jump straight to `/my-atlas?tab=playlists`.
 
 The existing **Daily Discovery** panel in `DiscoverFeed` stays where it is.
+
+### Known limitation — duplicate saves
+
+The current `Playlist` model has no `sourcePlaylistId` column, so a user who clicks `Save_To_My_Atlas` on the same curated playlist across separate page loads will get duplicate entries in their library. The in-session button state prevents double-save within a single load, but cross-session dedupe requires a schema migration (add `sourcePlaylistId String?` with a `@@unique([userId, sourcePlaylistId])` constraint). Revisit when duplicate-save becomes a real complaint; for v1 the manual-action framing is acceptable.
 
 ## Data Model
 
@@ -132,14 +143,16 @@ If users start "saving" curated playlists into their own library later, reuse th
 - `src/app/api/playlists/moods/route.ts`
 - `src/app/api/playlists/mood/[category]/route.ts`
 - `src/app/api/playlists/charts/route.ts`
-- `src/app/api/playlists/[id]/tracks/route.ts`
+- `src/app/api/playlists/curated/[id]/tracks/route.ts`
+- `src/app/api/playlists/genre-spotlights/route.ts`
+- `src/app/api/playlists/import-curated/route.ts` — save a curated playlist into the user's library
 
 ### Step 4 — UI components
 
 - `src/components/CuratedMoodsRow.tsx` — horizontal mood card strip
 - `src/components/ChartsRow.tsx` — region charts strip
 - `src/components/GenreSpotlightsRow.tsx` — genre-keyword-driven curated playlists
-- Reuse the existing Generated_Playlist panel in `DiscoverFeed.tsx` for the "open a curated playlist" detail view
+- `src/components/SaveCuratedButton.tsx` — shared `Save_To_My_Atlas` action used by all three rows; handles auth redirect + idle/saving/saved/error states
 
 ### Step 5 — Wire into homepage
 

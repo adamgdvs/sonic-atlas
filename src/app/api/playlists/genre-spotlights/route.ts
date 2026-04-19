@@ -2,12 +2,18 @@ import { NextResponse } from "next/server";
 import { searchCuratedPlaylists } from "@/lib/ytmusic";
 
 const DEFAULT_QUERIES = [
-  "shoegaze playlist",
-  "ambient playlist",
+  "shoegaze essentials playlist",
+  "ambient drone playlist",
   "hyperpop playlist",
   "jazz fusion playlist",
   "dream pop playlist",
   "afrobeats playlist",
+  "lo-fi hip hop playlist",
+  "city pop playlist",
+  "post-rock playlist",
+  "bossa nova playlist",
+  "neo-soul playlist",
+  "krautrock playlist",
 ];
 
 export const runtime = "nodejs";

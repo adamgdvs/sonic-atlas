@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useAudio } from "@/contexts/AudioContext";
+import SaveCuratedButton from "./SaveCuratedButton";
 
 interface CuratedPlaylistTrack {
   title: string;
@@ -199,13 +200,21 @@ export default function CuratedMoodsRow() {
               </p>
             </div>
 
-            <button
-              onClick={handlePlayPlaylist}
-              disabled={isPlayingPlaylist}
-              className="px-5 py-3 bg-shift5-orange text-white border-2 border-shift5-orange font-mono text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-shift5-orange active:bg-white active:text-shift5-orange transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isPlayingPlaylist ? "Loading..." : "Play_Mood_Set"}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={handlePlayPlaylist}
+                disabled={isPlayingPlaylist}
+                className="px-5 py-3 bg-shift5-orange text-white border-2 border-shift5-orange font-mono text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-shift5-orange active:bg-white active:text-shift5-orange transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isPlayingPlaylist ? "Loading..." : "Play_Mood_Set"}
+              </button>
+              <SaveCuratedButton
+                name={selectedPlaylist.title}
+                description={selectedPlaylist.description || "Curated mood set from Sonic Atlas"}
+                coverUrl={selectedPlaylist.coverUrl}
+                tracks={selectedPlaylist.tracks}
+              />
+            </div>
           </div>
 
           <div className="px-4 sm:px-5 py-4 grid gap-2">
