@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { CURATED_CATALOG, type CatalogCategory } from "@/lib/curated-catalog";
 import { buildVirtualCuratedPlaylist } from "@/lib/virtual-curated";
+import { searchDeezerPlaylists } from "@/lib/deezer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,7 +66,7 @@ export async function GET(req: Request) {
     }
 
     const page = entries.slice(offset, offset + pageSize);
-    const collections = page.map((entry) => ({
+    const catalogItems = page.map((entry) => ({
       label: entry.title,
       query: entry.searchQuery,
       category: entry.category,
@@ -78,10 +79,33 @@ export async function GET(req: Request) {
       }),
     }));
 
+    // When searching, fetch live Deezer results on the first page and prepend them
+    let deezerItems: typeof catalogItems = [];
+    if (titleQuery.length >= 2 && offset === 0) {
+      const deezerResults = await searchDeezerPlaylists(titleQuery, 8).catch(() => []);
+      deezerItems = deezerResults.map((pl) => ({
+        label: pl.title,
+        query: pl.title,
+        category: "genre" as CatalogCategory,
+        tone: pl.description || `${pl.trackCount} tracks · ${pl.creator}`,
+        playlist: {
+          id: `imported::deezer::${pl.id}`,
+          title: pl.title,
+          description: pl.description || `${pl.trackCount} tracks curated by ${pl.creator}`,
+          coverUrl: pl.coverUrl,
+          source: "atlas" as const,
+          category: "genre",
+          trackCount: pl.trackCount || null,
+        },
+      }));
+    }
+
+    const collections = [...deezerItems, ...catalogItems];
+
     return NextResponse.json({
       collection,
       collections,
-      total: entries.length,
+      total: entries.length + (offset === 0 ? deezerItems.length : 0),
       offset,
       pageSize,
       hasMore: offset + pageSize < entries.length,

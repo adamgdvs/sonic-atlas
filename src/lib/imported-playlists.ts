@@ -2,6 +2,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import type { CuratedPlaylist, CuratedPlaylistTrack } from "@/lib/ytmusic";
+import { getDeezerPlaylistWithTracks } from "@/lib/deezer";
+import { matchDeezerTrackToYouTube } from "@/lib/deezer-import";
+import type { DeezerImportTrack } from "@/lib/deezer-import";
 
 const IMPORTED_PREFIX = "imported::deezer::";
 const DATA_ROOT = path.join(process.cwd(), "data", "deezer");
@@ -315,36 +318,158 @@ export async function getImportedPlaylistTracks(id: string): Promise<CuratedPlay
     };
   }
 
+  // File-system fallback (pre-acquired JSON files)
   const normalized = await readJson<NormalizedPlaylist>(
     path.join(DATA_ROOT, "normalized", "playlists", `${playlistId}.json`)
   );
-  if (!normalized) {
-    throw new Error(`Imported playlist ${playlistId} not found`);
+  if (normalized) {
+    const matched = await readJson<MatchedPlaylist>(
+      path.join(DATA_ROOT, "matched", "playlists", `${playlistId}.json`)
+    );
+    const tracks: CuratedPlaylistTrack[] = matched
+      ? matched.matches
+          .filter((match) => match.status === "matched" && match.videoId)
+          .map((match) => ({
+            title: match.deezerTrack.title,
+            artist: match.deezerTrack.artist,
+            videoId: match.videoId!,
+            coverUrl: match.thumbnailUrl || match.deezerTrack.coverUrl || null,
+          }))
+      : [];
+    return {
+      id,
+      title: normalized.title,
+      description: buildImportedDescription(normalized, matched?.stats?.coverage ?? null),
+      coverUrl: normalized.coverUrl,
+      source: "atlas",
+      category: "imported",
+      trackCount: normalized.trackCount ?? normalized.tracks.length,
+      tracks,
+    };
   }
 
-  const matched = await readJson<MatchedPlaylist>(
-    path.join(DATA_ROOT, "matched", "playlists", `${playlistId}.json`)
-  );
+  // Live fetch from Deezer, match tracks to YouTube Music, cache result in DB
+  return fetchAndCacheDeezerPlaylist(id, playlistId);
+}
 
-  const tracks: CuratedPlaylistTrack[] = matched
-    ? matched.matches
-        .filter((match) => match.status === "matched" && match.videoId)
-        .map((match) => ({
-          title: match.deezerTrack.title,
-          artist: match.deezerTrack.artist,
-          videoId: match.videoId!,
-          coverUrl: match.thumbnailUrl || match.deezerTrack.coverUrl || null,
-        }))
-    : [];
+async function fetchAndCacheDeezerPlaylist(
+  fullId: string,
+  playlistId: string
+): Promise<CuratedPlaylist> {
+  const numericId = Number(playlistId);
+  if (!Number.isFinite(numericId) || numericId <= 0) {
+    throw new Error(`Invalid Deezer playlist id: ${playlistId}`);
+  }
+
+  const deezerPlaylist = await getDeezerPlaylistWithTracks(numericId, 100);
+  if (!deezerPlaylist) {
+    throw new Error(`Deezer playlist ${playlistId} could not be fetched`);
+  }
+
+  // Match all tracks to YouTube Music in batches of 6
+  const BATCH = 6;
+  const matches: Array<{ track: typeof deezerPlaylist.tracks[number]; videoId: string | null; matchedTitle: string | null; matchedArtist: string | null; thumbnail: string | null; confidence: number }> = [];
+
+  for (let i = 0; i < deezerPlaylist.tracks.length; i += BATCH) {
+    const batch = deezerPlaylist.tracks.slice(i, i + BATCH);
+    const batchResults = await Promise.all(
+      batch.map((track) => {
+        const importTrack: DeezerImportTrack = {
+          deezerId: track.id,
+          title: track.title,
+          artist: track.artist,
+          album: track.album,
+          duration: track.duration,
+          explicit: track.explicit,
+          preview: track.preview,
+          deezerUrl: track.deezerUrl,
+          timeAdded: null,
+          coverUrl: track.coverUrl,
+          isrc: track.isrc,
+        };
+        return matchDeezerTrackToYouTube(importTrack);
+      })
+    );
+    for (let j = 0; j < batch.length; j++) {
+      const r = batchResults[j];
+      matches.push({
+        track: batch[j],
+        videoId: r.videoId,
+        matchedTitle: r.matchedTitle,
+        matchedArtist: r.matchedArtist,
+        thumbnail: r.thumbnailUrl,
+        confidence: r.confidence,
+      });
+    }
+  }
+
+  const matched = matches.filter((m) => m.videoId);
+  const coverage = deezerPlaylist.tracks.length > 0 ? matched.length / deezerPlaylist.tracks.length : 0;
+
+  // Persist to DB so subsequent loads are instant
+  try {
+    await prisma.importedPlaylist.upsert({
+      where: { source_sourcePlaylistId: { source: "deezer", sourcePlaylistId: playlistId } },
+      create: {
+        source: "deezer",
+        sourcePlaylistId: playlistId,
+        title: deezerPlaylist.title,
+        description: deezerPlaylist.description,
+        creator: deezerPlaylist.creator,
+        coverUrl: deezerPlaylist.coverUrl,
+        trackCount: deezerPlaylist.trackCount,
+        matchedCoverage: coverage,
+        tracks: {
+          create: matches.map((m, position) => ({
+            sourceTrackId: String(m.track.id),
+            title: m.track.title,
+            artist: m.track.artist,
+            album: m.track.album || null,
+            duration: m.track.duration,
+            explicit: m.track.explicit,
+            previewUrl: m.track.preview,
+            coverUrl: m.track.coverUrl,
+            isrc: m.track.isrc,
+            position,
+            matchStatus: m.videoId ? "matched" : "unmatched",
+            matchConfidence: m.confidence,
+            videoId: m.videoId,
+            matchedTitle: m.matchedTitle,
+            matchedArtist: m.matchedArtist,
+            matchedThumbnailUrl: m.thumbnail,
+          })),
+        },
+      },
+      update: {
+        title: deezerPlaylist.title,
+        description: deezerPlaylist.description,
+        creator: deezerPlaylist.creator,
+        coverUrl: deezerPlaylist.coverUrl,
+        trackCount: deezerPlaylist.trackCount,
+        matchedCoverage: coverage,
+      },
+    });
+  } catch {
+    // Non-fatal — serve the result even if DB write fails
+  }
+
+  const tracks: CuratedPlaylistTrack[] = matched.map((m) => ({
+    title: m.track.title,
+    artist: m.track.artist,
+    videoId: m.videoId!,
+    coverUrl: m.thumbnail || m.track.coverUrl || null,
+  }));
 
   return {
-    id,
-    title: normalized.title,
-    description: buildImportedDescription(normalized, matched?.stats?.coverage ?? null),
-    coverUrl: normalized.coverUrl,
+    id: fullId,
+    title: deezerPlaylist.title,
+    description: deezerPlaylist.description
+      ? `${deezerPlaylist.description} · Imported from Deezer`
+      : `Imported from Deezer by ${deezerPlaylist.creator}`,
+    coverUrl: deezerPlaylist.coverUrl,
     source: "atlas",
     category: "imported",
-    trackCount: normalized.trackCount ?? normalized.tracks.length,
+    trackCount: deezerPlaylist.trackCount,
     tracks,
   };
 }
