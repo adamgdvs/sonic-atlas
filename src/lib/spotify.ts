@@ -185,6 +185,27 @@ export async function matchSpotifyTrackWithFeatures(title: string, artist: strin
 
 // ─── Playlist sourcing ────────────────────────────────────────────────────────
 
+type SpotifyPlaylistItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  images?: Array<{ url: string }>;
+  tracks?: { total: number };
+  owner?: { display_name: string };
+} | null;
+
+function mapPlaylistItem(item: SpotifyPlaylistItem): SpotifyPlaylistSummary | null {
+  if (!item?.id || !item.name) return null;
+  return {
+    id: item.id,
+    name: item.name,
+    description: item.description || "",
+    coverUrl: item.images?.[0]?.url || null,
+    trackCount: item.tracks?.total ?? null,
+    owner: item.owner?.display_name || "",
+  };
+}
+
 export interface SpotifyPlaylistSummary {
   id: string;
   name: string;
@@ -212,28 +233,50 @@ export async function searchSpotifyPlaylists(
     async () => {
       const q = encodeURIComponent(query);
       const data = await spotifyFetch<{
-        playlists?: {
-          items?: Array<{
-            id: string;
-            name: string;
-            description: string | null;
-            images?: Array<{ url: string }>;
-            tracks?: { total: number };
-            owner?: { display_name: string };
-          } | null>;
-        };
+        playlists?: { items?: SpotifyPlaylistItem[] };
       }>(`/search?q=${q}&type=playlist&limit=${limit}`);
-
       return (data?.playlists?.items || [])
-        .filter((item): item is NonNullable<typeof item> => Boolean(item?.id && item?.name))
-        .map((item) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description || "",
-          coverUrl: item.images?.[0]?.url || null,
-          trackCount: item.tracks?.total ?? null,
-          owner: item.owner?.display_name || "",
-        }));
+        .map(mapPlaylistItem)
+        .filter((item): item is SpotifyPlaylistSummary => item !== null);
+    }
+  );
+}
+
+export async function getCategoryPlaylists(
+  categoryId: string,
+  limit = 20
+): Promise<SpotifyPlaylistSummary[]> {
+  if (!getCredentials()) return [];
+
+  return dbCache<SpotifyPlaylistSummary[]>(
+    `spotify:catpl:${categoryId}`,
+    6 * 60 * 60 * 1000,
+    async () => {
+      const data = await spotifyFetch<{
+        playlists?: { items?: SpotifyPlaylistItem[] };
+      }>(`/browse/categories/${categoryId}/playlists?limit=${limit}&market=US`);
+      return (data?.playlists?.items || [])
+        .map(mapPlaylistItem)
+        .filter((item): item is SpotifyPlaylistSummary => item !== null);
+    }
+  );
+}
+
+export async function getFeaturedPlaylists(
+  limit = 20
+): Promise<SpotifyPlaylistSummary[]> {
+  if (!getCredentials()) return [];
+
+  return dbCache<SpotifyPlaylistSummary[]>(
+    "spotify:featured",
+    6 * 60 * 60 * 1000,
+    async () => {
+      const data = await spotifyFetch<{
+        playlists?: { items?: SpotifyPlaylistItem[] };
+      }>(`/browse/featured-playlists?limit=${limit}&market=US`);
+      return (data?.playlists?.items || [])
+        .map(mapPlaylistItem)
+        .filter((item): item is SpotifyPlaylistSummary => item !== null);
     }
   );
 }

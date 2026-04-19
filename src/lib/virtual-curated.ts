@@ -12,6 +12,8 @@ import {
   type SpotifyAudioFeatures,
   type SpotifyPlaylistSummary,
 } from "@/lib/spotify";
+
+export const SPOTIFY_PL_PREFIX = "spotify-pl:";
 import type { CuratedPlaylist, CuratedPlaylistTrack } from "@/lib/ytmusic";
 
 const VIRTUAL_CURATED_PREFIX = "atlas-curated";
@@ -730,7 +732,52 @@ export function parseVirtualCuratedId(id: string): VirtualCuratedDescriptor | nu
   };
 }
 
-// ─── Spotify-sourced resolution ───────────────────────────────────────────────
+// ─── Spotify playlist as source ──────────────────────────────────────────────
+
+export function buildSpotifySourcedPlaylist(
+  playlist: SpotifyPlaylistSummary,
+  category: string
+): CuratedPlaylist {
+  return buildVirtualCuratedPlaylist({
+    title: playlist.name,
+    description: playlist.description || `${playlist.name} — curated by Spotify`,
+    category,
+    query: `${SPOTIFY_PL_PREFIX}${playlist.id}`,
+    coverUrl: playlist.coverUrl,
+    trackCount: playlist.trackCount,
+  });
+}
+
+function extractSpotifyPlaylistId(query: string): string | null {
+  return query.startsWith(SPOTIFY_PL_PREFIX) ? query.slice(SPOTIFY_PL_PREFIX.length) : null;
+}
+
+async function resolveSpotifyPlaylistToYT(
+  spotifyPlaylistId: string,
+  limit: number
+): Promise<CuratedPlaylistTrack[]> {
+  const spotifyTracks = await getSpotifyPlaylistTracks(spotifyPlaylistId, limit + 20);
+  if (!spotifyTracks.length) return [];
+
+  const resolved: CuratedPlaylistTrack[] = [];
+  const seen = new Set<string>();
+
+  for (let i = 0; i < spotifyTracks.length && resolved.length < limit; i += 8) {
+    const batch = spotifyTracks.slice(i, i + 8);
+    const results = await Promise.all(batch.map((t) => resolveTrackToYT(t.title, t.artist)));
+    for (const track of results) {
+      if (!track) continue;
+      const key = normalizeTrackKey(track);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      resolved.push(track);
+    }
+  }
+
+  return resolved;
+}
+
+// ─── Spotify-sourced search-based resolution ──────────────────────────────────
 
 async function resolveTrackToYT(
   title: string,
@@ -819,6 +866,19 @@ export async function resolveVirtualCuratedPlaylist(
   const entry = getCatalogEntry(descriptor);
   const laneSeeds = getLaneSeedProfile(entry);
   const queries = buildTrackQueries(descriptor);
+
+  // Direct Spotify playlist resolution — when hub item was sourced from Browse API
+  const spotifyPlaylistId = extractSpotifyPlaylistId(descriptor.query);
+  if (spotifyPlaylistId) {
+    const tracks = await resolveSpotifyPlaylistToYT(spotifyPlaylistId, limit).catch(() => []);
+    if (tracks.length >= 10) {
+      const coverUrl = descriptor.coverUrl || tracks[0]?.coverUrl || null;
+      return {
+        ...buildVirtualCuratedPlaylist({ ...descriptor, coverUrl, trackCount: tracks.length }),
+        tracks,
+      };
+    }
+  }
 
   // Try Spotify editorial playlists first — highest quality track sourcing
   const spotifyTracks = await resolveViaSpotify(descriptor, entry, limit).catch(() => null);

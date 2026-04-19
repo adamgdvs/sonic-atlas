@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_MIN_CURATED_TRACKS } from "@/lib/playlist-ranking";
 import { buildResolverEntry, resolveCuratedPlaylist } from "@/lib/curated-resolver";
-import { buildVirtualCuratedPlaylist } from "@/lib/virtual-curated";
+import { buildVirtualCuratedPlaylist, buildSpotifySourcedPlaylist } from "@/lib/virtual-curated";
+import {
+  getCategoryPlaylists,
+  getFeaturedPlaylists,
+  type SpotifyPlaylistSummary,
+} from "@/lib/spotify";
 
 type Preset = {
   label: string;
@@ -47,17 +52,66 @@ const PRESETS: Preset[] = [
   { label: "60s Soul", query: "60s soul essentials playlist", category: "era", tone: "timeless groove" },
 ];
 
+// Maps our collection tabs to Spotify Browse category IDs.
+// Categories can be verified at: GET /browse/categories
+const COLLECTION_SPOTIFY_CATEGORIES: Record<string, string[]> = {
+  featured: [], // uses getFeaturedPlaylists instead
+  mood: ["mood", "chill", "sleep"],
+  genre: ["pop", "rock", "hiphop", "indie_alt", "electronic", "rnb", "jazz", "country"],
+  activity: ["workout", "focus", "party"],
+  era: ["decades"],
+};
+
+async function fetchSpotifyCollectionPlaylists(
+  collection: string
+): Promise<SpotifyPlaylistSummary[]> {
+  if (collection === "featured") {
+    return getFeaturedPlaylists(24).catch(() => []);
+  }
+  const categoryIds = COLLECTION_SPOTIFY_CATEGORIES[collection] || [];
+  if (!categoryIds.length) return [];
+
+  const batches = await Promise.allSettled(
+    categoryIds.map((id) => getCategoryPlaylists(id, 8))
+  );
+  const seen = new Set<string>();
+  return batches
+    .flatMap((r) => (r.status === "fulfilled" ? r.value : []))
+    .filter((p) => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+}
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const collection = (searchParams.get("collection") || "featured").toLowerCase();
-  const filtered = collection === "all"
-    ? PRESETS
-    : PRESETS.filter((preset) => preset.category === collection);
+  const availableCollections = ["featured", "genre", "mood", "activity", "era"];
 
   try {
+    // Try Spotify Browse API first — real editorial playlists with full track counts
+    const spotifyPlaylists = await fetchSpotifyCollectionPlaylists(collection).catch(() => []);
+
+    if (spotifyPlaylists.length > 0) {
+      const collections = spotifyPlaylists.map((playlist) => ({
+        label: playlist.name,
+        query: playlist.name,
+        category: collection,
+        tone: playlist.description || `${collection} vibes`,
+        playlist: buildSpotifySourcedPlaylist(playlist, collection),
+      }));
+      return NextResponse.json({ collection, collections, availableCollections, source: "spotify" });
+    }
+
+    // Fallback: preset-based virtual playlists (no Spotify creds or API error)
+    const filtered = collection === "all"
+      ? PRESETS
+      : PRESETS.filter((preset) => preset.category === collection);
+
     const results = await Promise.all(
       filtered.map(async (preset) => {
         try {
@@ -105,17 +159,9 @@ export async function GET(req: Request) {
       })
     );
 
-    return NextResponse.json({
-      collection,
-      collections: results,
-      availableCollections: ["featured", "genre", "mood", "activity", "era"],
-    });
+    return NextResponse.json({ collection, collections: results, availableCollections });
   } catch (error) {
     console.error("Failed to load curated collections:", error);
-    return NextResponse.json({
-      collection,
-      collections: [],
-      availableCollections: ["featured", "genre", "mood", "activity", "era"],
-    });
+    return NextResponse.json({ collection, collections: [], availableCollections });
   }
 }
