@@ -242,43 +242,71 @@ export async function searchSpotifyPlaylists(
   );
 }
 
+// Spotify deprecated /browse/categories and /browse/featured-playlists (2024).
+// These replacements use /search?type=playlist which is still supported.
+
+const CATEGORY_SEARCH_QUERIES: Record<string, string[]> = {
+  mood:      ["mood booster playlist", "feel good playlist", "happy vibes playlist"],
+  chill:     ["chill vibes playlist", "lofi chill playlist", "relaxing music playlist"],
+  sleep:     ["sleep music playlist", "calm sleep playlist", "peaceful sleep playlist"],
+  focus:     ["focus study playlist", "deep focus music", "concentration playlist"],
+  workout:   ["workout playlist", "gym music playlist", "high energy workout"],
+  party:     ["party hits playlist", "dance party playlist", "club hits playlist"],
+  pop:       ["pop hits playlist", "top pop songs", "popular music playlist"],
+  rock:      ["rock classics playlist", "rock hits", "best rock songs playlist"],
+  hiphop:    ["hip hop playlist", "rap hits playlist", "best rap songs"],
+  indie_alt: ["indie playlist", "indie rock playlist", "alternative playlist"],
+  electronic:["electronic playlist", "edm playlist", "dance music playlist"],
+  rnb:       ["r&b playlist", "soul r&b playlist", "best r&b songs"],
+  jazz:      ["jazz playlist", "smooth jazz playlist", "jazz classics"],
+  country:   ["country playlist", "country hits", "best country songs"],
+  decades:   ["80s hits playlist", "90s playlist", "2000s hits", "70s classic rock"],
+};
+
+const FEATURED_SEARCH_QUERIES = [
+  "today's top hits playlist",
+  "viral hits playlist",
+  "new music friday playlist",
+  "trending songs playlist",
+  "global top songs playlist",
+  "hot hits playlist",
+];
+
+async function searchPlaylistBatch(
+  queries: string[],
+  perQuery: number
+): Promise<SpotifyPlaylistSummary[]> {
+  const results = await Promise.allSettled(
+    queries.map((q) => searchSpotifyPlaylists(q, perQuery))
+  );
+  const seen = new Set<string>();
+  return results
+    .flatMap((r) => (r.status === "fulfilled" ? r.value : []))
+    .filter((p) => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+}
+
 export async function getCategoryPlaylists(
   categoryId: string,
   limit = 20
 ): Promise<SpotifyPlaylistSummary[]> {
   if (!getCredentials()) return [];
-
-  return dbCache<SpotifyPlaylistSummary[]>(
-    `spotify:catpl:${categoryId}`,
-    6 * 60 * 60 * 1000,
-    async () => {
-      const data = await spotifyFetch<{
-        playlists?: { items?: SpotifyPlaylistItem[] };
-      }>(`/browse/categories/${categoryId}/playlists?limit=${limit}&market=US`);
-      return (data?.playlists?.items || [])
-        .map(mapPlaylistItem)
-        .filter((item): item is SpotifyPlaylistSummary => item !== null);
-    }
-  );
+  const queries = CATEGORY_SEARCH_QUERIES[categoryId] || [`${categoryId} playlist`];
+  const perQuery = Math.ceil(limit / queries.length) + 2;
+  const results = await searchPlaylistBatch(queries, perQuery);
+  return results.slice(0, limit);
 }
 
 export async function getFeaturedPlaylists(
-  limit = 20
+  limit = 24
 ): Promise<SpotifyPlaylistSummary[]> {
   if (!getCredentials()) return [];
-
-  return dbCache<SpotifyPlaylistSummary[]>(
-    "spotify:featured",
-    6 * 60 * 60 * 1000,
-    async () => {
-      const data = await spotifyFetch<{
-        playlists?: { items?: SpotifyPlaylistItem[] };
-      }>(`/browse/featured-playlists?limit=${limit}&market=US`);
-      return (data?.playlists?.items || [])
-        .map(mapPlaylistItem)
-        .filter((item): item is SpotifyPlaylistSummary => item !== null);
-    }
-  );
+  const perQuery = Math.ceil(limit / FEATURED_SEARCH_QUERIES.length) + 2;
+  const results = await searchPlaylistBatch(FEATURED_SEARCH_QUERIES, perQuery);
+  return results.slice(0, limit);
 }
 
 export async function getSpotifyPlaylistTracks(
