@@ -237,17 +237,35 @@ function mapDeezerPlaylistTrack(raw: unknown): DeezerPlaylistTrack | null {
 
 export async function searchDeezerPlaylists(
   query: string,
-  limit = 10
+  limit = 50
 ): Promise<DeezerPlaylistSummary[]> {
   const key = `deezer:plsearch:${query.toLowerCase().trim()}:${limit}`;
   return dbCache<DeezerPlaylistSummary[]>(key, DAY, async () => {
-    const data = await deezerPlaylistFetch<{ data?: unknown[] }>(
-      `/search/playlist?q=${encodeURIComponent(query)}&limit=${Math.min(limit, 25)}`
-    );
-    if (!Array.isArray(data?.data)) return [];
-    return data.data
-      .map(mapDeezerPlaylist)
-      .filter((p): p is DeezerPlaylistSummary => p !== null);
+    const results: DeezerPlaylistSummary[] = [];
+    const pageSize = 50; // Deezer supports up to 100 but 50 is reliable
+    let index = 0;
+
+    while (results.length < limit) {
+      const fetch_limit = Math.min(pageSize, limit - results.length);
+      const data = await deezerPlaylistFetch<{
+        data?: unknown[];
+        total?: number;
+        next?: string;
+      }>(`/search/playlist?q=${encodeURIComponent(query)}&limit=${fetch_limit}&index=${index}`);
+
+      if (!Array.isArray(data?.data) || data.data.length === 0) break;
+
+      for (const item of data.data) {
+        const pl = mapDeezerPlaylist(item);
+        if (pl) results.push(pl);
+      }
+
+      // Stop if Deezer has no more pages
+      if (!data.next || data.data.length < fetch_limit) break;
+      index += fetch_limit;
+    }
+
+    return results;
   });
 }
 

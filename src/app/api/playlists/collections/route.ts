@@ -82,7 +82,7 @@ export async function GET(req: Request) {
     // When searching, fetch live Deezer results on the first page and prepend them
     let deezerItems: typeof catalogItems = [];
     if (titleQuery.length >= 2 && offset === 0) {
-      const deezerResults = await searchDeezerPlaylists(titleQuery, 8).catch(() => []);
+      const deezerResults = await searchDeezerPlaylists(titleQuery, 50).catch(() => []);
       deezerItems = deezerResults.map((pl) => ({
         label: pl.title,
         query: pl.title,
